@@ -1,0 +1,11 @@
+<#if package?? && package != "">
+package ${package};
+</#if>
+
+import com.vaadin.ui.AbstractComponent;
+
+public class ${name} extends AbstractComponent {
+
+	public ${name}() {
+	}
+}

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
+
+<filesystem>
+	<folder name="Loaders">
+    	<folder name="text">
+        	<folder name="xml-mime">
+         	        <folder name="Actions">
+         	        		<file name="org-vaadin-netbeans-refactoring-CustomRefactoringAction.instance">
+    							<attr name="position" intvalue="1400"/>
+    							<attr name="misplaced.action.allowed" boolvalue="true"/>
+							</file>
+        		</folder>
+         	</folder>
+        </folder>
+ 	</folder>
+	<folder name="Projects">
+				<folder name="Vaadin">
+					<file name="org.vaadin.netbeans.maven.project.VaadinAction.instance">
+						<attr name="misplaced.action.allowed" boolvalue="true" />
+					</file>
+				</folder>
+				
+				<folder name="org-netbeans-modules-maven">
+					<folder name="Actions">
+						<file name="Vaadin.shadow">
+    						<attr name="originalFile" stringvalue="Projects/Vaadin"/>
+    						<attr name="position" intvalue="1050"/>
+						</file>
+					</folder>
+				</folder>
+	</folder>
+    <folder name="Templates">
+        <folder name="Project">
+            <folder name="Vaadin">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="org.vaadin.netbeans.maven.Bundle"/>
+                <attr name="position" intvalue="250"/>
+            </folder>
+        </folder>
+        <folder name="Vaadin">
+        	<attr name="position" intvalue="620"/>
+			<attr name="SystemFileSystem.localizingBundle" stringvalue="org.vaadin.netbeans.resources.Bundle"/>
+			
+			 <file name="Component.java"  url="nbres:/org/vaadin/netbeans/resources/FullFledgedComponent.template">
+                <attr name="position" intvalue="100"/>
+                <attr name="template" boolvalue="true"/>
+                <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
+                <attr name="instantiatingIterator" newvalue="org.vaadin.netbeans.ui.wizard.NewWidgetWizardIterator"/>
+                <attr name="templateWizardURL" urlvalue="nbresloc:/org/vaadin/netbeans/resources/Widget.html"/>
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="org.vaadin.netbeans.resources.Bundle"/>
+                <attr name="SystemFileSystem.icon" urlvalue="nbresloc:/org/vaadin/netbeans/resources/widget.png"/>
+            </file>
+            
+            <file name="ConnectorComponent.java"  url="nbres:/org/vaadin/netbeans/resources/ConnectorComponent.template">
+                <attr name="position" intvalue="0"/>
+                <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
+            </file>
+            
+            <file name="ConnectorConnector.java"  url="nbres:/org/vaadin/netbeans/resources/ConnectorConnector.template">
+                <attr name="position" intvalue="0"/>
+                <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
+            </file>
+       
+            <file name="WidgetSet.gwt.xml"  url="nbres:/org/vaadin/netbeans/resources/GwtModule.template">
+                <attr name="position" intvalue="1000"/>
+                <attr name="template" boolvalue="true"/>
+                <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
+                <attr name="templateWizardURL" urlvalue="nbresloc:/org/vaadin/netbeans/resources/Gwt.html"/>
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="org.vaadin.netbeans.resources.Bundle"/>
+                <attr name="SystemFileSystem.icon" urlvalue="nbresloc:/org/vaadin/netbeans/resources/gwt-module.png"/>
+            </file>
+			
+            <file name="FullFledgedWidget.java"  url="nbres:/org/vaadin/netbeans/resources/FullFledgedWidget.template">
+                <attr name="position" intvalue="0"/>
+                <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
+            </file>
+            
+			<file name="SharedState.java"  url="nbres:/org/vaadin/netbeans/resources/SharedState.template">
+                <attr name="position" intvalue="0"/>
+                <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
+            </file>
+            
+             <file name="FullFledgedConnector.java"  url="nbres:/org/vaadin/netbeans/resources/FullFledgedConnector.template">
+                <attr name="position" intvalue="0"/>
+                <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
+            </file>
+            
+            <file name="ClientRpc.java"  url="nbres:/org/vaadin/netbeans/resources/ClientRpc.template">
+                <attr name="position" intvalue="0"/>
+                <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
+            </file>
+            
+            <file name="ServerRpc.java"  url="nbres:/org/vaadin/netbeans/resources/ServerRpc.template">
+                <attr name="position" intvalue="0"/>
+                <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
+            </file>
+			
+			<file name="addons.scss"  url="nbres:/org/vaadin/netbeans/resources/addons.scss.template">
+                <attr name="position" intvalue="0"/>
+                <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
+            </file>
+            
+            <file name="theme.scss"  url="nbres:/org/vaadin/netbeans/resources/theme.scss.template">
+                <attr name="position" intvalue="0"/>
+                <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
+            </file>
+            
+            <file name="styles.scss"  url="nbres:/org/vaadin/netbeans/resources/styles.scss.template">
+                <attr name="position" intvalue="0"/>
+                <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
+            </file>
+            
+            <file name="favicon.ico"  url="nbres:/org/vaadin/netbeans/resources/favicon.ico">
+                <attr name="position" intvalue="0"/>
+            </file>
+            
+        </folder>
+    </folder>
+</filesystem>
+

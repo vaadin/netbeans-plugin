@@ -1,0 +1,13 @@
+<#if package?? && package != "">
+package ${package};
+</#if>
+
+import com.vaadin.shared.MouseEventDetails;
+import com.vaadin.shared.communication.ServerRpc;
+
+public interface ${name} extends ServerRpc {
+
+    // TODO: example API
+    public void clicked(MouseEventDetails mouseDetails);
+
+}

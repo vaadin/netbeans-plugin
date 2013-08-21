@@ -1,0 +1,35 @@
+<#if package?? && package != "">
+package ${package};
+</#if>
+
+import ${client_rpc_fqn};
+import ${server_rpc_fqn};
+import ${shared_state_fqn};
+import com.vaadin.shared.MouseEventDetails;
+import com.vaadin.ui.AbstractComponent;
+
+public class ${name} extends AbstractComponent {
+
+    private ${server_rpc} rpc = new ${server_rpc}() {
+        private int clickCount = 0;
+
+        public void clicked(MouseEventDetails mouseDetails) {
+            // nag every 5:th click using RPC
+            if (++clickCount % 5 == 0) {
+                getRpcProxy(${client_rpc}.class).alert(
+                        "Ok, that's enough!");
+            }
+            // update shared state
+            getState().text = "You have clicked " + clickCount + " times";
+        }
+    };
+
+    public ${name}() {
+        registerRpc(rpc);
+    }
+
+    @Override
+    public ${shared_state} getState() {
+        return (${shared_state}) super.getState();
+    }
+}

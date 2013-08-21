@@ -1,0 +1,12 @@
+<#if package?? && package != "">
+package ${package};
+</#if>
+
+import com.vaadin.shared.AbstractComponentState;
+
+public class ${name} extends AbstractComponentState {
+
+    // TODO: example state field
+    public String text = "This is ${component}";
+
+}

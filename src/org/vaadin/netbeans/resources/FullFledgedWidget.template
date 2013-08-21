@@ -1,0 +1,17 @@
+<#if package?? && package != "">
+package ${package};
+</#if>
+
+import com.google.gwt.user.client.ui.Label;
+
+// TODO: extend any GWT Widget
+public class ${name} extends Label {
+
+    public static final String CLASSNAME = "${style_name}";
+
+    public ${name}() {
+        // setText("${name} sets the text via ${connector} using ${shared_state}");
+        setStyleName(CLASSNAME);
+    }
+
+}
