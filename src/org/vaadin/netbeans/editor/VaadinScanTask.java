@@ -13,6 +13,7 @@ import javax.lang.model.util.ElementFilter;
 
 import org.netbeans.api.java.source.CompilationInfo;
 import org.netbeans.spi.editor.hints.ErrorDescription;
+import org.vaadin.netbeans.editor.analyzer.ConnectorAnalyzer;
 import org.vaadin.netbeans.editor.analyzer.ThemeAnalyzer;
 import org.vaadin.netbeans.editor.analyzer.TypeAnalyzer;
 import org.vaadin.netbeans.editor.analyzer.VaadinServletConfigurationAnalyzer;
@@ -80,5 +81,6 @@ class VaadinScanTask {
         ANALYZERS.add(new ThemeAnalyzer());
         ANALYZERS.add(new VaadinServletConfigurationAnalyzer());
         ANALYZERS.add(new WebServletAnalyzer());
+        ANALYZERS.add(new ConnectorAnalyzer());
     }
 }
