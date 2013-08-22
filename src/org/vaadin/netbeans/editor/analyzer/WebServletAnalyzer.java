@@ -5,25 +5,17 @@ package org.vaadin.netbeans.editor.analyzer;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.TypeMirror;
 
 import org.netbeans.api.java.source.CompilationInfo;
-import org.netbeans.api.java.source.ElementHandle;
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
 import org.netbeans.spi.editor.hints.ErrorDescription;
-import org.netbeans.spi.editor.hints.ErrorDescriptionFactory;
-import org.netbeans.spi.editor.hints.Fix;
 import org.netbeans.spi.editor.hints.Severity;
 import org.openide.filesystems.FileObject;
 import org.openide.util.NbBundle;
@@ -37,8 +29,6 @@ import org.vaadin.netbeans.model.VaadinModel;
  * @author denis
  */
 public class WebServletAnalyzer implements TypeAnalyzer {
-
-    private static final String HTTP_SERVLET = "javax.servlet.http.HttpServlet"; // NOI18N
 
     @Override
     public void analyze( TypeElement type, CompilationInfo info,
@@ -112,26 +102,8 @@ public class WebServletAnalyzer implements TypeAnalyzer {
     private void requireVaadinServlet( TypeElement type, CompilationInfo info,
             Collection<ErrorDescription> descriptions )
     {
-        TypeMirror superclass = type.getSuperclass();
-        TypeElement superElement = (TypeElement) info.getTypes().asElement(
-                superclass);
-        List<Fix> fixes = Collections.emptyList();
-        Name qName = superElement.getQualifiedName();
-        if (qName.contentEquals(Object.class.getName())
-                || qName.contentEquals(HTTP_SERVLET))
-        {
-            Fix fix = new ExtendVaadinServletFix(info.getFileObject(),
-                    ElementHandle.create(type));
-            fixes = Collections.singletonList(fix);
-        }
-        List<Integer> positions = AbstractJavaFix
-                .getElementPosition(info, type);
-        ErrorDescription description = ErrorDescriptionFactory
-                .createErrorDescription(Severity.WARNING,
-                        Bundle.badClassHierarchy(), fixes,
-                        info.getFileObject(), positions.get(0),
-                        positions.get(1));
-        descriptions.add(description);
+        descriptions.add(AbstractJavaFix.createExtendServletFix(type, info,
+                Bundle.badClassHierarchy(), Severity.WARNING));
     }
 
     private void checkWidgetset( String widgetset, TypeElement type,

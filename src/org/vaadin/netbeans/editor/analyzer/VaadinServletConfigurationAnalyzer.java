@@ -68,15 +68,8 @@ public class VaadinServletConfigurationAnalyzer implements TypeAnalyzer {
                 JavaUtils.VAADIN_SERVLET);
         if (servlet != null) {
             if (!info.getTypes().isSubtype(type.asType(), servlet.asType())) {
-                List<Integer> positions = AbstractJavaFix.getElementPosition(
-                        info, type);
-                ErrorDescription description = ErrorDescriptionFactory
-                        .createErrorDescription(Severity.ERROR,
-                                Bundle.configAnnotationError(),
-                                Collections.<Fix> emptyList(),
-                                info.getFileObject(), positions.get(0),
-                                positions.get(1));
-                descriptions.add(description);
+                descriptions.add(AbstractJavaFix.createExtendServletFix(type,
+                        info, Bundle.configAnnotationError(), Severity.ERROR));
             }
         }
         if (cancel.get()) {

@@ -5,20 +5,27 @@ package org.vaadin.netbeans.editor.analyzer;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
+import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
 
 import org.netbeans.api.java.lexer.JavaTokenId;
 import org.netbeans.api.java.source.CompilationInfo;
+import org.netbeans.api.java.source.ElementHandle;
 import org.netbeans.api.java.source.ModificationResult;
 import org.netbeans.api.java.source.TreeUtilities;
 import org.netbeans.api.java.source.ModificationResult.Difference;
 import org.netbeans.api.lexer.Token;
 import org.netbeans.api.lexer.TokenSequence;
 import org.netbeans.spi.editor.hints.ChangeInfo;
+import org.netbeans.spi.editor.hints.ErrorDescription;
+import org.netbeans.spi.editor.hints.ErrorDescriptionFactory;
 import org.netbeans.spi.editor.hints.Fix;
+import org.netbeans.spi.editor.hints.Severity;
 import org.openide.filesystems.FileObject;
 import org.openide.text.PositionRef;
 
@@ -36,6 +43,8 @@ import com.sun.source.util.SourcePositions;
  * @author denis
  */
 abstract class AbstractJavaFix implements Fix {
+
+    static final String HTTP_SERVLET = "javax.servlet.http.HttpServlet"; // NOI18N
 
     protected AbstractJavaFix( FileObject fileObject ) {
         myFileObject = fileObject;
@@ -142,6 +151,30 @@ abstract class AbstractJavaFix implements Fix {
             }
         }
         return null;
+    }
+
+    static ErrorDescription createExtendServletFix( TypeElement type,
+            CompilationInfo info, String errorText, Severity severity )
+    {
+        TypeMirror superclass = type.getSuperclass();
+        TypeElement superElement = (TypeElement) info.getTypes().asElement(
+                superclass);
+        List<Integer> positions = AbstractJavaFix
+                .getElementPosition(info, type);
+        List<Fix> fixes = Collections.emptyList();
+        Name qName = superElement.getQualifiedName();
+        if (qName.contentEquals(Object.class.getName())
+                || qName.contentEquals(AbstractJavaFix.HTTP_SERVLET))
+        {
+            Fix fix = new ExtendVaadinServletFix(info.getFileObject(),
+                    ElementHandle.create(type));
+            fixes = Collections.singletonList(fix);
+        }
+        ErrorDescription description = ErrorDescriptionFactory
+                .createErrorDescription(severity, errorText, fixes,
+                        info.getFileObject(), positions.get(0),
+                        positions.get(1));
+        return description;
     }
 
     private FileObject myFileObject;
