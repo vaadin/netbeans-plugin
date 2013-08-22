@@ -19,6 +19,7 @@ import java.util.logging.Logger;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
@@ -28,6 +29,7 @@ import org.netbeans.api.java.queries.UnitTestForSourceQuery;
 import org.netbeans.api.java.source.ClassIndex.SearchKind;
 import org.netbeans.api.java.source.ClassIndex.SearchScope;
 import org.netbeans.api.java.source.CompilationController;
+import org.netbeans.api.java.source.CompilationInfo;
 import org.netbeans.api.java.source.ElementHandle;
 import org.netbeans.api.java.source.JavaSource;
 import org.netbeans.api.java.source.JavaSource.Phase;
@@ -68,6 +70,10 @@ public final class JavaUtils {
     public static final String VAADIN_UI_FQN = "com.vaadin.ui.UI"; // NOI18N
 
     public static final String VAADIN_SERVLET = "com.vaadin.server.VaadinServlet"; // NOI18N
+
+    public static final Set<ElementKind> TYPE_KINDS = EnumSet.of(
+            ElementKind.CLASS, ElementKind.INTERFACE, ElementKind.ENUM,
+            ElementKind.ANNOTATION_TYPE);
 
     private JavaUtils() {
     }
@@ -201,7 +207,7 @@ public final class JavaUtils {
     }
 
     public static List<TypeElement> findAnnotatedElements(
-            final String searchedTypeName, CompilationController controller )
+            final String searchedTypeName, CompilationInfo controller )
             throws InterruptedException
     {
         TypeElement searchedType = controller.getElements().getTypeElement(
@@ -370,6 +376,16 @@ public final class JavaUtils {
         return false;
     }
 
+    public static Set<TypeElement> getSubclasses( TypeElement typeElement,
+            CompilationInfo info ) throws InterruptedException
+    {
+        if (typeElement == null) {
+            return Collections.emptySet();
+        }
+        return discoverHierarchy(typeElement, EnumSet.of(ElementKind.CLASS),
+                info);
+    }
+
     private static Set<FileObject> getTestRoots( Project project,
             SourceGroup[] sourceGroups )
     {
@@ -405,6 +421,65 @@ public final class JavaUtils {
                         Level.INFO,
                         "No FileObject found for the following URL: {0}", url);
             }
+        }
+        return result;
+    }
+
+    private static Set<TypeElement> discoverHierarchy( TypeElement typeElement,
+            Set<ElementKind> kinds, CompilationInfo info )
+            throws InterruptedException
+    {
+        Set<TypeElement> result = new HashSet<TypeElement>();
+        result.add((TypeElement) typeElement);
+
+        Set<TypeElement> toProcess = new HashSet<TypeElement>();
+        toProcess.add((TypeElement) typeElement);
+        Set<ElementKind> requiredKinds = EnumSet.copyOf(kinds);
+        requiredKinds.retainAll(TYPE_KINDS);
+        while (toProcess.size() > 0) {
+            TypeElement element = toProcess.iterator().next();
+            toProcess.remove(element);
+            Set<TypeElement> set = doDiscoverHierarchy(element, requiredKinds,
+                    info);
+            if (set.size() == 0) {
+                continue;
+            }
+            result.addAll(set);
+            for (TypeElement impl : set) {
+                toProcess.add(impl);
+            }
+        }
+        result.remove(typeElement);
+        return result;
+    }
+
+    private static Set<TypeElement> doDiscoverHierarchy(
+            TypeElement typeElement, Set<ElementKind> kinds,
+            CompilationInfo info ) throws InterruptedException
+    {
+        Set<TypeElement> result = new HashSet<>();
+        ElementHandle<TypeElement> handle = ElementHandle.create(typeElement);
+        final Set<ElementHandle<TypeElement>> handles = info
+                .getClasspathInfo()
+                .getClassIndex()
+                .getElements(
+                        handle,
+                        EnumSet.of(SearchKind.IMPLEMENTORS),
+                        EnumSet.of(SearchScope.SOURCE, SearchScope.DEPENDENCIES));
+        if (handles == null) {
+            throw new InterruptedException(
+                    "ClassIndex.getElements() was interrupted"); // NOI18N
+        }
+        for (ElementHandle<TypeElement> elementHandle : handles) {
+            Logger.getLogger(JavaUtils.class.getName()).log(Level.INFO,
+                    elementHandle.getQualifiedName()); // NOI18N
+            TypeElement derivedElement = elementHandle.resolve(info);
+            if (derivedElement == null
+                    || !kinds.contains(derivedElement.getKind()))
+            {
+                continue;
+            }
+            result.add(derivedElement);
         }
         return result;
     }

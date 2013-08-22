@@ -15,7 +15,6 @@ import java.util.logging.Logger;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.TypeElement;
 
-import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.source.CompilationInfo;
 import org.netbeans.api.java.source.ElementHandle;
 import org.netbeans.api.project.FileOwnerQuery;
@@ -28,7 +27,6 @@ import org.openide.filesystems.FileObject;
 import org.openide.util.NbBundle;
 import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.code.generator.JavaUtils;
-import org.vaadin.netbeans.code.generator.XmlUtils;
 import org.vaadin.netbeans.editor.VaadinTaskFactory;
 import org.vaadin.netbeans.model.ModelOperation;
 import org.vaadin.netbeans.model.VaadinModel;
@@ -115,17 +113,11 @@ public class VaadinServletConfigurationAnalyzer implements TypeAnalyzer {
                 descriptions.add(description);
             }
             else {
-                // TODO : add hint to create GWT module
+                // TODO : add hint to create GWT module (low priority)
             }
             return;
         }
-        ClassPath classPath = ClassPath.getClassPath(gwtXml[0],
-                ClassPath.SOURCE);
-        String foundWidgetset = classPath.getResourceName(gwtXml[0], '.', true);
-        if (foundWidgetset.endsWith(XmlUtils.GWT_XML)) {
-            foundWidgetset = foundWidgetset.substring(0,
-                    foundWidgetset.length() - XmlUtils.GWT_XML.length());
-        }
+        String foundWidgetset = AbstractJavaFix.getWidgetsetFqn(gwtXml[0]);
         if (!foundWidgetset.equals(widgetset)) {
             AnnotationTree annotationTree = (AnnotationTree) info.getTrees()
                     .getTree(type, config);

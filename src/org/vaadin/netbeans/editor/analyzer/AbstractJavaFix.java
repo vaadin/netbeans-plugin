@@ -13,12 +13,14 @@ import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 
+import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.lexer.JavaTokenId;
 import org.netbeans.api.java.source.CompilationInfo;
 import org.netbeans.api.java.source.ElementHandle;
 import org.netbeans.api.java.source.ModificationResult;
-import org.netbeans.api.java.source.TreeUtilities;
 import org.netbeans.api.java.source.ModificationResult.Difference;
+import org.netbeans.api.java.source.TreeMaker;
+import org.netbeans.api.java.source.TreeUtilities;
 import org.netbeans.api.lexer.Token;
 import org.netbeans.api.lexer.TokenSequence;
 import org.netbeans.spi.editor.hints.ChangeInfo;
@@ -28,6 +30,8 @@ import org.netbeans.spi.editor.hints.Fix;
 import org.netbeans.spi.editor.hints.Severity;
 import org.openide.filesystems.FileObject;
 import org.openide.text.PositionRef;
+import org.vaadin.netbeans.code.generator.JavaUtils;
+import org.vaadin.netbeans.code.generator.XmlUtils;
 
 import com.sun.source.tree.AnnotationTree;
 import com.sun.source.tree.AssignmentTree;
@@ -57,11 +61,13 @@ abstract class AbstractJavaFix implements Fix {
         for (ModificationResult result : results) {
             List<? extends Difference> differences = result
                     .getDifferences(getFileObject());
-            for (Difference difference : differences) {
-                PositionRef start = difference.getStartPosition();
-                PositionRef end = difference.getEndPosition();
-                changeInfo.add(getFileObject(), start.getPosition(),
-                        end.getPosition());
+            if (differences != null) {
+                for (Difference difference : differences) {
+                    PositionRef start = difference.getStartPosition();
+                    PositionRef end = difference.getEndPosition();
+                    changeInfo.add(getFileObject(), start.getPosition(),
+                            end.getPosition());
+                }
             }
         }
         return changeInfo;
@@ -85,22 +91,26 @@ abstract class AbstractJavaFix implements Fix {
     static List<Integer> getElementPosition( CompilationInfo info, Tree tree ) {
         SourcePositions srcPos = info.getTrees().getSourcePositions();
 
+        Tree subjectTree = tree;
+        if (Tree.Kind.ANNOTATION.equals(subjectTree.getKind())) {
+            subjectTree = ((AnnotationTree) subjectTree).getAnnotationType();
+        }
+
         int startOffset = (int) srcPos.getStartPosition(
-                info.getCompilationUnit(), tree);
+                info.getCompilationUnit(), subjectTree);
         int endOffset = (int) srcPos.getEndPosition(info.getCompilationUnit(),
-                tree);
+                subjectTree);
 
         Tree startTree = null;
 
-        if (TreeUtilities.CLASS_TREE_KINDS.contains(tree.getKind())) {
-            startTree = ((ClassTree) tree).getModifiers();
-
+        if (TreeUtilities.CLASS_TREE_KINDS.contains(subjectTree.getKind())) {
+            startTree = ((ClassTree) subjectTree).getModifiers();
         }
-        else if (tree.getKind() == Tree.Kind.METHOD) {
-            startTree = ((MethodTree) tree).getReturnType();
+        else if (subjectTree.getKind() == Tree.Kind.METHOD) {
+            startTree = ((MethodTree) subjectTree).getReturnType();
         }
-        else if (tree.getKind() == Tree.Kind.VARIABLE) {
-            startTree = ((VariableTree) tree).getType();
+        else if (subjectTree.getKind() == Tree.Kind.VARIABLE) {
+            startTree = ((VariableTree) subjectTree).getType();
         }
 
         if (startTree != null) {
@@ -108,7 +118,7 @@ abstract class AbstractJavaFix implements Fix {
                     info.getCompilationUnit(), startTree);
 
             TokenSequence<?> tokenSequence = info.getTreeUtilities().tokensFor(
-                    tree);
+                    subjectTree);
 
             if (tokenSequence != null) {
                 boolean eob = false;
@@ -175,6 +185,32 @@ abstract class AbstractJavaFix implements Fix {
                         info.getFileObject(), positions.get(0),
                         positions.get(1));
         return description;
+    }
+
+    static ExpressionTree createWebInitParam( TreeMaker treeMaker,
+            String paramName, String paramValue )
+    {
+        ExpressionTree nameAttrTree = treeMaker.Assignment(
+                treeMaker.Identifier(JavaUtils.NAME),
+                treeMaker.Literal(paramName));
+        ExpressionTree valueAttrTree = treeMaker.Assignment(
+                treeMaker.Identifier(JavaUtils.VALUE),
+                treeMaker.Literal(paramValue));
+
+        List<ExpressionTree> expressions = new ArrayList<>(2);
+        expressions.add(nameAttrTree);
+        expressions.add(valueAttrTree);
+        return treeMaker.Annotation(treeMaker.Type(JavaUtils.WEB_INIT_PARAM),
+                expressions);
+    }
+
+    static String getWidgetsetFqn( FileObject gwtXml ) {
+        ClassPath classPath = ClassPath.getClassPath(gwtXml, ClassPath.SOURCE);
+        String fqn = classPath.getResourceName(gwtXml, '.', true);
+        if (fqn.endsWith(XmlUtils.GWT_XML)) {
+            fqn = fqn.substring(0, fqn.length() - XmlUtils.GWT_XML.length());
+        }
+        return fqn;
     }
 
     private FileObject myFileObject;
