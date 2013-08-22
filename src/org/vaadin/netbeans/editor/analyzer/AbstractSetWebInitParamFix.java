@@ -9,6 +9,7 @@ import javax.lang.model.element.TypeElement;
 import org.netbeans.api.java.source.ElementHandle;
 import org.netbeans.api.java.source.TreeMaker;
 import org.openide.filesystems.FileObject;
+import org.vaadin.netbeans.code.generator.JavaUtils;
 
 import com.sun.source.tree.AnnotationTree;
 import com.sun.source.tree.AssignmentTree;
@@ -52,8 +53,28 @@ abstract class AbstractSetWebInitParamFix extends AbstractJavaFix {
         else if (expression instanceof NewArrayTree) {
             NewArrayTree arrayTree = (NewArrayTree) expression;
             oldTree = arrayTree;
-            newTree = treeMaker.addNewArrayInitializer(arrayTree,
-                    createWebInitParam(treeMaker, paramName, paramValue));
+            List<? extends ExpressionTree> initializers = arrayTree
+                    .getInitializers();
+            AssignmentTree assignment = null;
+            for (ExpressionTree initializer : initializers) {
+                if (initializer instanceof AnnotationTree) {
+                    AnnotationTree initParam = (AnnotationTree) initializer;
+                    String value = getAnnotationTreeAttributeValue(initParam,
+                            JavaUtils.NAME);
+                    if (JavaUtils.WIDGETSET.equals(value)) {
+                        assignment = getAnnotationTreeAttribute(initParam,
+                                JavaUtils.VALUE);
+                    }
+                }
+            }
+            if (assignment != null) {
+                oldTree = assignment.getExpression();
+                newTree = treeMaker.Literal(paramValue);
+            }
+            else {
+                newTree = treeMaker.addNewArrayInitializer(arrayTree,
+                        createWebInitParam(treeMaker, paramName, paramValue));
+            }
         }
         return new Tree[] { oldTree, newTree };
     }

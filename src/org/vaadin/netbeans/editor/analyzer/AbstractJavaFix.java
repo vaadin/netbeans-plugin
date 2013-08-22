@@ -38,6 +38,7 @@ import com.sun.source.tree.AssignmentTree;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.IdentifierTree;
+import com.sun.source.tree.LiteralTree;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
@@ -163,6 +164,24 @@ abstract class AbstractJavaFix implements Fix {
         return null;
     }
 
+    static String getAnnotationTreeAttributeValue( AnnotationTree annotation,
+            String attributeName )
+    {
+        AssignmentTree tree = getAnnotationTreeAttribute(annotation,
+                attributeName);
+        if (tree == null) {
+            return null;
+        }
+        else {
+            ExpressionTree expression = tree.getExpression();
+            if (expression instanceof LiteralTree) {
+                Object value = ((LiteralTree) expression).getValue();
+                return value == null ? null : value.toString();
+            }
+            return null;
+        }
+    }
+
     static ErrorDescription createExtendServletFix( TypeElement type,
             CompilationInfo info, String errorText, Severity severity )
     {
@@ -205,6 +224,9 @@ abstract class AbstractJavaFix implements Fix {
     }
 
     static String getWidgetsetFqn( FileObject gwtXml ) {
+        if (gwtXml == null) {
+            return null;
+        }
         ClassPath classPath = ClassPath.getClassPath(gwtXml, ClassPath.SOURCE);
         String fqn = classPath.getResourceName(gwtXml, '.', true);
         if (fqn.endsWith(XmlUtils.GWT_XML)) {

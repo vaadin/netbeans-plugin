@@ -30,7 +30,6 @@ import org.openide.filesystems.FileObject;
 import org.openide.util.NbBundle;
 import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.code.generator.JavaUtils;
-import org.vaadin.netbeans.code.generator.XmlUtils;
 import org.vaadin.netbeans.editor.VaadinTaskFactory;
 import org.vaadin.netbeans.model.ModelOperation;
 import org.vaadin.netbeans.model.VaadinModel;
@@ -102,7 +101,8 @@ public class WebServletAnalyzer implements TypeAnalyzer {
                             descriptions);
                 }
                 else {
-                    checkWidgetset(widgetset, type, info, descriptions, factory);
+                    checkWidgetset(widgetset, gwtXml[0], servlet, type, info,
+                            descriptions, factory);
                 }
             }
         }
@@ -121,13 +121,34 @@ public class WebServletAnalyzer implements TypeAnalyzer {
                 Bundle.badClassHierarchy(), Severity.WARNING));
     }
 
-    private void checkWidgetset( String widgetset, TypeElement type,
-            CompilationInfo info, Collection<ErrorDescription> descriptions,
-            VaadinTaskFactory factory )
+    private void checkWidgetset( String widgetset, FileObject gwtXml,
+            AnnotationMirror servlet, TypeElement type, CompilationInfo info,
+            Collection<ErrorDescription> descriptions, VaadinTaskFactory factory )
     {
-        // TODO : Check widgetset against gwtXml and provide hints for correction/creation if it differs
+        String name = AbstractJavaFix.getWidgetsetFqn(gwtXml);
+        if (name == null) {
+            List<Integer> positions = AbstractJavaFix.getElementPosition(info,
+                    getInitParamsTree(servlet, type, info));
+            ErrorDescription description = ErrorDescriptionFactory
+                    .createErrorDescription(Severity.ERROR, Bundle
+                            .noGwtModule(widgetset), Collections
+                            .<Fix> singletonList(new CreateGwtModuleFix(
+                                    widgetset, info.getFileObject(), factory)),
+                            info.getFileObject(), positions.get(0), positions
+                                    .get(1));
+            descriptions.add(description);
+        }
+        else if (!widgetset.equals(name)) {
+            ErrorDescription description = createServletWidgetsetDescription(
+                    name, servlet, type, info, Severity.ERROR,
+                    Bundle.noGwtModule(name), new CreateGwtModuleFix(widgetset,
+                            info.getFileObject(), factory));
+            descriptions.add(description);
+        }
     }
 
+    @NbBundle.Messages({ "# {0} - widgetset",
+            "noWidgetset=GWT module {0} exists but is not declared for VaadinServlet" })
     private void noWidgetsetVaadinServlet( FileObject gwtXml,
             AnnotationMirror servlet, TypeElement type, CompilationInfo info,
             Collection<ErrorDescription> descriptions )
@@ -136,29 +157,51 @@ public class WebServletAnalyzer implements TypeAnalyzer {
             // TODO : add hint to create and set gwt module name (low priority)
         }
         else {
-            String name = gwtXml.getNameExt();
-            if (name.endsWith(XmlUtils.GWT_XML)) {
-                name = name.substring(0,
-                        name.length() - XmlUtils.GWT_XML.length());
-            }
-            AnnotationTree annotationTree = (AnnotationTree) info.getTrees()
-                    .getTree(type, servlet);
-            AssignmentTree assignment = AbstractJavaFix
-                    .getAnnotationTreeAttribute(annotationTree,
-                            JavaUtils.INIT_PARAMS);
-            List<Integer> positions = AbstractJavaFix.getElementPosition(info,
-                    assignment);
-            ErrorDescription description = ErrorDescriptionFactory
-                    .createErrorDescription(Severity.HINT, Bundle
-                            .noGwtModule(name), Collections
-                            .<Fix> singletonList(new SetServletWidgetsetFix(
-                                    AbstractJavaFix.getWidgetsetFqn(gwtXml),
-                                    info.getFileObject(), ElementHandle
-                                            .create(type))), info
-                            .getFileObject(), positions.get(0), positions
-                            .get(1));
+            String name = AbstractJavaFix.getWidgetsetFqn(gwtXml);
+            ErrorDescription description = createServletWidgetsetDescription(
+                    name, servlet, type, info, Severity.HINT,
+                    Bundle.noWidgetset(name));
             descriptions.add(description);
         }
+    }
+
+    private ErrorDescription createServletWidgetsetDescription(
+            String widgetset, AnnotationMirror servlet, TypeElement type,
+            CompilationInfo info, Severity severity, String descriptionText,
+            Fix... moreFixes )
+    {
+        Tree tree = getInitParamsTree(servlet, type, info);
+        List<Integer> positions = AbstractJavaFix
+                .getElementPosition(info, tree);
+        List<Fix> fixes;
+        if (moreFixes.length == 0) {
+            fixes = Collections
+                    .<Fix> singletonList(new SetServletWidgetsetFix(widgetset,
+                            info.getFileObject(), ElementHandle.create(type)));
+        }
+        else {
+            fixes = new ArrayList<>(moreFixes.length + 1);
+            fixes.add(new SetServletWidgetsetFix(widgetset, info
+                    .getFileObject(), ElementHandle.create(type)));
+            for (Fix fix : moreFixes) {
+                fixes.add(fix);
+            }
+        }
+        ErrorDescription description = ErrorDescriptionFactory
+                .createErrorDescription(severity, descriptionText, fixes,
+                        info.getFileObject(), positions.get(0),
+                        positions.get(1));
+        return description;
+    }
+
+    private Tree getInitParamsTree( AnnotationMirror servlet, TypeElement type,
+            CompilationInfo info )
+    {
+        AnnotationTree annotationTree = (AnnotationTree) info.getTrees()
+                .getTree(type, servlet);
+        AssignmentTree assignment = AbstractJavaFix.getAnnotationTreeAttribute(
+                annotationTree, JavaUtils.INIT_PARAMS);
+        return assignment.getVariable();
     }
 
     @NbBundle.Messages("noUiProvided=Servlet class extends VaadinServlet but there is no UI class specified")
