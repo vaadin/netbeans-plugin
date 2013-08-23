@@ -3,6 +3,8 @@
  */
 package org.vaadin.netbeans.impl;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -35,6 +37,7 @@ import org.netbeans.api.java.source.TypesEvent;
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.SourceGroup;
+import org.netbeans.modules.maven.api.NbMavenProject;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
 import org.netbeans.spi.java.classpath.support.ClassPathSupport;
 import org.netbeans.spi.project.ProjectServiceProvider;
@@ -79,6 +82,7 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
         myResourcesListener = new ResourcesListener(this);
         myActions = new ConcurrentHashMap<>();
         isWeb = web;
+        myDownloadListener = new DownloadDepsListener();
     }
 
     @Override
@@ -173,6 +177,9 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
     @Override
     protected void projectClosed() {
         removeFileSystemListener();
+        NbMavenProject mvnProject = getProject().getLookup().lookup(
+                NbMavenProject.class);
+        mvnProject.removePropertyChangeListener(myDownloadListener);
 
         myClasspathInfo = null;
         myModel.cleanup(false);
@@ -184,6 +191,10 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
                 getClassPath(getProject(), ClassPath.BOOT),
                 getClassPath(getProject(), ClassPath.COMPILE),
                 getClassPath(getProject(), ClassPath.SOURCE));
+
+        NbMavenProject mvnProject = getProject().getLookup().lookup(
+                NbMavenProject.class);
+        mvnProject.addPropertyChangeListener(myDownloadListener);
 
         initializeClassIndex(true);
     }
@@ -272,7 +283,7 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
     {
         // myClasspathInfo could be null in the process of project closing
         ClasspathInfo info = myClasspathInfo;
-        if ( info == null ){
+        if (info == null) {
             return null;
         }
         JavaSource javaSource = JavaSource.create(info);
@@ -320,8 +331,7 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
         ClassPathProvider provider = project.getLookup().lookup(
                 ClassPathProvider.class);
         SourceGroup[] sourceGroups = JavaUtils.getJavaSourceGroups(project);
-        List<ClassPath> classPaths = new ArrayList<>(
-                sourceGroups.length);
+        List<ClassPath> classPaths = new ArrayList<>(sourceGroups.length);
         for (SourceGroup sourceGroup : sourceGroups) {
             FileObject rootFolder = sourceGroup.getRootFolder();
             ClassPath path = provider.findClassPath(rootFolder, type);
@@ -380,6 +390,17 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
 
             isInitialized = true;
         }
+    }
+
+    private final class DownloadDepsListener implements PropertyChangeListener {
+
+        @Override
+        public void propertyChange( PropertyChangeEvent evt ) {
+            if (NbMavenProject.PROP_PROJECT.equals(evt.getPropertyName())) {
+                initializeClassIndex(false);
+            }
+        }
+
     }
 
     private final class ClassIndexListenerImpl implements ClassIndexListener {
@@ -489,6 +510,8 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
     private final ResourcesListener myResourcesListener;
 
     private final ConcurrentHashMap<Action, Set<ExecutorTask>> myActions;
+
+    private final PropertyChangeListener myDownloadListener;
 
     private final boolean isWeb;
 
