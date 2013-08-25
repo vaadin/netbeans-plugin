@@ -20,7 +20,7 @@ import org.vaadin.netbeans.VaadinSupport;
 class WidgetTypePanel implements WizardDescriptor.Panel<WizardDescriptor> {
 
     enum Template {
-        FULL_FLEDGED, CONNECTOR_ONLY
+        FULL_FLEDGED, CONNECTOR_ONLY, EXTENSION
     }
 
     @Override

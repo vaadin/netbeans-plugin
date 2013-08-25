@@ -1,0 +1,21 @@
+<#if package?? && package != "">
+package ${package};
+</#if>
+
+import ${server_component_fqn};
+import com.google.gwt.user.client.ui.Widget;
+import com.vaadin.client.ComponentConnector;
+import com.vaadin.client.ServerConnector;
+import com.vaadin.client.extensions.AbstractExtensionConnector;
+import com.vaadin.shared.ui.Connect;
+
+@Connect(${server_component}.class)
+public class ${name} extends AbstractExtensionConnector {
+
+    @Override
+    protected void extend(ServerConnector target) {
+    	Widget widget = ((ComponentConnector) target).getWidget();
+        // TODO : write client side logic to extend widget functionality
+    }
+
+}

@@ -94,6 +94,16 @@
                 <attr name="position" intvalue="0"/>
                 <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
             </file>
+            
+             <file name="Extension.java"  url="nbres:/org/vaadin/netbeans/resources/ExtensionComponent.template">
+                <attr name="position" intvalue="0"/>
+                <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
+            </file>
+            
+            <file name="ExtensionConnector.java"  url="nbres:/org/vaadin/netbeans/resources/ExtensionConnector.template">
+                <attr name="position" intvalue="0"/>
+                <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
+            </file>
 			
 			<file name="addons.scss"  url="nbres:/org/vaadin/netbeans/resources/addons.scss.template">
                 <attr name="position" intvalue="0"/>

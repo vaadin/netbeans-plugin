@@ -22,6 +22,7 @@ import org.openide.WizardDescriptor.Panel;
 import org.openide.WizardDescriptor.ProgressInstantiatingIterator;
 import org.openide.filesystems.FileObject;
 import org.vaadin.netbeans.code.generator.ConnectorOnlyWidgetGenerator;
+import org.vaadin.netbeans.code.generator.ExtensionWidgetGenerator;
 import org.vaadin.netbeans.code.generator.FullFledgedWidgetGenerator;
 import org.vaadin.netbeans.code.generator.JavaUtils;
 import org.vaadin.netbeans.code.generator.WidgetGenerator;
@@ -42,6 +43,8 @@ public class NewWidgetWizardIterator implements
                 new FullFledgedWidgetGenerator());
         TEMPLATE_GENERATORS.put(Template.CONNECTOR_ONLY,
                 new ConnectorOnlyWidgetGenerator());
+        TEMPLATE_GENERATORS.put(Template.EXTENSION,
+                new ExtensionWidgetGenerator());
     }
 
     @Override
