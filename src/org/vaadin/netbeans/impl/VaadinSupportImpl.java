@@ -487,7 +487,9 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
                     .getTypes();
             for (ElementHandle<TypeElement> elementHandle : types) {
                 TypeElement element = elementHandle.resolve(controller);
-                VaadinSupportImpl.this.updateModel(controller, element);
+                if (element != null) {
+                    VaadinSupportImpl.this.updateModel(controller, element);
+                }
             }
         }
 

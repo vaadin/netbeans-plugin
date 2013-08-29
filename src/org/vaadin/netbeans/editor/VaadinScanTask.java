@@ -14,10 +14,13 @@ import javax.lang.model.util.ElementFilter;
 import org.netbeans.api.java.source.CompilationInfo;
 import org.netbeans.spi.editor.hints.ErrorDescription;
 import org.vaadin.netbeans.editor.analyzer.ConnectorAnalyzer;
+import org.vaadin.netbeans.editor.analyzer.RpcInterfacesAnalyzer;
+import org.vaadin.netbeans.editor.analyzer.SharedStateAnalyzer;
 import org.vaadin.netbeans.editor.analyzer.ThemeAnalyzer;
 import org.vaadin.netbeans.editor.analyzer.TypeAnalyzer;
 import org.vaadin.netbeans.editor.analyzer.VaadinServletConfigurationAnalyzer;
 import org.vaadin.netbeans.editor.analyzer.WebServletAnalyzer;
+import org.vaadin.netbeans.editor.analyzer.GwtClassesAnalyzer;
 
 /**
  * @author denis
@@ -82,5 +85,8 @@ class VaadinScanTask {
         ANALYZERS.add(new VaadinServletConfigurationAnalyzer());
         ANALYZERS.add(new WebServletAnalyzer());
         ANALYZERS.add(new ConnectorAnalyzer());
+        ANALYZERS.add(new SharedStateAnalyzer());
+        ANALYZERS.add(new RpcInterfacesAnalyzer());
+        ANALYZERS.add(new GwtClassesAnalyzer());
     }
 }

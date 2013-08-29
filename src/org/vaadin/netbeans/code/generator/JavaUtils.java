@@ -6,9 +6,11 @@ package org.vaadin.netbeans.code.generator;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -23,6 +25,7 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
 
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.java.queries.UnitTestForSourceQuery;
@@ -384,6 +387,38 @@ public final class JavaUtils {
         }
         return discoverHierarchy(typeElement, EnumSet.of(ElementKind.CLASS),
                 info);
+    }
+
+    public static Collection<? extends TypeMirror> getSupertypes(
+            TypeMirror type, CompilationInfo info )
+    {
+        Collection<TypeMirror> result = new LinkedList<>();
+        List<TypeMirror> walkThrough = new LinkedList<>();
+        walkThrough.add(type);
+        Set<Element> visited = new HashSet<>();
+        collectSupertypes(walkThrough, result, visited, info);
+        return result;
+    }
+
+    private static void collectSupertypes( List<TypeMirror> types,
+            Collection<TypeMirror> superTypes, Set<Element> visited,
+            CompilationInfo info )
+    {
+        while (!types.isEmpty()) {
+            TypeMirror typeMirror = types.remove(0);
+            Element typeElement = info.getTypes().asElement(typeMirror);
+
+            List<? extends TypeMirror> directSupertypes = info.getTypes()
+                    .directSupertypes(typeMirror);
+            for (TypeMirror directSupertype : directSupertypes) {
+                typeElement = info.getTypes().asElement(directSupertype);
+                if (!visited.contains(typeElement)) {
+                    types.add(directSupertype);
+                    superTypes.add(directSupertype);
+                    visited.add(typeElement);
+                }
+            }
+        }
     }
 
     private static Set<FileObject> getTestRoots( Project project,

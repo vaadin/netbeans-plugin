@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 
 import org.netbeans.api.java.classpath.ClassPath;
@@ -87,6 +88,13 @@ abstract class AbstractJavaFix implements Fix {
     {
         ClassTree classTree = info.getTrees().getTree(type);
         return getElementPosition(info, classTree);
+    }
+
+    static List<Integer> getElementPosition( CompilationInfo info,
+            VariableElement element )
+    {
+        Tree tree = info.getTrees().getTree(element);
+        return getElementPosition(info, tree);
     }
 
     static List<Integer> getElementPosition( CompilationInfo info, Tree tree ) {
