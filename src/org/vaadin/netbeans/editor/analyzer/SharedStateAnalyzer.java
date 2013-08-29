@@ -37,7 +37,7 @@ import org.vaadin.netbeans.editor.VaadinTaskFactory;
 /**
  * @author denis
  */
-@NbBundle.Messages({ "noAccessors=JavaBeans specification is violated. Couldn''t find accessor methods" })
+@NbBundle.Messages({ "noAccessors=JavaBeans specification is violated. Couldn't find accessor methods" })
 public class SharedStateAnalyzer extends ClientClassAnalyzer {
 
     private static final String GET = "get"; // NOI18N
@@ -153,8 +153,8 @@ public class SharedStateAnalyzer extends ClientClassAnalyzer {
     }
 
     @NbBundle.Messages({
-            "noSetter=JavaBeans specification is violated. Couldn''t find setter method",
-            "noGetter=JavaBeans specification is violated. Couldn''t find getter method" })
+            "noSetter=JavaBeans specification is violated. Couldn't find setter method",
+            "noGetter=JavaBeans specification is violated. Couldn't find getter method" })
     private void addNonMatchingAccessorsWarning( VariableElement field,
             boolean hasGetter, CompilationInfo info,
             Collection<ErrorDescription> descriptions )

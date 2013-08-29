@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
@@ -92,6 +93,13 @@ abstract class AbstractJavaFix implements Fix {
 
     static List<Integer> getElementPosition( CompilationInfo info,
             VariableElement element )
+    {
+        Tree tree = info.getTrees().getTree(element);
+        return getElementPosition(info, tree);
+    }
+
+    static List<Integer> getElementPosition( CompilationInfo info,
+            ExecutableElement element )
     {
         Tree tree = info.getTrees().getTree(element);
         return getElementPosition(info, tree);
