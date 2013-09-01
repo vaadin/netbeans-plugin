@@ -118,7 +118,22 @@ public class VaadinServletConfigurationAnalyzer implements TypeAnalyzer {
             return;
         }
         String foundWidgetset = AbstractJavaFix.getWidgetsetFqn(gwtXml[0]);
-        if (!foundWidgetset.equals(widgetset)) {
+        if (widgetset == null) {
+            AnnotationTree annotationTree = (AnnotationTree) info.getTrees()
+                    .getTree(type, config);
+            List<Integer> positions = AbstractJavaFix.getElementPosition(info,
+                    annotationTree);
+            ErrorDescription description = ErrorDescriptionFactory
+                    .createErrorDescription(Severity.HINT, Bundle
+                            .noWidgetset(foundWidgetset), Collections
+                            .<Fix> singletonList(new SetWidgetsetFix(
+                                    foundWidgetset, fileObject, ElementHandle
+                                            .create(type))), info
+                            .getFileObject(), positions.get(0), positions
+                            .get(1));
+            descriptions.add(description);
+        }
+        else if (!foundWidgetset.equals(widgetset)) {
             AnnotationTree annotationTree = (AnnotationTree) info.getTrees()
                     .getTree(type, config);
             AssignmentTree assignment = AbstractJavaFix

@@ -52,10 +52,14 @@ abstract class AbstractRefactoringUI<R extends AbstractRefactoring> implements
             else {
                 title = Bundle.moveModule(moduleName);
             }
-            Project project = FileOwnerQuery.getOwner(source);
+            Project project;
             FileObject target = myTarget;
             if (target == null) {
                 target = source.getParent();
+                project = FileOwnerQuery.getOwner(source);
+            }
+            else {
+                project = FileOwnerQuery.getOwner(target);
             }
             myPanel = new MovePanel(moduleName, project, target, listener,
                     isCopy(), title);

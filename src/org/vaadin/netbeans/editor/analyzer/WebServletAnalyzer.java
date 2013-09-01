@@ -93,7 +93,11 @@ public class WebServletAnalyzer implements TypeAnalyzer {
 
         if (info.getTypes().isSubtype(type.asType(), vaadinServlet.asType())) {
             if (ui == null) {
-                noUiVaadinServlet(type, info, servlet, descriptions);
+                if (!JavaUtils.hasAnnotation(type,
+                        JavaUtils.VAADIN_SERVLET_CONFIGURATION))
+                {
+                    noUiVaadinServlet(type, info, servlet, descriptions);
+                }
             }
             else {
                 if (widgetset == null) {
