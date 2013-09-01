@@ -272,7 +272,7 @@ public class RpcInterfacesAnalyzer extends AbstractJavaBeanAnalyzer {
             List<Integer> positions = AbstractJavaFix.getElementPosition(info,
                     checkTarget);
             ErrorDescription description = ErrorDescriptionFactory
-                    .createErrorDescription(Severity.WARNING,
+                    .createErrorDescription(Severity.ERROR,
                             Bundle.typeVarParameterDeclaration(),
                             Collections.<Fix> emptyList(),
                             info.getFileObject(), positions.get(0),
@@ -288,7 +288,7 @@ public class RpcInterfacesAnalyzer extends AbstractJavaBeanAnalyzer {
             List<Integer> positions = AbstractJavaFix.getElementPosition(info,
                     checkTarget);
             ErrorDescription description = ErrorDescriptionFactory
-                    .createErrorDescription(Severity.WARNING,
+                    .createErrorDescription(Severity.ERROR,
                             Bundle.wildcardParameterDeclaration(),
                             Collections.<Fix> emptyList(),
                             info.getFileObject(), positions.get(0),
@@ -305,7 +305,7 @@ public class RpcInterfacesAnalyzer extends AbstractJavaBeanAnalyzer {
         List<Integer> positions = AbstractJavaFix.getElementPosition(info,
                 method);
         ErrorDescription description = ErrorDescriptionFactory
-                .createErrorDescription(Severity.WARNING, Bundle
+                .createErrorDescription(Severity.ERROR, Bundle
                         .duplicateRpcMethodName(method.getSimpleName()
                                 .toString()), Collections.<Fix> emptyList(),
                         info.getFileObject(), positions.get(0), positions
