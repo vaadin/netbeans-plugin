@@ -174,7 +174,7 @@ abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
             msg = getNoSetterMessage(target, field);
         }
         else {
-            msg = getNoSetterMessage(target, field);
+            msg = getNoGetterMessage(target, field);
         }
         ErrorDescription description = ErrorDescriptionFactory
                 .createErrorDescription(Severity.WARNING, msg,
