@@ -145,8 +145,7 @@ public class WebServletAnalyzer implements TypeAnalyzer {
         else if (!widgetset.equals(name)) {
             ErrorDescription description = createServletWidgetsetDescription(
                     name, servlet, type, info, Severity.ERROR,
-                    Bundle.noGwtModule(name), new CreateGwtModuleFix(widgetset,
-                            info.getFileObject(), factory));
+                    Bundle.noGwtModule(name));
             descriptions.add(description);
         }
     }

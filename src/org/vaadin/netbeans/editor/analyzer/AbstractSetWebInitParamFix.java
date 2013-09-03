@@ -61,7 +61,7 @@ abstract class AbstractSetWebInitParamFix extends AbstractJavaFix {
                     AnnotationTree initParam = (AnnotationTree) initializer;
                     String value = getAnnotationTreeAttributeValue(initParam,
                             JavaUtils.NAME);
-                    if (JavaUtils.WIDGETSET.equals(value)) {
+                    if (paramName.equals(value)) {
                         assignment = getAnnotationTreeAttribute(initParam,
                                 JavaUtils.VALUE);
                     }

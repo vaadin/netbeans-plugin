@@ -141,10 +141,11 @@ public class VaadinServletConfigurationAnalyzer implements TypeAnalyzer {
                             JavaUtils.WIDGETSET);
             List<Integer> positions = AbstractJavaFix.getElementPosition(info,
                     assignment);
-            List<Fix> fixes = new ArrayList<>(2);
+            List<Fix> fixes = new ArrayList<>(1);
             fixes.add(new SetWidgetsetFix(foundWidgetset, fileObject,
                     ElementHandle.create(type)));
-            fixes.add(new CreateGwtModuleFix(widgetset, fileObject, factory));
+            // don't add fix if there is already GWT.xml available
+            //fixes.add(new CreateGwtModuleFix(widgetset, fileObject, factory));
             ErrorDescription description = ErrorDescriptionFactory
                     .createErrorDescription(Severity.ERROR,
                             Bundle.noGwtModule(widgetset), fixes,
