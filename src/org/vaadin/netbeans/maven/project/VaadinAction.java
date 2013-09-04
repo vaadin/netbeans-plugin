@@ -28,7 +28,6 @@ import org.netbeans.modules.maven.api.Constants;
 import org.netbeans.modules.maven.api.execute.RunConfig;
 import org.netbeans.modules.maven.api.execute.RunUtils;
 import org.netbeans.modules.maven.spi.debug.MavenDebugger;
-import org.netbeans.spi.project.ui.CustomizerProvider2;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.awt.DynamicMenuContent;
@@ -112,12 +111,6 @@ public class VaadinAction extends AbstractAction implements Popup,
             menu.add(createDevModeJettyItem());
             menu.add(createDebugJettyItem());
 
-            /*
-             * Maven project doesn't provide CustomizerProvider2 instance.
-             * Uncomment this code when it will be available.
-             * menu.addSeparator(); menu.add(createVaadinPropertiesItem());
-             */
-
             menu.setEnabled(isEnabled());
             return menu;
         }
@@ -140,22 +133,6 @@ public class VaadinAction extends AbstractAction implements Popup,
         }
         FileObject fObj = dataObjects.iterator().next().getPrimaryFile();
         return FileOwnerQuery.getOwner(fObj);
-    }
-
-    @NbBundle.Messages("vaadinProperties=Vaadin Properties")
-    private JMenuItem createVaadinPropertiesItem() {
-        JMenuItem item = new JMenuItem(Bundle.vaadinProperties());
-        item.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed( ActionEvent e ) {
-                CustomizerProvider2 customizer = myProject.getLookup().lookup(
-                        CustomizerProvider2.class);
-                customizer.showCustomizer(VaadinCustomizer.VAADIN_CATEGORY,
-                        null);
-            }
-        });
-        return item;
     }
 
     @NbBundle.Messages({ "runJetty=Run Jetty", "# {0} - project name",
