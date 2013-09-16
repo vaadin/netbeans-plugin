@@ -315,7 +315,7 @@ public class VaadinOptionsPanel extends JPanel {
 
     private static class StringWrapper {
 
-        @NbBundle.Messages("waitVersion=Loading Availbale Versions...")
+        @NbBundle.Messages("waitVersion=Loading Available Versions...")
         static final StringWrapper WAIT = new StringWrapper(
                 Bundle.waitVersion());
 
