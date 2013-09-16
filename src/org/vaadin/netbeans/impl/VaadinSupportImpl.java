@@ -134,6 +134,10 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
     public boolean isEnabled() {
         Boolean enabled = isEnabled.get();
         if (enabled == null) {
+            // if projectOpened() still in progress. Fix for #12555
+            if (myClasspathInfo == null) {
+                return false;
+            }
             ClassPath classPath = myClasspathInfo
                     .getClassPath(PathKind.COMPILE);
             if (classPath.findResource(VAADIN_REQUEST_FQN + ".class") != null) { // NOI18N 
