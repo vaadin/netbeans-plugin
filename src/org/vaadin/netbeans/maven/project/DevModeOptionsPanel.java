@@ -45,6 +45,14 @@ public class DevModeOptionsPanel extends javax.swing.JPanel {
     public DevModeOptionsPanel( Lookup context ) {
         initComponents();
 
+        // Fix for #12596
+        hostedWebappLbl.setVisible(false);
+        myHostedWebApp.setVisible(false);
+        portLbl.setVisible(false);
+        myHostedPort.setVisible(false);
+        myNoServer.setVisible(false);
+        separator.setVisible(false);
+
         myDebugPort.setDocument(new NumericDocument(myDebugPort, 5));
         myHostedPort.setDocument(new NumericDocument(myHostedPort, 5));
         myTimeout.setDocument(new NumericDocument(myTimeout, -1));
