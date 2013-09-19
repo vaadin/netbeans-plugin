@@ -326,8 +326,7 @@ public class VaadinProjectWizardIterator implements InstantiatingIterator {
                     return;
                 }
             }
-            configuration.addExtensibilityElement(createRunTarget(name,
-                        model));
+            configuration.addExtensibilityElement(createRunTarget(name, model));
         }
     }
 
@@ -454,17 +453,6 @@ public class VaadinProjectWizardIterator implements InstantiatingIterator {
         delegate.uninitialize(descriptor);
     }
 
-    public static List<String> getVaadinVersoins( int minVersion ) {
-        /*
-         * XXX: this is not actual method to retrieve Vaadin versions, but
-         * rather Vaadin Wenb App maven plugin versions. But they correspons to
-         * the Vaadin version at the moment. It could change in the future.
-         */
-        List<String> versions = new LinkedList<>();
-        getLatestArchetype(APPLICATION_ARTIFACT_ID, 7, versions);
-        return versions;
-    }
-
     private static WizardDescriptor.InstantiatingIterator<?> newProject(
             final String artifactId, String title )
     {
@@ -494,12 +482,14 @@ public class VaadinProjectWizardIterator implements InstantiatingIterator {
         String repository = REPOSITORY;
         String useVersion = version;
         if (isCancelled.get()) {
-            LOG.log(Level.INFO,"Latest version retrieval is interrupted, " + 
-                    "using default version: {0}", version); // NOI18N
+            LOG.log(Level.INFO, "Latest version retrieval is interrupted, "
+                    + "using default version: {0}", version); // NOI18N
         }
         else if (archetype[0] == null) {
-            LOG.log(Level.WARNING,"Latest version retrieval is not interrupted but version "
-                    + "hasn''t been dtermined, using default version: {0}", version); // NOI18N
+            LOG.log(Level.WARNING,
+                    "Latest version retrieval is not interrupted but version "
+                            + "hasn''t been dtermined, using default version: {0}",
+                    version); // NOI18N
         }
         if (!isCancelled.get() && archetype[0] != null) {
             useVersion = archetype[0].getVersion();
@@ -525,9 +515,10 @@ public class VaadinProjectWizardIterator implements InstantiatingIterator {
                 {
                     String archVersion = archetype.getVersion();
                     String version = archVersion;
-                    LOG.log(Level.FINE,"Found archetype with appropriate group id " + 
-                            "and artifactId: {0}. It''s version : {1}", 
-                            new Object[]{artifactId, archVersion});
+                    LOG.log(Level.FINE,
+                            "Found archetype with appropriate group id "
+                                    + "and artifactId: {0}. It''s version : {1}",
+                            new Object[] { artifactId, archVersion });
                     int index = archVersion.indexOf('.');
                     int majorVersion = 0;
                     try {
@@ -537,7 +528,8 @@ public class VaadinProjectWizardIterator implements InstantiatingIterator {
                         majorVersion = Integer.parseInt(version);
                     }
                     catch (NumberFormatException ignore) {
-                        LOG.log(Level.WARNING, "Unable to parse version :{0}", version);
+                        LOG.log(Level.WARNING, "Unable to parse version :{0}",
+                                version);
                     }
                     if (majorVersion >= minVersion) {
                         if (versions != null) {
@@ -551,9 +543,10 @@ public class VaadinProjectWizardIterator implements InstantiatingIterator {
                         }
                     }
                     else {
-                        LOG.log(Level.FINE, "Found archetype version {0} is skipped. "
-                                + "It''s less than default version {1}", 
-                                new Object[]{version, minVersion});
+                        LOG.log(Level.FINE,
+                                "Found archetype version {0} is skipped. "
+                                        + "It''s less than default version {1}",
+                                new Object[] { version, minVersion });
                     }
                 }
             }

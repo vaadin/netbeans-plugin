@@ -88,8 +88,7 @@ public class VaadinOptionsPanel extends JPanel {
 
             @Override
             protected List<String> doInBackground() throws Exception {
-                return VaadinProjectWizardIterator
-                        .getVaadinVersoins(VaadinProjectWizardIterator.APPLICATION_MIN_VERSION);
+                return VaadinVersions.getInstance().getVersions();
             }
 
             @Override

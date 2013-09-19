@@ -35,6 +35,7 @@
 	<classpathentry kind="lib" path="build/public-package-jars/org-openide-io.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-openide-filesystems.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-openide-loaders.jar"/>
+	<classpathentry kind="lib" path="build/public-package-jars/org-openide-modules.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-openide-nodes.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-openide-text.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-openide-util.jar"/>
