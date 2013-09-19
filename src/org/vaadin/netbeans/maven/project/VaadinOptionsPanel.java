@@ -59,7 +59,7 @@ public class VaadinOptionsPanel extends JPanel {
             public void itemStateChanged( ItemEvent e ) {
                 final StringWrapper version = (StringWrapper) myVaadinVersion
                         .getModel().getSelectedItem();
-                if (version.equals(StringWrapper.WAIT)) {
+                if (version == null || version.equals(StringWrapper.WAIT)) {
                     return;
                 }
                 ModelOperation<POMModel> operation = new VersionModificationOperation(
