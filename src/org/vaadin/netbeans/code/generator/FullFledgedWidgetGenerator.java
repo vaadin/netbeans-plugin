@@ -88,7 +88,7 @@ public class FullFledgedWidgetGenerator implements WidgetGenerator {
                 @Override
                 public void run( VaadinModel model ) {
                     gwtXml[0] = model.getGwtXml();
-                    srcPath[0] = model.getSourcePath();
+                    srcPath[0] = model.getSourcePaths().get(0);
                 }
             });
         }

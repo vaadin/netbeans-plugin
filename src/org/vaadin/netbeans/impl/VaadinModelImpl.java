@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -95,8 +96,8 @@ class VaadinModelImpl implements VaadinModel {
     }
 
     @Override
-    public String getSourcePath() {
-        return mySourcePath;
+    public List<String> getSourcePaths() {
+        return mySourcePaths;
     }
 
     void initGwtXml() {
@@ -169,14 +170,14 @@ class VaadinModelImpl implements VaadinModel {
             doReparseGwtXml();
         }
         finally {
-            if (mySourcePath == null) {
-                mySourcePath = CLIENT;
+            if (mySourcePaths == null) {
+                mySourcePaths = Collections.singletonList(CLIENT);
             }
         }
     }
 
     void doReparseGwtXml() {
-        mySourcePath = null;
+        mySourcePaths = null;
         isSuperDevModeEnabled = false;
         if (myGwtXml != null) {
             try {
@@ -211,13 +212,13 @@ class VaadinModelImpl implements VaadinModel {
                         new XmlUtils.EmptyEntityResolver());
                 Element module = document.getDocumentElement();
                 NodeList children = module.getChildNodes();
+                List<String> paths = new LinkedList<>();
                 for (int i = 0; i < children.getLength(); i++) {
                     Node item = children.item(i);
                     if (item instanceof Element
-                            && SOURCE.equals(item.getNodeName())
-                            && mySourcePath == null)
+                            && SOURCE.equals(item.getNodeName()))
                     {
-                        mySourcePath = ((Element) item).getAttribute(PATH);
+                        paths.add(((Element) item).getAttribute(PATH));
                     }
                     if (item instanceof Element
                             && XmlUtils.CONFIG_PROPERTY.equals(item
@@ -231,6 +232,9 @@ class VaadinModelImpl implements VaadinModel {
                                             .getAttribute(XmlUtils.VALUE));
                         }
                     }
+                }
+                if (!paths.isEmpty()) {
+                    mySourcePaths = paths;
                 }
             }
             catch (SAXException | IOException e) {
@@ -310,7 +314,7 @@ class VaadinModelImpl implements VaadinModel {
 
     private FileObject myGwtXml;
 
-    private String mySourcePath;
+    private List<String> mySourcePaths;
 
     private boolean isSuperDevModeEnabled;
 

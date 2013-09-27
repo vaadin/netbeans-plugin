@@ -3,6 +3,7 @@ package org.vaadin.netbeans.editor.analyzer;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
@@ -63,13 +64,13 @@ abstract class ClientClassAnalyzer implements TypeAnalyzer {
 
     @NbBundle.Messages({
             "# {0} - clientPackage",
-            "notClientPackage=Class''s package is incorrect, it must be inside client package {0}" })
+            "notClientPackage=Class''s package is incorrect, it must be inside client package ({0})" })
     protected void checkClientPackage( TypeElement type, CompilationInfo info,
             VaadinSupport support, Collection<ErrorDescription> descriptions )
     {
-        final FileObject[] clientPackage = new FileObject[1];
+        final List<FileObject> clientPackage = new LinkedList<>();
         final boolean[] hasWidgetset = new boolean[1];
-        final String[] clientPkgFqn = new String[1];
+        final List<String> clientPkgFqn = new LinkedList<>();
         try {
             support.runModelOperation(new ModelOperation() {
 
@@ -81,15 +82,15 @@ abstract class ClientClassAnalyzer implements TypeAnalyzer {
                         return;
                     }
                     try {
-                        clientPackage[0] = XmlUtils.getClientWidgetPackage(
-                                model.getGwtXml(), model.getSourcePath(), false);
-                        clientPkgFqn[0] = AbstractJavaFix
-                                .getWidgetsetFqn(gwtXml);
-                        clientPkgFqn[0] = clientPkgFqn[0].substring(0,
-                                clientPkgFqn[0].length()
-                                        - gwtXml.getNameExt().length()
-                                        + XmlUtils.GWT_XML.length())
-                                + model.getSourcePath();
+                        String fqn = AbstractJavaFix.getWidgetsetFqn(gwtXml);
+                        for (String path : model.getSourcePaths()) {
+                            clientPackage.add(XmlUtils.getClientWidgetPackage(
+                                    model.getGwtXml(), path, false));
+                            clientPkgFqn.add(fqn.substring(0, fqn.length()
+                                    - gwtXml.getNameExt().length()
+                                    + XmlUtils.GWT_XML.length())
+                                    + path);
+                        }
                     }
                     catch (IOException ignore) {
                     }
@@ -98,23 +99,33 @@ abstract class ClientClassAnalyzer implements TypeAnalyzer {
             if (!hasWidgetset[0]) {
                 // TODO : no widgetset file error
             }
-            else if (clientPackage[0] == null
-                    || !FileUtil.isParentOf(clientPackage[0],
+            else {
+                boolean isInsideClientPkg = false;
+                for (FileObject clientPkg : clientPackage) {
+                    if (clientPkg == null) {
+                        // TODO : for fix hint. Package has to be created
+                    }
+                    else if (FileUtil.isParentOf(clientPkg,
                             info.getFileObject()))
-            {
-                if (clientPackage[0] == null) {
-                    // TODO : for fix hint. Package has to be created
+                    {
+                        isInsideClientPkg = true;
+                        break;
+                    }
                 }
-                // TODO : provide a hint to move class into the client package (using refactoring)
-                List<Integer> positions = AbstractJavaFix.getElementPosition(
-                        info, type);
-                ErrorDescription description = ErrorDescriptionFactory
-                        .createErrorDescription(Severity.ERROR,
-                                Bundle.notClientPackage(clientPkgFqn[0]),
-                                Collections.<Fix> emptyList(),
-                                info.getFileObject(), positions.get(0),
-                                positions.get(1));
-                descriptions.add(description);
+
+                if (!isInsideClientPkg) {
+                    // TODO : provide a hint to move class into the client package (using refactoring)
+                    List<Integer> positions = AbstractJavaFix
+                            .getElementPosition(info, type);
+                    ErrorDescription description = ErrorDescriptionFactory
+                            .createErrorDescription(
+                                    Severity.ERROR,
+                                    Bundle.notClientPackage(getPackages(clientPkgFqn)),
+                                    Collections.<Fix> emptyList(), info
+                                            .getFileObject(), positions.get(0),
+                                    positions.get(1));
+                    descriptions.add(description);
+                }
             }
         }
         catch (IOException e) {
@@ -123,4 +134,15 @@ abstract class ClientClassAnalyzer implements TypeAnalyzer {
         }
     }
 
+    private String getPackages( List<String> fqns ) {
+        StringBuilder result = new StringBuilder();
+        for (String fqn : fqns) {
+            result.append(fqn);
+            result.append(", ");
+        }
+        if (result.length() > 0) {
+            return result.substring(0, result.length() - 2);
+        }
+        return result.toString();
+    }
 }

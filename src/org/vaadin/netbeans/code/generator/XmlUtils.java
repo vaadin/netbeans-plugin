@@ -276,7 +276,7 @@ public final class XmlUtils {
                 public void run( VaadinModel model ) {
                     if (model.getGwtXml() != null) {
                         gwtXmlCreated[0] = true;
-                        srcPath[0] = model.getSourcePath();
+                        srcPath[0] = model.getSourcePaths().get(0);
                     }
                 }
             });

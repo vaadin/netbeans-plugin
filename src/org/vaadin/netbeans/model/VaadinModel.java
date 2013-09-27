@@ -4,6 +4,7 @@
 package org.vaadin.netbeans.model;
 
 import java.util.Collection;
+import java.util.List;
 
 import org.openide.filesystems.FileObject;
 
@@ -18,6 +19,6 @@ public interface VaadinModel {
 
     boolean isSuperDevModeEnabled();
 
-    String getSourcePath();
+    List<String> getSourcePaths();
 
 }
