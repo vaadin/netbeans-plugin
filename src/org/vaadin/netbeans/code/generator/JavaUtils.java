@@ -52,7 +52,7 @@ import org.vaadin.netbeans.ui.wizard.NewWidgetWizardIterator;
  */
 public final class JavaUtils {
 
-    public static final String JAVA_SUFFIX = "java"; // NOI18N
+    public static final String JAVA_SUFFIX = ".java"; // NOI18N
 
     public static final String VAADIN_SERVLET_CONFIGURATION = "com.vaadin.annotations.VaadinServletConfiguration";//NOI18N
 

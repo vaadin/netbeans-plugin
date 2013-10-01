@@ -144,7 +144,7 @@ public class FullFledgedWidgetGenerator implements WidgetGenerator {
 
         handle.progress(Bundle.generateConnector());
         String connectorName = JavaUtils.getFreeName(clientPackage,
-                componentClassName + CONNECTOR, "java");
+                componentClassName + CONNECTOR, JavaUtils.JAVA_SUFFIX);
 
         // Generate widget
         handle.progress(Bundle.generateWidget());
