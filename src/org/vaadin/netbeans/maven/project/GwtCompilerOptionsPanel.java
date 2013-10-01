@@ -19,8 +19,6 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.JSpinner.DefaultEditor;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.xml.namespace.QName;
@@ -48,31 +46,11 @@ public class GwtCompilerOptionsPanel extends JPanel {
 
     private static final String LOCAL_WORKERS = "localWorkers";//NOI18N
 
-    private static final String PERSISTENT_UNIT_CACHEDIR = "persistentunitcachedir";//NOI18N
-
-    private static final String WEBAPP_DIRECTORY = "webappDirectory"; //NOI18N
-
     private static final String JVM_ARGS = "extraJvmArgs"; // NOI18N
-
-    private static final String COMPILE_REPORT = "compileReport"; // NOI18N
-
-    private static final String OPTIMIZATION_LEVEL = "optimizationLevel";//NOI18N
 
     private static final String LOG_LEVEL = "logLevel"; //NOI18N
 
     private static final String STYLE = "style"; //NOI18N
-
-    private static final String STRICT = "strict"; //NOI18N 
-
-    private static final String PERSISTENT_UNIT_CACHE = "persistentunitcache"; //NOI18N 
-
-    private static final String TREE_LOGGER = "treeLogger"; //NOI18N 
-
-    private static final String VALIDATE_ONLY = "validateOnly"; //NOI18N 
-
-    private static final String SKIP = "skip"; //NOI18N 
-
-    private static final String FORCE = "force"; //NOI18N 
 
     private static final String DRAFT = "draftCompile"; //NOI18N 
 
@@ -119,9 +97,6 @@ public class GwtCompilerOptionsPanel extends JPanel {
         };
 
         myJvmArgs.getDocument().addDocumentListener(documentListener);
-        myWebApp.getDocument().addDocumentListener(documentListener);
-        myPersistUnitCacheDir.getDocument().addDocumentListener(
-                documentListener);
 
         ((DefaultEditor) myThreads.getEditor()).getTextField().getDocument()
                 .addDocumentListener(documentListener);
@@ -137,26 +112,10 @@ public class GwtCompilerOptionsPanel extends JPanel {
         myStyle.addItemListener(itemListener);
         myLogLevel.addItemListener(itemListener);
 
-        ChangeListener changeListener = new ChangeListener() {
-
-            @Override
-            public void stateChanged( ChangeEvent e ) {
-                myOptimizationValue.setText(String.valueOf(myOptimization
-                        .getValue()));
-                addModification(handle, operation);
-            }
-        };
-
-        myOptimization.addChangeListener(changeListener);
-
         ActionListener actionListener = new ActionListener() {
 
             @Override
             public void actionPerformed( ActionEvent e ) {
-                if (e.getSource().equals(myPersistenceCache)) {
-                    myPersistUnitCacheDir.setEditable(myPersistenceCache
-                            .isSelected());
-                }
                 addModification(handle, operation);
             }
         };
@@ -198,263 +157,252 @@ public class GwtCompilerOptionsPanel extends JPanel {
 
         jvmArgs = new javax.swing.JLabel();
         myJvmArgs = new javax.swing.JTextField();
-        webAppDirLbl = new javax.swing.JLabel();
-        myWebApp = new javax.swing.JTextField();
-        persistentunitcachedirLbl = new javax.swing.JLabel();
-        myPersistUnitCacheDir = new javax.swing.JTextField();
         styleLbl = new javax.swing.JLabel();
         myStyle = new javax.swing.JComboBox();
-        optimizationLbl = new javax.swing.JLabel();
-        myOptimization = new javax.swing.JSlider();
-        myOptimizationValue = new javax.swing.JTextField();
         threadsLbl = new javax.swing.JLabel();
         myThreads = new ThreadsSpinner();
         logLbl = new javax.swing.JLabel();
         myLogLevel = new javax.swing.JComboBox();
-        myCompileReport = new javax.swing.JCheckBox();
         separator = new javax.swing.JSeparator();
-        myStrict = new javax.swing.JCheckBox();
         myDraft = new javax.swing.JCheckBox();
-        myForce = new javax.swing.JCheckBox();
-        mySkip = new javax.swing.JCheckBox();
-        myValidate = new javax.swing.JCheckBox();
-        myTreeLogger = new javax.swing.JCheckBox();
-        myPersistenceCache = new javax.swing.JCheckBox();
 
-        org.openide.awt.Mnemonics.setLocalizedText(jvmArgs, org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "LBL_JvmArgs")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jvmArgs,
+                org.openide.util.NbBundle.getMessage(
+                        GwtCompilerOptionsPanel.class, "LBL_JvmArgs")); // NOI18N
 
-        myJvmArgs.setToolTipText(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "TLTP_JvmArgs")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(webAppDirLbl, org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "LBL_WebApp")); // NOI18N
-
-        myWebApp.setToolTipText(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "TLTP_WebApp")); // NOI18N
-
-        persistentunitcachedirLbl.setLabelFor(myPersistUnitCacheDir);
-        org.openide.awt.Mnemonics.setLocalizedText(persistentunitcachedirLbl, org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "LBL_Persistent")); // NOI18N
-        persistentunitcachedirLbl.setToolTipText("");
-
-        myPersistUnitCacheDir.setToolTipText(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "TLTP_Persistent")); // NOI18N
+        myJvmArgs.setToolTipText(org.openide.util.NbBundle.getMessage(
+                GwtCompilerOptionsPanel.class, "TLTP_JvmArgs")); // NOI18N
 
         styleLbl.setLabelFor(myStyle);
-        org.openide.awt.Mnemonics.setLocalizedText(styleLbl, org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "LBL_Style")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(styleLbl,
+                org.openide.util.NbBundle.getMessage(
+                        GwtCompilerOptionsPanel.class, "LBL_Style")); // NOI18N
 
-        myStyle.setToolTipText(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "TLTP_Style")); // NOI18N
-
-        optimizationLbl.setLabelFor(myOptimization);
-        org.openide.awt.Mnemonics.setLocalizedText(optimizationLbl, org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "LBL_Optimization")); // NOI18N
-
-        myOptimization.setMaximum(9);
-        myOptimization.setMinimum(-1);
-        myOptimization.setToolTipText(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "TLTP_Optimization")); // NOI18N
-        myOptimization.setValue(-1);
-
-        myOptimizationValue.setEditable(false);
-        myOptimizationValue.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-        myOptimizationValue.setText(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "GwtCompilerOptionsPanel.myOptimizationValue.text")); // NOI18N
+        myStyle.setToolTipText(org.openide.util.NbBundle.getMessage(
+                GwtCompilerOptionsPanel.class, "TLTP_Style")); // NOI18N
 
         threadsLbl.setLabelFor(myThreads);
-        org.openide.awt.Mnemonics.setLocalizedText(threadsLbl, org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "LBL_Threads")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(threadsLbl,
+                org.openide.util.NbBundle.getMessage(
+                        GwtCompilerOptionsPanel.class, "LBL_Threads")); // NOI18N
 
-        myThreads.setToolTipText(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "TLTP_Threads")); // NOI18N
+        myThreads.setToolTipText(org.openide.util.NbBundle.getMessage(
+                GwtCompilerOptionsPanel.class, "TLTP_Threads")); // NOI18N
 
         logLbl.setLabelFor(myLogLevel);
-        org.openide.awt.Mnemonics.setLocalizedText(logLbl, org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "LBL_Logging")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(logLbl,
+                org.openide.util.NbBundle.getMessage(
+                        GwtCompilerOptionsPanel.class, "LBL_Logging")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(myCompileReport, org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "LBL_CompileReport")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(myStrict, org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "LBL_StrictMode")); // NOI18N
-        myStrict.setToolTipText(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "TLTP_Sctrict")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(myDraft, org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "LBL_Draft")); // NOI18N
-        myDraft.setToolTipText(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "TLTP_Draft")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(myForce, org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "LBL_Force")); // NOI18N
-        myForce.setToolTipText(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "TLTP_Force")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(mySkip, org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "LBL_Skip")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(myValidate, org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "LBL_Validate")); // NOI18N
-        myValidate.setToolTipText(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "TLTP_Validate")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(myTreeLogger, org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "LBL_TreeLogger")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(myPersistenceCache, org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "LBL_PersistenceCache")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(myDraft,
+                org.openide.util.NbBundle.getMessage(
+                        GwtCompilerOptionsPanel.class, "LBL_Draft")); // NOI18N
+        myDraft.setToolTipText(org.openide.util.NbBundle.getMessage(
+                GwtCompilerOptionsPanel.class, "TLTP_Draft")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(persistentunitcachedirLbl)
-                                    .addComponent(webAppDirLbl)
-                                    .addComponent(jvmArgs)
-                                    .addComponent(styleLbl)
-                                    .addComponent(optimizationLbl)
-                                    .addComponent(threadsLbl)
-                                    .addComponent(logLbl))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(myOptimization, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(myOptimizationValue, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addComponent(myStyle, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(myPersistUnitCacheDir)
-                                    .addComponent(myWebApp)
-                                    .addComponent(myJvmArgs, javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(myLogLevel, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(myThreads, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(0, 0, Short.MAX_VALUE))))
-                            .addComponent(separator))
-                        .addContainerGap())
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(myDraft)
-                            .addComponent(mySkip)
-                            .addComponent(myCompileReport)
-                            .addComponent(myTreeLogger))
-                        .addGap(25, 25, 25)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(myPersistenceCache)
-                            .addComponent(myStrict)
-                            .addComponent(myForce)
-                            .addComponent(myValidate))
-                        .addGap(0, 98, Short.MAX_VALUE))))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(myJvmArgs, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jvmArgs))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(webAppDirLbl)
-                    .addComponent(myWebApp, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(persistentunitcachedirLbl)
-                    .addComponent(myPersistUnitCacheDir, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(styleLbl)
-                    .addComponent(myStyle, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(optimizationLbl)
-                        .addGap(18, 18, 18)
-                        .addComponent(threadsLbl))
-                    .addComponent(myOptimizationValue, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(myOptimization, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(myThreads, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(myLogLevel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(logLbl))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(separator, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(myCompileReport)
-                    .addComponent(myStrict))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(myDraft)
-                    .addComponent(myForce))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(myValidate)
-                    .addComponent(mySkip))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(myTreeLogger)
-                    .addComponent(myPersistenceCache))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
+        layout.setHorizontalGroup(layout
+                .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(
+                        layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(
+                                        layout.createParallelGroup(
+                                                javax.swing.GroupLayout.Alignment.LEADING)
+                                                .addComponent(separator)
+                                                .addGroup(
+                                                        layout.createSequentialGroup()
+                                                                .addGroup(
+                                                                        layout.createParallelGroup(
+                                                                                javax.swing.GroupLayout.Alignment.LEADING)
+                                                                                .addComponent(
+                                                                                        jvmArgs)
+                                                                                .addComponent(
+                                                                                        styleLbl))
+                                                                .addPreferredGap(
+                                                                        javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                                .addGroup(
+                                                                        layout.createParallelGroup(
+                                                                                javax.swing.GroupLayout.Alignment.LEADING)
+                                                                                .addComponent(
+                                                                                        myStyle,
+                                                                                        0,
+                                                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                                                        Short.MAX_VALUE)
+                                                                                .addGroup(
+                                                                                        layout.createSequentialGroup()
+                                                                                                .addComponent(
+                                                                                                        myJvmArgs,
+                                                                                                        javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                                                                        399,
+                                                                                                        javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                                                                .addGap(0,
+                                                                                                        0,
+                                                                                                        Short.MAX_VALUE))))
+                                                .addGroup(
+                                                        layout.createSequentialGroup()
+                                                                .addComponent(
+                                                                        logLbl)
+                                                                .addGap(50, 50,
+                                                                        50)
+                                                                .addComponent(
+                                                                        myLogLevel,
+                                                                        0,
+                                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                                        Short.MAX_VALUE))
+                                                .addGroup(
+                                                        layout.createSequentialGroup()
+                                                                .addGroup(
+                                                                        layout.createParallelGroup(
+                                                                                javax.swing.GroupLayout.Alignment.LEADING)
+                                                                                .addComponent(
+                                                                                        myDraft)
+                                                                                .addGroup(
+                                                                                        layout.createSequentialGroup()
+                                                                                                .addComponent(
+                                                                                                        threadsLbl)
+                                                                                                .addGap(25,
+                                                                                                        25,
+                                                                                                        25)
+                                                                                                .addComponent(
+                                                                                                        myThreads,
+                                                                                                        javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                                                                        41,
+                                                                                                        javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                                                .addGap(0,
+                                                                        0,
+                                                                        Short.MAX_VALUE)))
+                                .addContainerGap()));
+        layout.setVerticalGroup(layout
+                .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(
+                        layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(
+                                        layout.createParallelGroup(
+                                                javax.swing.GroupLayout.Alignment.BASELINE)
+                                                .addComponent(
+                                                        myJvmArgs,
+                                                        javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                        javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(jvmArgs))
+                                .addPreferredGap(
+                                        javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(
+                                        layout.createParallelGroup(
+                                                javax.swing.GroupLayout.Alignment.BASELINE)
+                                                .addComponent(
+                                                        myStyle,
+                                                        javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                        javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(styleLbl))
+                                .addPreferredGap(
+                                        javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(
+                                        layout.createParallelGroup(
+                                                javax.swing.GroupLayout.Alignment.BASELINE)
+                                                .addComponent(threadsLbl)
+                                                .addComponent(
+                                                        myThreads,
+                                                        javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                        javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(
+                                        javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(
+                                        layout.createParallelGroup(
+                                                javax.swing.GroupLayout.Alignment.BASELINE)
+                                                .addComponent(
+                                                        myLogLevel,
+                                                        javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                        javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(logLbl))
+                                .addPreferredGap(
+                                        javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(separator,
+                                        javax.swing.GroupLayout.PREFERRED_SIZE,
+                                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                                        javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(
+                                        javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(myDraft)
+                                .addContainerGap(
+                                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                                        Short.MAX_VALUE)));
 
-        jvmArgs.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSN_JvmArgs")); // NOI18N
-        jvmArgs.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSD_JvmArgs")); // NOI18N
-        myJvmArgs.getAccessibleContext().setAccessibleName(jvmArgs.getAccessibleContext().getAccessibleName());
-        myJvmArgs.getAccessibleContext().setAccessibleDescription(jvmArgs.getAccessibleContext().getAccessibleDescription());
-        webAppDirLbl.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSN_WebApp")); // NOI18N
-        webAppDirLbl.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSD_WebApp")); // NOI18N
-        myWebApp.getAccessibleContext().setAccessibleName(webAppDirLbl.getAccessibleContext().getAccessibleName());
-        myWebApp.getAccessibleContext().setAccessibleDescription(webAppDirLbl.getAccessibleContext().getAccessibleDescription());
-        persistentunitcachedirLbl.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSN_Persistent")); // NOI18N
-        persistentunitcachedirLbl.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSD_Persistent")); // NOI18N
-        myPersistUnitCacheDir.getAccessibleContext().setAccessibleName(persistentunitcachedirLbl.getAccessibleContext().getAccessibleName());
-        myPersistUnitCacheDir.getAccessibleContext().setAccessibleDescription(persistentunitcachedirLbl.getAccessibleContext().getAccessibleDescription());
-        styleLbl.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSN_Style")); // NOI18N
-        styleLbl.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSD_Style")); // NOI18N
-        myStyle.getAccessibleContext().setAccessibleName(styleLbl.getAccessibleContext().getAccessibleName());
-        myStyle.getAccessibleContext().setAccessibleDescription(styleLbl.getAccessibleContext().getAccessibleDescription());
-        optimizationLbl.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSN_Optimization")); // NOI18N
-        optimizationLbl.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSD_Optimization")); // NOI18N
-        myOptimization.getAccessibleContext().setAccessibleName(optimizationLbl.getAccessibleContext().getAccessibleName());
-        myOptimization.getAccessibleContext().setAccessibleDescription(optimizationLbl.getAccessibleContext().getAccessibleDescription());
-        myOptimizationValue.getAccessibleContext().setAccessibleName(optimizationLbl.getAccessibleContext().getAccessibleName());
-        myOptimizationValue.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSD_OptimizationLevel")); // NOI18N
-        threadsLbl.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSN_CompilerThreads")); // NOI18N
-        threadsLbl.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSD_CompilerThreads")); // NOI18N
-        myThreads.getAccessibleContext().setAccessibleName(threadsLbl.getAccessibleContext().getAccessibleName());
-        myThreads.getAccessibleContext().setAccessibleDescription(threadsLbl.getAccessibleContext().getAccessibleDescription());
-        logLbl.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSN_LogLevel")); // NOI18N
-        logLbl.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSD_LogLevel")); // NOI18N
-        myLogLevel.getAccessibleContext().setAccessibleName(logLbl.getAccessibleContext().getAccessibleName());
-        myLogLevel.getAccessibleContext().setAccessibleDescription(logLbl.getAccessibleContext().getAccessibleDescription());
-        myCompileReport.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSN_CompileReport")); // NOI18N
-        myCompileReport.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSD_CompileReport")); // NOI18N
-        myStrict.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSN_Strict")); // NOI18N
-        myStrict.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSD_Strict")); // NOI18N
-        myDraft.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSN_Draft")); // NOI18N
-        myDraft.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSD_Draft")); // NOI18N
-        myForce.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSN_Force")); // NOI18N
-        myForce.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSD_Force")); // NOI18N
-        mySkip.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSN_Skip")); // NOI18N
-        mySkip.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSD_Skip")); // NOI18N
-        myValidate.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSN_Validate")); // NOI18N
-        myValidate.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSD_Validate")); // NOI18N
-        myTreeLogger.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSN_TreeLogger")); // NOI18N
-        myTreeLogger.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSD_TreeLogger")); // NOI18N
-        myPersistenceCache.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSN_PersistenceCache")); // NOI18N
-        myPersistenceCache.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSD_PersistenceCache")); // NOI18N
+        jvmArgs.getAccessibleContext().setAccessibleName(
+                org.openide.util.NbBundle.getMessage(
+                        GwtCompilerOptionsPanel.class, "ACSN_JvmArgs")); // NOI18N
+        jvmArgs.getAccessibleContext().setAccessibleDescription(
+                org.openide.util.NbBundle.getMessage(
+                        GwtCompilerOptionsPanel.class, "ACSD_JvmArgs")); // NOI18N
+        myJvmArgs.getAccessibleContext().setAccessibleName(
+                jvmArgs.getAccessibleContext().getAccessibleName());
+        myJvmArgs.getAccessibleContext().setAccessibleDescription(
+                jvmArgs.getAccessibleContext().getAccessibleDescription());
+        styleLbl.getAccessibleContext().setAccessibleName(
+                org.openide.util.NbBundle.getMessage(
+                        GwtCompilerOptionsPanel.class, "ACSN_Style")); // NOI18N
+        styleLbl.getAccessibleContext().setAccessibleDescription(
+                org.openide.util.NbBundle.getMessage(
+                        GwtCompilerOptionsPanel.class, "ACSD_Style")); // NOI18N
+        myStyle.getAccessibleContext().setAccessibleName(
+                styleLbl.getAccessibleContext().getAccessibleName());
+        myStyle.getAccessibleContext().setAccessibleDescription(
+                styleLbl.getAccessibleContext().getAccessibleDescription());
+        threadsLbl.getAccessibleContext().setAccessibleName(
+                org.openide.util.NbBundle.getMessage(
+                        GwtCompilerOptionsPanel.class, "ACSN_CompilerThreads")); // NOI18N
+        threadsLbl.getAccessibleContext().setAccessibleDescription(
+                org.openide.util.NbBundle.getMessage(
+                        GwtCompilerOptionsPanel.class, "ACSD_CompilerThreads")); // NOI18N
+        myThreads.getAccessibleContext().setAccessibleName(
+                threadsLbl.getAccessibleContext().getAccessibleName());
+        myThreads.getAccessibleContext().setAccessibleDescription(
+                threadsLbl.getAccessibleContext().getAccessibleDescription());
+        logLbl.getAccessibleContext().setAccessibleName(
+                org.openide.util.NbBundle.getMessage(
+                        GwtCompilerOptionsPanel.class, "ACSN_LogLevel")); // NOI18N
+        logLbl.getAccessibleContext().setAccessibleDescription(
+                org.openide.util.NbBundle.getMessage(
+                        GwtCompilerOptionsPanel.class, "ACSD_LogLevel")); // NOI18N
+        myLogLevel.getAccessibleContext().setAccessibleName(
+                logLbl.getAccessibleContext().getAccessibleName());
+        myLogLevel.getAccessibleContext().setAccessibleDescription(
+                logLbl.getAccessibleContext().getAccessibleDescription());
+        myDraft.getAccessibleContext().setAccessibleName(
+                org.openide.util.NbBundle.getMessage(
+                        GwtCompilerOptionsPanel.class, "ACSN_Draft")); // NOI18N
+        myDraft.getAccessibleContext().setAccessibleDescription(
+                org.openide.util.NbBundle.getMessage(
+                        GwtCompilerOptionsPanel.class, "ACSD_Draft")); // NOI18N
     }// </editor-fold>//GEN-END:initComponents
-    // Variables declaration - do not modify//GEN-BEGIN:variables
+     // Variables declaration - do not modify//GEN-BEGIN:variables
+
     private javax.swing.JLabel jvmArgs;
+
     private javax.swing.JLabel logLbl;
-    private javax.swing.JCheckBox myCompileReport;
+
     private javax.swing.JCheckBox myDraft;
-    private javax.swing.JCheckBox myForce;
+
     private javax.swing.JTextField myJvmArgs;
+
     private javax.swing.JComboBox myLogLevel;
-    private javax.swing.JSlider myOptimization;
-    private javax.swing.JTextField myOptimizationValue;
-    private javax.swing.JTextField myPersistUnitCacheDir;
-    private javax.swing.JCheckBox myPersistenceCache;
-    private javax.swing.JCheckBox mySkip;
-    private javax.swing.JCheckBox myStrict;
+
     private javax.swing.JComboBox myStyle;
+
     private javax.swing.JSpinner myThreads;
-    private javax.swing.JCheckBox myTreeLogger;
-    private javax.swing.JCheckBox myValidate;
-    private javax.swing.JTextField myWebApp;
-    private javax.swing.JLabel optimizationLbl;
-    private javax.swing.JLabel persistentunitcachedirLbl;
+
     private javax.swing.JSeparator separator;
+
     private javax.swing.JLabel styleLbl;
+
     private javax.swing.JLabel threadsLbl;
-    private javax.swing.JLabel webAppDirLbl;
+
     // End of variables declaration//GEN-END:variables
 
     private final class GwtOptionsModification implements
@@ -489,13 +437,6 @@ public class GwtCompilerOptionsPanel extends JPanel {
             }
 
             POMUtils.setTextField(JVM_ARGS, values, myJvmArgs, configuration);
-            POMUtils.setTextField(WEBAPP_DIRECTORY, values, myWebApp,
-                    configuration);
-
-            if (myPersistenceCache.isSelected()) {
-                POMUtils.setTextField(PERSISTENT_UNIT_CACHEDIR, values,
-                        myPersistUnitCacheDir, configuration);
-            }
 
             POMExtensibilityElement style = values.get(STYLE);
             JSStyle item = (JSStyle) myStyle.getSelectedItem();
@@ -510,27 +451,6 @@ public class GwtCompilerOptionsPanel extends JPanel {
                     if (!oldValue.equals(item)) {
                         style.setElementText(item.getValue());
                     }
-                }
-            }
-
-            POMExtensibilityElement optimization = values
-                    .get(OPTIMIZATION_LEVEL);
-            if (optimization == null) {
-                if (myOptimization.getValue() > -1) {
-                    configuration.addExtensibilityElement(POMUtils
-                            .createElement(model, OPTIMIZATION_LEVEL,
-                                    myOptimizationValue.getText()));
-                }
-            }
-            else {
-                if (myOptimization.getValue() > -1
-                        && !POMUtils.getValue(optimization).equals(
-                                myOptimizationValue.getText()))
-                {
-                    optimization.setElementText(myOptimizationValue.getText());
-                }
-                else {
-                    configuration.removeExtensibilityElement(optimization);
                 }
             }
 
@@ -566,7 +486,9 @@ public class GwtCompilerOptionsPanel extends JPanel {
                                             threadsValue));
                         }
                         else {
-                            if (!POMUtils.getValue(threads).equals(String.valueOf(newValue))) {
+                            if (!POMUtils.getValue(threads).equals(
+                                    String.valueOf(newValue)))
+                            {
                                 threads.setElementText(threadsValue);
                             }
                         }
@@ -576,18 +498,7 @@ public class GwtCompilerOptionsPanel extends JPanel {
             catch (NumberFormatException ignore) {
             }
 
-            POMUtils.setBooleanVaue(COMPILE_REPORT, values, myCompileReport,
-                    configuration);
-            POMUtils.setBooleanVaue(STRICT, values, myStrict, configuration);
             POMUtils.setBooleanVaue(DRAFT, values, myDraft, configuration);
-            POMUtils.setBooleanVaue(FORCE, values, myForce, configuration);
-            POMUtils.setBooleanVaue(SKIP, values, mySkip, configuration);
-            POMUtils.setBooleanVaue(VALIDATE_ONLY, values, myValidate,
-                    configuration);
-            POMUtils.setBooleanVaue(TREE_LOGGER, values, myTreeLogger,
-                    configuration);
-            POMUtils.setBooleanVaue(PERSISTENT_UNIT_CACHE, values,
-                    myPersistenceCache, configuration);
         }
 
         private void createConfiguration( Plugin plugin ) {
@@ -630,25 +541,11 @@ public class GwtCompilerOptionsPanel extends JPanel {
                     case JVM_ARGS:
                         jvmArgs = value;
                         break;
-                    case WEBAPP_DIRECTORY:
-                        webApp = value;
-                        break;
-                    case PERSISTENT_UNIT_CACHEDIR:
-                        persistentUnitDir = value;
-                        break;
                     case STYLE:
                         style = JSStyle.forString(value);
                         break;
                     case LOG_LEVEL:
                         logLevel = GwtLogLevel.forString(value);
-                        break;
-                    case OPTIMIZATION_LEVEL:
-                        try {
-                            optimization = Integer.parseInt(value);
-                        }
-                        catch (NumberFormatException e) {
-                            optimization = -1;
-                        }
                         break;
                     case LOCAL_WORKERS:
                         try {
@@ -657,29 +554,8 @@ public class GwtCompilerOptionsPanel extends JPanel {
                         catch (NumberFormatException ignore) {
                         }
                         break;
-                    case COMPILE_REPORT:
-                        compileReport = Boolean.parseBoolean(value);
-                        break;
-                    case STRICT:
-                        strict = Boolean.parseBoolean(value);
-                        break;
                     case DRAFT:
                         draft = Boolean.parseBoolean(value);
-                        break;
-                    case FORCE:
-                        force = Boolean.parseBoolean(value);
-                        break;
-                    case SKIP:
-                        skip = Boolean.parseBoolean(value);
-                        break;
-                    case VALIDATE_ONLY:
-                        validate = Boolean.parseBoolean(value);
-                        break;
-                    case TREE_LOGGER:
-                        treeLogger = Boolean.parseBoolean(value);
-                        break;
-                    case PERSISTENT_UNIT_CACHE:
-                        usePersistentUnitCache = Boolean.parseBoolean(value);
                         break;
                 }
             }
@@ -698,12 +574,8 @@ public class GwtCompilerOptionsPanel extends JPanel {
                     Collections.singletonList(this));
 
             myJvmArgs.setText(jvmArgs);
-            myWebApp.setText(webApp);
-            myPersistUnitCacheDir.setText(persistentUnitDir);
             myStyle.setSelectedItem(style);
             myLogLevel.setSelectedItem(logLevel);
-            myOptimization.setValue(optimization);
-            myOptimizationValue.setText(String.valueOf(optimization));
             if (threads == -1) {
                 ((DefaultEditor) myThreads.getEditor()).getTextField().setText(
                         "");
@@ -711,49 +583,21 @@ public class GwtCompilerOptionsPanel extends JPanel {
             else {
                 myThreads.setValue(threads);
             }
-            myCompileReport.setSelected(compileReport);
-            myStrict.setSelected(strict);
             myDraft.setSelected(draft);
-            myForce.setSelected(force);
-            mySkip.setSelected(skip);
-            myValidate.setSelected(validate);
-            myTreeLogger.setSelected(treeLogger);
-            myPersistenceCache.setSelected(usePersistentUnitCache);
-
-            myPersistUnitCacheDir.setEditable(myPersistenceCache.isSelected());
         }
 
         private final Lookup myLookup;
 
         private String jvmArgs;
 
-        private String webApp;
-
-        private String persistentUnitDir;
-
         private JSStyle style;
-
-        private int optimization = -1;
 
         private GwtLogLevel logLevel = GwtLogLevel.INFO;
 
         private int threads = -1;
 
-        private boolean compileReport;
-
-        private boolean strict;
-
         private boolean draft;
 
-        private boolean force;
-
-        private boolean skip;
-
-        private boolean validate;
-
-        private boolean treeLogger;
-
-        private boolean usePersistentUnitCache;
     }
 
     enum JSStyle {

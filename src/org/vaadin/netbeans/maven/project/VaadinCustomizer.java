@@ -38,13 +38,16 @@ public class VaadinCustomizer implements
 
     private static final String GWT_COMPILER_CATEGORY = "GwtCompiler";// NOI18N
 
+    private static final String ADVANCED_GWT_COMPILER_CATEGORY = "AdvancedGwtCompiler";// NOI18N
+
     private static final String DEV_MODE_CATEGORY = "GwtHosted";// NOI18N
 
     private static final String JETTY_CATEGORY = "Jetty";// NOI18N
 
     @NbBundle.Messages({ "vaadinCategoryName=Vaadin",
-            "gwtCategoryName=Compiler and GWT", "devModeCategoryName=Dev Mode",
-            "jettyCategoryName=Jetty" })
+            "gwtCategoryName=Compiler and GWT",
+            "advancedCategoryName=Advanced Compiler and GWT",
+            "devModeCategoryName=Dev Mode", "jettyCategoryName=Jetty" })
     @Override
     public ProjectCustomizer.Category createCategory( Lookup context ) {
         Project project = context.lookup(Project.class);
@@ -62,13 +65,16 @@ public class VaadinCustomizer implements
         }
         Category gwt = Category.create(GWT_COMPILER_CATEGORY,
                 Bundle.gwtCategoryName(), null);
+        Category advanced = Category.create(ADVANCED_GWT_COMPILER_CATEGORY,
+                Bundle.advancedCategoryName(), null);
         Category devMode = Category.create(DEV_MODE_CATEGORY,
                 Bundle.devModeCategoryName(), null);
         Category jetty = Category.create(JETTY_CATEGORY,
                 Bundle.jettyCategoryName(), null);
 
         return ProjectCustomizer.Category.create(VAADIN_CATEGORY,
-                Bundle.vaadinCategoryName(), image, gwt, devMode, jetty);
+                Bundle.vaadinCategoryName(), image, gwt, advanced, devMode,
+                jetty);
     }
 
     @Override
@@ -80,6 +86,9 @@ public class VaadinCustomizer implements
         }
         else if (category.getName().equals(GWT_COMPILER_CATEGORY)) {
             return new GwtCompilerOptionsPanel(context);
+        }
+        else if (category.getName().equals(ADVANCED_GWT_COMPILER_CATEGORY)) {
+            return new AdvancedGwtOptionsPanel(context);
         }
         else if (category.getName().equals(DEV_MODE_CATEGORY)) {
             return new DevModeOptionsPanel(context);
