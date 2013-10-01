@@ -20,12 +20,25 @@
 						<attr name="misplaced.action.allowed" boolvalue="true" />
 					</file>
 				</folder>
+				<folder name="Jetty">
+					<file name="org.vaadin.netbeans.maven.project.JettyAction.instance">
+						<attr name="misplaced.action.allowed" boolvalue="true" />
+					</file>
+				</folder>
 				
 				<folder name="org-netbeans-modules-maven">
 					<folder name="Actions">
 						<file name="Vaadin.shadow">
     						<attr name="originalFile" stringvalue="Projects/Vaadin"/>
     						<attr name="position" intvalue="1050"/>
+						</file>
+					</folder>
+				</folder>
+				<folder name="org-netbeans-modules-maven">
+					<folder name="Actions">
+						<file name="Jetty.shadow">
+    						<attr name="originalFile" stringvalue="Projects/Jetty"/>
+    						<attr name="position" intvalue="1060"/>
 						</file>
 					</folder>
 				</folder>

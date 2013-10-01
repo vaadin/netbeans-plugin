@@ -7,11 +7,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -19,12 +16,10 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
-import javax.swing.SwingUtilities;
 
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectUtils;
-import org.netbeans.modules.maven.api.Constants;
 import org.netbeans.modules.maven.api.execute.RunConfig;
 import org.netbeans.modules.maven.api.execute.RunUtils;
 import org.netbeans.modules.maven.spi.debug.MavenDebugger;
@@ -39,7 +34,6 @@ import org.openide.loaders.DataObject;
 import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
-import org.openide.util.RequestProcessor;
 import org.openide.util.actions.Presenter.Popup;
 import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.code.generator.XmlUtils;
@@ -53,20 +47,15 @@ public class VaadinAction extends AbstractAction implements Popup,
         ContextAwareAction
 {
 
-    private static final String GWT_COMPILER_SKIP = "gwt.compiler.skip";// NOI18N
+    static final String VAADIN_DEV_MODE_GOAL = "vaadin:run"; // NOI18N
 
-    private static final String VAADIN_DEV_MODE_GOAL = "vaadin:run"; // NOI18N
-
-    private static final String VAADIN_DEBUG_DEV_MODE_GOAL = "vaadin:debug"; // NOI18N
+    static final String VAADIN_DEBUG_DEV_MODE_GOAL = "vaadin:debug"; // NOI18N
 
     private static final String VAADIN_SUPER_DEV_MODE_GOAL = "vaadin:run-codeserver"; // NOI18N
 
-    private static final ExecutorService REQUEST_PROCESSOR = new RequestProcessor(
-            VaadinAction.class);
+    private static final String COMPILE = "vaadin:compile"; // NOI18N
 
-    private static final String PACKAGE_GOAL = "package"; // NOI18N
-
-    private static final String JETTY_GOAL = "jetty:run";// NOI18N
+    private static final String COMPILE_THEME = "vaadin:compile-theme"; // NOI18N
 
     private static final Logger LOG = Logger.getLogger(VaadinAction.class
             .getName());
@@ -103,14 +92,15 @@ public class VaadinAction extends AbstractAction implements Popup,
     public JMenu getPopupPresenter() {
         if (isEnabled()) {
             JMenu menu = new JMenu(Bundle.vaadin());
+
+            menu.add(createCompileItem());
+            menu.add(createCompileThemeItem());
+
+            menu.addSeparator();
+
             menu.add(createDevModeItem());
             menu.add(createDebugDevModeItem());
             menu.add(createSuperDevModeItem());
-
-            menu.addSeparator();
-            menu.add(createJettyItem());
-            menu.add(createDevModeJettyItem());
-            menu.add(createDebugJettyItem());
 
             /*
              * Maven project doesn't provide CustomizerProvider2 instance.
@@ -142,6 +132,56 @@ public class VaadinAction extends AbstractAction implements Popup,
         return FileOwnerQuery.getOwner(fObj);
     }
 
+    @NbBundle.Messages({ "compileTheme=Compile Theme", "# {0} - project name",
+            "compileThemeTask={0}: Compile Theme" })
+    private JMenuItem createCompileThemeItem() {
+        JMenuItem item = new JMenuItem(Bundle.compileTheme());
+        item.addActionListener(new AbstractActionListener() {
+
+            @Override
+            public void run() {
+                String name = ProjectUtils.getInformation(myProject)
+                        .getDisplayName();
+                RunConfig config = RunUtils.createRunConfig(
+                        FileUtil.toFile(myProject.getProjectDirectory()),
+                        myProject, Bundle.compileThemeTask(name),
+                        Collections.singletonList(COMPILE_THEME));
+                ExecutorTask task = RunUtils.executeMaven(config);
+                VaadinSupport support = myProject.getLookup().lookup(
+                        VaadinSupport.class);
+                if (support != null) {
+                    support.addAction(VaadinSupport.Action.COMPILE_THEME, task);
+                }
+            }
+        });
+        return item;
+    }
+
+    @NbBundle.Messages({ "compileWidgetset=Compile Widgetset and Theme",
+            "# {0} - project name", "compile={0}: Compile Widgetset" })
+    private JMenuItem createCompileItem() {
+        JMenuItem item = new JMenuItem(Bundle.compileWidgetset());
+        item.addActionListener(new AbstractActionListener() {
+
+            @Override
+            public void run() {
+                String name = ProjectUtils.getInformation(myProject)
+                        .getDisplayName();
+                RunConfig config = RunUtils.createRunConfig(
+                        FileUtil.toFile(myProject.getProjectDirectory()),
+                        myProject, Bundle.compile(name),
+                        Collections.singletonList(COMPILE));
+                ExecutorTask task = RunUtils.executeMaven(config);
+                VaadinSupport support = myProject.getLookup().lookup(
+                        VaadinSupport.class);
+                if (support != null) {
+                    support.addAction(VaadinSupport.Action.COMPILE, task);
+                }
+            }
+        });
+        return item;
+    }
+
     @NbBundle.Messages("vaadinProperties=Vaadin Properties")
     private JMenuItem createVaadinPropertiesItem() {
         JMenuItem item = new JMenuItem(Bundle.vaadinProperties());
@@ -156,105 +196,6 @@ public class VaadinAction extends AbstractAction implements Popup,
             }
         });
         return item;
-    }
-
-    @NbBundle.Messages({ "runJetty=Run Jetty", "# {0} - project name",
-            "runAppInJetty={0}: Jetty Web Server" })
-    private JMenuItem createJettyItem() {
-        JMenuItem item = new JMenuItem(Bundle.runJetty());
-        item.addActionListener(new AbstractActionListener() {
-
-            @Override
-            public void run() {
-                VaadinSupport support = myProject.getLookup().lookup(
-                        VaadinSupport.class);
-                if (support != null) {
-                    Collection<ExecutorTask> tasks = support
-                            .getTasks(VaadinSupport.Action.RUN_JETTY);
-                    for (ExecutorTask task : tasks) {
-                        task.stop();
-                    }
-                    tasks = support.getTasks(VaadinSupport.Action.DEBUG_JETTY);
-                    for (ExecutorTask task : tasks) {
-                        task.stop();
-                    }
-                }
-
-                List<String> goals = new ArrayList<>(2);
-                goals.add(PACKAGE_GOAL);
-                goals.add(JETTY_GOAL);
-                String name = ProjectUtils.getInformation(myProject)
-                        .getDisplayName();
-                RunConfig config = RunUtils.createRunConfig(
-                        FileUtil.toFile(myProject.getProjectDirectory()),
-                        myProject, Bundle.runAppInJetty(name), goals);
-
-                ExecutorTask task = RunUtils.executeMaven(config);
-                if (support != null) {
-                    support.addAction(VaadinSupport.Action.RUN_JETTY, task);
-                }
-            }
-        });
-        return item;
-    }
-
-    @NbBundle.Messages("runJettyDevMode=Run Jetty and Dev Mode")
-    private JMenuItem createDevModeJettyItem() {
-        JMenuItem item = new JMenuItem(Bundle.runJettyDevMode());
-        item.addActionListener(new AbstractActionListener() {
-
-            @Override
-            public void run() {
-                VaadinSupport support = myProject.getLookup().lookup(
-                        VaadinSupport.class);
-                if (support != null) {
-                    Collection<ExecutorTask> tasks = support
-                            .getTasks(VaadinSupport.Action.RUN_JETTY);
-                    for (ExecutorTask task : tasks) {
-                        task.stop();
-                    }
-                }
-                List<String> goals = new ArrayList<>(2);
-                goals.add(PACKAGE_GOAL);
-                goals.add(JETTY_GOAL);
-                String name = ProjectUtils.getInformation(myProject)
-                        .getDisplayName();
-                RunConfig config = RunUtils.createRunConfig(
-                        FileUtil.toFile(myProject.getProjectDirectory()),
-                        myProject, Bundle.runAppInJetty(name), goals);
-
-                config.setProperty(GWT_COMPILER_SKIP, Boolean.TRUE.toString());
-
-                ExecutorTask task = RunUtils.executeMaven(config);
-                boolean runDevMode = true;
-                if (support != null) {
-                    support.addAction(VaadinSupport.Action.RUN_JETTY, task);
-                    runDevMode = support
-                            .getTasks(VaadinSupport.Action.DEV_MODE).isEmpty();
-                    for (ExecutorTask debugTask : support
-                            .getTasks(VaadinSupport.Action.DEBUG_DEV_MODE))
-                    {
-                        debugTask.stop();
-                    }
-                }
-
-                if (runDevMode) {
-                    config = RunUtils.createRunConfig(
-                            FileUtil.toFile(myProject.getProjectDirectory()),
-                            myProject,
-                            Bundle.runAppInDevMode(ProjectUtils.getInformation(
-                                    myProject).getDisplayName()),
-                            Collections.singletonList(VAADIN_DEV_MODE_GOAL));
-                    task = RunUtils.executeMaven(config);
-                    if (support != null) {
-                        support.addAction(VaadinSupport.Action.DEV_MODE, task);
-                    }
-                }
-
-            }
-        });
-        return item;
-
     }
 
     @NbBundle.Messages({ "runDevMode=Run Dev Mode", "# {0} - project name",
@@ -283,7 +224,7 @@ public class VaadinAction extends AbstractAction implements Popup,
     }
 
     @NbBundle.Messages({
-            "debugDevMode=Debug Dev Mode",
+            "debugDevMode=Run Dev Mode (debug)",
             "# {0} - host",
             "# {1} - port",
             "# {2} - timeout",
@@ -403,64 +344,6 @@ public class VaadinAction extends AbstractAction implements Popup,
             }
         });
         return item;
-    }
-
-    @NbBundle.Messages({ "debugJetty=Debug Jetty", "# {0} - project name",
-            "debugAppInJetty={0}: Jetty Web Server" })
-    private JMenuItem createDebugJettyItem() {
-        JMenuItem item = new JMenuItem(Bundle.debugJetty());
-        item.addActionListener(new AbstractActionListener() {
-
-            @Override
-            public void run() {
-                VaadinSupport support = myProject.getLookup().lookup(
-                        VaadinSupport.class);
-                if (support != null) {
-                    Collection<ExecutorTask> tasks = support
-                            .getTasks(VaadinSupport.Action.RUN_JETTY);
-                    for (ExecutorTask task : tasks) {
-                        task.stop();
-                    }
-                    tasks = support.getTasks(VaadinSupport.Action.DEBUG_JETTY);
-                    for (ExecutorTask task : tasks) {
-                        task.stop();
-                    }
-                }
-
-                String name = ProjectUtils.getInformation(myProject)
-                        .getDisplayName();
-
-                List<String> goals = new ArrayList<>();
-                goals.add(PACKAGE_GOAL);
-                goals.add(JETTY_GOAL);
-
-                RunConfig config = RunUtils.createRunConfig(
-                        FileUtil.toFile(myProject.getProjectDirectory()),
-                        myProject, Bundle.debugAppInJetty(name), goals);
-                config.setProperty(Constants.ACTION_PROPERTY_JPDALISTEN,
-                        "maven");// NOI18N
-                ExecutorTask task = RunUtils.executeMaven(config);
-                if (support != null) {
-                    support.addAction(VaadinSupport.Action.DEBUG_JETTY, task);
-                }
-            }
-        });
-        return item;
-    }
-
-    static abstract class AbstractActionListener implements ActionListener,
-            Runnable
-    {
-
-        @Override
-        public void actionPerformed( ActionEvent e ) {
-            if (SwingUtilities.isEventDispatchThread()) {
-                REQUEST_PROCESSOR.execute(this);
-            }
-            else {
-                run();
-            }
-        }
     }
 
     private Project myProject;

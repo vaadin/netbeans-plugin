@@ -16,7 +16,7 @@ import org.vaadin.netbeans.model.ModelOperation;
 public interface VaadinSupport {
 
     public enum Action {
-        RUN_JETTY, DEBUG_JETTY, DEV_MODE, DEBUG_DEV_MODE, SUPER_DEV_MODE;
+        COMPILE, COMPILE_THEME, RUN_JETTY, DEBUG_JETTY, DEV_MODE, DEBUG_DEV_MODE, SUPER_DEV_MODE;
     }
 
     boolean isEnabled();
