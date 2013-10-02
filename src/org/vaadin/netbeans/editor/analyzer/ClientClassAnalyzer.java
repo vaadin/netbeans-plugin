@@ -47,8 +47,7 @@ abstract class ClientClassAnalyzer implements TypeAnalyzer {
             return;
         }
         if (isClientClass(type, info)) {
-            // TODO: this is temporary disabled as because of #12560 and 12559
-            //checkClientPackage(type, info, support, descriptions);
+            checkClientPackage(type, info, support, descriptions);
             checkClientClass(type, info, descriptions, factory, cancel);
         }
     }
