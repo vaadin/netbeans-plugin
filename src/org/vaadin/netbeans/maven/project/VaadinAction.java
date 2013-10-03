@@ -14,6 +14,7 @@ import java.util.logging.Logger;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.JButton;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 
@@ -227,11 +228,8 @@ public class VaadinAction extends AbstractAction implements Popup,
             "debugDevMode=Run Dev Mode (debug)",
             "# {0} - host",
             "# {1} - port",
-            "# {2} - timeout",
-            "debuggerNotStarter=Unable to connect to debugger on host '{0}', "
-                    + "port {1} within {2} seconds",
             "unableToAttach=Unable to attach debugger "
-                    + "to the host '{0}' and port {1}",
+                    + "to the host ''{0}'' and port {1}",
             "debugName={0}: GWT Dev Mode" })
     private JMenuItem createDebugDevModeItem() {
         JMenuItem item = new JMenuItem(Bundle.debugDevMode());
@@ -262,42 +260,70 @@ public class VaadinAction extends AbstractAction implements Popup,
                 InetSocketAddress address = DebugUtils
                         .getBindAddress(myProject);
                 int seconds = DebugUtils.getAttachDebuggerTimout(myProject);
-                boolean ready;
-                try {
-                    ready = DebugUtils.waitPort(address.getHostString(),
-                            address.getPort(), seconds * 1000, task);
-                }
-                catch (InterruptedException e) {
-                    return;
-                }
-                if (ready) {
-                    MavenDebugger debugger = myProject.getLookup().lookup(
-                            MavenDebugger.class);
+                boolean doLoop = true;
+                while (doLoop) {
+                    doLoop = false;
+                    boolean ready;
                     try {
-                        debugger.attachDebugger(null, Bundle.debugName(name),
-                                DebugUtils.DEBUG_TRANSPORT,
-                                address.getHostString(),
-                                String.valueOf(address.getPort()));
+                        ready = DebugUtils.waitPort(address.getHostString(),
+                                address.getPort(), seconds * 1000, task);
                     }
-                    catch (Exception e) {
-                        LOG.log(Level.INFO, null, e);
-                        NotifyDescriptor descriptor = new NotifyDescriptor.Message(
-                                Bundle.unableToAttach(address.getHostString(),
-                                        String.valueOf(address.getPort())),
-                                NotifyDescriptor.ERROR_MESSAGE);
-                        DialogDisplayer.getDefault().notify(descriptor);
+                    catch (InterruptedException e) {
+                        return;
                     }
-                }
-                else {
-                    NotifyDescriptor descriptor = new NotifyDescriptor.Message(
-                            Bundle.debuggerNotStarter(address.getHostString(),
-                                    String.valueOf(address.getPort()), seconds),
-                            NotifyDescriptor.ERROR_MESSAGE);
-                    DialogDisplayer.getDefault().notify(descriptor);
+                    if (ready) {
+                        MavenDebugger debugger = myProject.getLookup().lookup(
+                                MavenDebugger.class);
+                        try {
+                            debugger.attachDebugger(null,
+                                    Bundle.debugName(name),
+                                    DebugUtils.DEBUG_TRANSPORT,
+                                    address.getHostString(),
+                                    String.valueOf(address.getPort()));
+                        }
+                        catch (Exception e) {
+                            LOG.log(Level.INFO, null, e);
+                            NotifyDescriptor descriptor = new NotifyDescriptor.Message(
+                                    Bundle.unableToAttach(
+                                            address.getHostString(),
+                                            String.valueOf(address.getPort())),
+                                    NotifyDescriptor.ERROR_MESSAGE);
+                            DialogDisplayer.getDefault().notify(descriptor);
+                        }
+                    }
+                    else {
+                        if (askContinueWaiting(address, seconds)) {
+                            doLoop = true;
+                        }
+                        else {
+                            task.stop();
+                        }
+                    }
                 }
             }
+
         });
         return item;
+    }
+
+    @NbBundle.Messages({
+            "waitDebugger=Continue Waiting",
+            "stop=Stop Debug",
+            "# {0} - host",
+            "# {1} - port",
+            "# {2} - timeout",
+            "debuggerNotStarter=Unable to connect to debugger on host ''{0}'', "
+                    + "port {1} within {2} seconds" })
+    private boolean askContinueWaiting( InetSocketAddress address, int seconds )
+    {
+        NotifyDescriptor descriptor = new NotifyDescriptor.Message(
+                Bundle.debuggerNotStarter(address.getHostString(),
+                        String.valueOf(address.getPort()), seconds),
+                NotifyDescriptor.ERROR_MESSAGE);
+        JButton wait = new JButton(Bundle.waitDebugger());
+        JButton stop = new JButton(Bundle.stop());
+        descriptor.setOptions(new Object[] { wait, stop });
+        return wait.equals(DialogDisplayer.getDefault().notify(descriptor));
     }
 
     @NbBundle.Messages({ "runSuperDevMode=Run Super Dev Mode",
