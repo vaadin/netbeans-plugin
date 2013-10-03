@@ -30,10 +30,13 @@ import org.netbeans.modules.j2ee.dd.api.web.DDProvider;
 import org.netbeans.modules.j2ee.dd.api.web.Servlet;
 import org.netbeans.modules.j2ee.dd.api.web.WebApp;
 import org.netbeans.modules.web.api.webmodule.WebModule;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.cookies.EditorCookie;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataObject;
+import org.openide.util.NbBundle;
 import org.openide.xml.XMLUtil;
 import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.model.ModelOperation;
@@ -266,34 +269,6 @@ public final class XmlUtils {
         }
     }
 
-    static void waitGwtXml( final VaadinSupport support, final String[] srcPath )
-    {
-        try {
-            final boolean[] gwtXmlCreated = new boolean[1];
-            support.runModelOperation(new ModelOperation() {
-
-                @Override
-                public void run( VaadinModel model ) {
-                    if (model.getGwtXml() != null) {
-                        gwtXmlCreated[0] = true;
-                        srcPath[0] = model.getSourcePaths().get(0);
-                    }
-                }
-            });
-            if (!gwtXmlCreated[0]) {
-                try {
-                    Thread.sleep(100);
-                }
-                catch (InterruptedException ignore) {
-                }
-                waitGwtXml(support, srcPath);
-            }
-        }
-        catch (IOException e) {
-            LOG.log(Level.INFO, null, e);
-        }
-    }
-
     public static String readFile( FileObject file ) throws IOException {
         InputStream inputStream = null;
         try {
@@ -313,6 +288,57 @@ public final class XmlUtils {
                 }
             }
         }
+    }
+
+    static void waitGwtXml( final VaadinSupport support,
+            final List<String> srcPath )
+    {
+        try {
+            final boolean[] gwtXmlCreated = new boolean[1];
+            support.runModelOperation(new ModelOperation() {
+
+                @Override
+                public void run( VaadinModel model ) {
+                    if (model.getGwtXml() != null) {
+                        gwtXmlCreated[0] = true;
+                        srcPath.add(model.getSourcePaths().get(0));
+                    }
+                }
+            });
+            if (!gwtXmlCreated[0]) {
+                try {
+                    Thread.sleep(100);
+                }
+                catch (InterruptedException ignore) {
+                }
+                waitGwtXml(support, srcPath);
+            }
+        }
+        catch (IOException e) {
+            LOG.log(Level.INFO, null, e);
+        }
+    }
+
+    @NbBundle.Messages("serverSideInClient=Selected package should be used only for client side classes")
+    static boolean checkServerPackage( FileObject serverPkg,
+            List<String> srcPaths, FileObject gwtXml ) throws IOException
+    {
+        for (String srcPath : srcPaths) {
+            FileObject clientPkg = XmlUtils.getClientWidgetPackage(gwtXml,
+                    srcPath, false);
+            if (clientPkg != null) {
+                if (serverPkg.equals(clientPkg)
+                        || FileUtil.isParentOf(clientPkg, serverPkg))
+                {
+                    NotifyDescriptor descriptor = new NotifyDescriptor.Message(
+                            Bundle.serverSideInClient(),
+                            NotifyDescriptor.ERROR_MESSAGE);
+                    DialogDisplayer.getDefault().notify(descriptor);
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     private static boolean updateSuperDevModeContent( BaseDocument document,

@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -81,14 +83,14 @@ public class FullFledgedWidgetGenerator implements WidgetGenerator {
         Project project = Templates.getProject(wizard);
         VaadinSupport support = project.getLookup().lookup(VaadinSupport.class);
         final FileObject[] gwtXml = new FileObject[1];
-        final String[] srcPath = new String[1];
+        final List<String> srcPaths = new LinkedList<>();
         if (support != null) {
             support.runModelOperation(new ModelOperation() {
 
                 @Override
                 public void run( VaadinModel model ) {
                     gwtXml[0] = model.getGwtXml();
-                    srcPath[0] = model.getSourcePaths().get(0);
+                    srcPaths.addAll(model.getSourcePaths());
                 }
             });
         }
@@ -98,12 +100,17 @@ public class FullFledgedWidgetGenerator implements WidgetGenerator {
             gwtXml[0] = XmlUtils.createGwtXml(targetPackage);
             classes.add(gwtXml[0]);
             if (support != null) {
-                XmlUtils.waitGwtXml(support, srcPath);
+                XmlUtils.waitGwtXml(support, srcPaths);
             }
+        }
+        else if (!XmlUtils.checkServerPackage(targetPackage, srcPaths,
+                gwtXml[0]))
+        {
+            return Collections.emptySet();
         }
 
         FileObject clientPackage = XmlUtils.getClientWidgetPackage(gwtXml[0],
-                srcPath[0], true);
+                srcPaths.get(0), true);
 
         // Generate rpcs, shared state
         handle.progress(Bundle.generateClientRpc());

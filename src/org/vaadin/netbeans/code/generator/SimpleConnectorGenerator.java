@@ -4,8 +4,11 @@
 package org.vaadin.netbeans.code.generator;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -15,6 +18,7 @@ import org.netbeans.api.project.Project;
 import org.netbeans.spi.project.ui.templates.support.Templates;
 import org.openide.WizardDescriptor;
 import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataObject;
 import org.openide.util.NbBundle;
 import org.vaadin.netbeans.VaadinSupport;
@@ -52,14 +56,14 @@ abstract class SimpleConnectorGenerator implements WidgetGenerator {
         Project project = Templates.getProject(wizard);
         VaadinSupport support = project.getLookup().lookup(VaadinSupport.class);
         final FileObject[] gwtXml = new FileObject[1];
-        final String[] srcPath = new String[1];
+        final List<String> srcPaths = new LinkedList<>();
         if (support != null) {
             support.runModelOperation(new ModelOperation() {
 
                 @Override
                 public void run( VaadinModel model ) {
                     gwtXml[0] = model.getGwtXml();
-                    srcPath[0] = model.getSourcePaths().get(0);
+                    srcPaths.addAll(model.getSourcePaths());
                 }
             });
         }
@@ -69,11 +73,17 @@ abstract class SimpleConnectorGenerator implements WidgetGenerator {
             gwtXml[0] = XmlUtils.createGwtXml(targetPackage);
             classes.add(gwtXml[0]);
             if (support != null) {
-                XmlUtils.waitGwtXml(support, srcPath);
+                XmlUtils.waitGwtXml(support, srcPaths);
             }
         }
+        else if (!XmlUtils.checkServerPackage(targetPackage, srcPaths,
+                gwtXml[0]))
+        {
+            return Collections.emptySet();
+        }
+
         FileObject clientPackage = XmlUtils.getClientWidgetPackage(gwtXml[0],
-                srcPath[0], true);
+                srcPaths.get(0), true);
 
         if (clientPackage == null) {
             Logger.getLogger(ConnectorOnlyWidgetGenerator.class.getName())
