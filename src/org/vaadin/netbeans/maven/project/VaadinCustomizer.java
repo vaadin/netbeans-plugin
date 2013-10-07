@@ -52,7 +52,7 @@ public class VaadinCustomizer implements
     public ProjectCustomizer.Category createCategory( Lookup context ) {
         Project project = context.lookup(Project.class);
         VaadinSupport support = project.getLookup().lookup(VaadinSupport.class);
-        if (support == null || !support.isEnabled() || !support.isWeb()) {
+        if (support == null || !support.isEnabled()) {
             return null;
         }
         BufferedImage image = null;
@@ -63,26 +63,39 @@ public class VaadinCustomizer implements
         }
         catch (IOException ignore) {
         }
-        Category gwt = Category.create(GWT_COMPILER_CATEGORY,
-                Bundle.gwtCategoryName(), null);
-        Category advanced = Category.create(ADVANCED_GWT_COMPILER_CATEGORY,
-                Bundle.advancedCategoryName(), null);
-        Category devMode = Category.create(DEV_MODE_CATEGORY,
-                Bundle.devModeCategoryName(), null);
-        Category jetty = Category.create(JETTY_CATEGORY,
-                Bundle.jettyCategoryName(), null);
+        if (support.isWeb()) {
+            Category gwt = Category.create(GWT_COMPILER_CATEGORY,
+                    Bundle.gwtCategoryName(), null);
+            Category advanced = Category.create(ADVANCED_GWT_COMPILER_CATEGORY,
+                    Bundle.advancedCategoryName(), null);
+            Category devMode = Category.create(DEV_MODE_CATEGORY,
+                    Bundle.devModeCategoryName(), null);
+            Category jetty = Category.create(JETTY_CATEGORY,
+                    Bundle.jettyCategoryName(), null);
 
-        return ProjectCustomizer.Category.create(VAADIN_CATEGORY,
-                Bundle.vaadinCategoryName(), image, gwt, advanced, devMode,
-                jetty);
+            return ProjectCustomizer.Category.create(VAADIN_CATEGORY,
+                    Bundle.vaadinCategoryName(), image, gwt, advanced, devMode,
+                    jetty);
+        }
+        else {
+            return ProjectCustomizer.Category.create(VAADIN_CATEGORY,
+                    Bundle.vaadinCategoryName(), image);
+        }
     }
 
     @Override
     public JComponent createComponent( ProjectCustomizer.Category category,
             Lookup context )
     {
+        Project project = context.lookup(Project.class);
+        VaadinSupport support = project.getLookup().lookup(VaadinSupport.class);
         if (category.getName().equals(VAADIN_CATEGORY)) {
-            return new VaadinOptionsPanel(context);
+            if (support.isWeb()) {
+                return new VaadinOptionsPanel(context);
+            }
+            else {
+                return new AddOnOptionsPanel(context);
+            }
         }
         else if (category.getName().equals(GWT_COMPILER_CATEGORY)) {
             return new GwtCompilerOptionsPanel(context);

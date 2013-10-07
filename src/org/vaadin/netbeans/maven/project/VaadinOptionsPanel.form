@@ -71,6 +71,9 @@
           <Connection code="versionLbl.getAccessibleContext().getAccessibleDescription()" type="code"/>
         </Property>
       </AccessibilityProperties>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;StringWrapper&gt;"/>
+      </AuxValues>
     </Component>
   </SubComponents>
 </Form>
