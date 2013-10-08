@@ -1,7 +1,17 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates and open the template
- * in the editor.
+ * Copyright 2000-2013 Vaadin Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package org.vaadin.netbeans.refactoring;
 
@@ -476,7 +486,8 @@ class MovePanel extends JPanel implements CustomRefactoringPanel {
 
     static class ProjectNameComparator implements Comparator<Project> {
 
-        private static final Comparator<Object> COLLATOR = Collator.getInstance();
+        private static final Comparator<Object> COLLATOR = Collator
+                .getInstance();
 
         @Override
         public int compare( Project p1, Project p2 ) {
@@ -540,12 +551,10 @@ class MovePanel extends JPanel implements CustomRefactoringPanel {
             // #89393: GTK needs name to render cell renderer "natively"
             setName("ComboBox.listRenderer"); // NOI18N
 
-            
             ProjectInformation pi = ProjectUtils
                     .getInformation((Project) value);
             setText(pi.getDisplayName());
             setIcon(pi.getIcon());
- 
 
             if (isSelected) {
                 setBackground(list.getSelectionBackground());

@@ -1,9 +1,18 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates and open the template
- * in the editor.
+ * Copyright 2000-2013 Vaadin Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
-
 package org.vaadin.netbeans.maven.project;
 
 import java.awt.Component;
@@ -172,166 +181,358 @@ public class AdvancedGwtOptionsPanel extends JPanel {
         myTreeLogger = new javax.swing.JCheckBox();
 
         webAppDirLbl.setLabelFor(myWebApp);
-        org.openide.awt.Mnemonics.setLocalizedText(webAppDirLbl, org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "LBL_WebApp")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(webAppDirLbl,
+                org.openide.util.NbBundle.getMessage(
+                        AdvancedGwtOptionsPanel.class, "LBL_WebApp")); // NOI18N
 
-        myWebApp.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "TLTP_WebApp")); // NOI18N
+        myWebApp.setToolTipText(org.openide.util.NbBundle.getMessage(
+                AdvancedGwtOptionsPanel.class, "TLTP_WebApp")); // NOI18N
 
         persistentunitcachedirLbl.setLabelFor(persistentunitcachedirLbl);
-        org.openide.awt.Mnemonics.setLocalizedText(persistentunitcachedirLbl, org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "LBL_Persistent")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(persistentunitcachedirLbl,
+                org.openide.util.NbBundle.getMessage(
+                        AdvancedGwtOptionsPanel.class, "LBL_Persistent")); // NOI18N
 
-        myPersistUnitCacheDir.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "TLTP_Persistent")); // NOI18N
+        myPersistUnitCacheDir.setToolTipText(org.openide.util.NbBundle
+                .getMessage(AdvancedGwtOptionsPanel.class, "TLTP_Persistent")); // NOI18N
 
         optimizationLbl.setLabelFor(myOptimization);
-        org.openide.awt.Mnemonics.setLocalizedText(optimizationLbl, org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "LBL_Optimization")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(optimizationLbl,
+                org.openide.util.NbBundle.getMessage(
+                        AdvancedGwtOptionsPanel.class, "LBL_Optimization")); // NOI18N
 
         myOptimization.setMaximum(9);
         myOptimization.setMinimum(-1);
-        myOptimization.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "TLTP_Optimization")); // NOI18N
+        myOptimization.setToolTipText(org.openide.util.NbBundle.getMessage(
+                AdvancedGwtOptionsPanel.class, "TLTP_Optimization")); // NOI18N
         myOptimization.setValue(-1);
 
         myOptimizationValue.setEditable(false);
-        myOptimizationValue.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        myOptimizationValue
+                .setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         myOptimizationValue.setText("-1");
 
-        org.openide.awt.Mnemonics.setLocalizedText(myPersistenceCache, org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "LBL_PersistenceCache")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(myPersistenceCache,
+                org.openide.util.NbBundle.getMessage(
+                        AdvancedGwtOptionsPanel.class, "LBL_PersistenceCache")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(myStrict, org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "LBL_StrictMode")); // NOI18N
-        myStrict.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "TLTP_Sctrict")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(myStrict,
+                org.openide.util.NbBundle.getMessage(
+                        AdvancedGwtOptionsPanel.class, "LBL_StrictMode")); // NOI18N
+        myStrict.setToolTipText(org.openide.util.NbBundle.getMessage(
+                AdvancedGwtOptionsPanel.class, "TLTP_Sctrict")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(myValidate, org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "LBL_Validate")); // NOI18N
-        myValidate.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "TLTP_Validate")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(myValidate,
+                org.openide.util.NbBundle.getMessage(
+                        AdvancedGwtOptionsPanel.class, "LBL_Validate")); // NOI18N
+        myValidate.setToolTipText(org.openide.util.NbBundle.getMessage(
+                AdvancedGwtOptionsPanel.class, "TLTP_Validate")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(myForce, org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "LBL_Force")); // NOI18N
-        myForce.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "TLTP_Force")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(myForce,
+                org.openide.util.NbBundle.getMessage(
+                        AdvancedGwtOptionsPanel.class, "LBL_Force")); // NOI18N
+        myForce.setToolTipText(org.openide.util.NbBundle.getMessage(
+                AdvancedGwtOptionsPanel.class, "TLTP_Force")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(myCompileReport, org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "LBL_CompileReport")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(myCompileReport,
+                org.openide.util.NbBundle.getMessage(
+                        AdvancedGwtOptionsPanel.class, "LBL_CompileReport")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(mySkip, org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "LBL_Skip")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(mySkip,
+                org.openide.util.NbBundle.getMessage(
+                        AdvancedGwtOptionsPanel.class, "LBL_Skip")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(myTreeLogger, org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "LBL_TreeLogger")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(myTreeLogger,
+                org.openide.util.NbBundle.getMessage(
+                        AdvancedGwtOptionsPanel.class, "LBL_TreeLogger")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(myTreeLogger)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(separator)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(persistentunitcachedirLbl)
-                            .addComponent(webAppDirLbl)
-                            .addComponent(optimizationLbl))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(myWebApp)
-                            .addComponent(myPersistUnitCacheDir)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(myOptimization, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(myOptimizationValue, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(myPersistenceCache)
-                            .addComponent(myValidate)
-                            .addComponent(myCompileReport))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 108, Short.MAX_VALUE)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(mySkip)
-                            .addComponent(myForce)
-                            .addComponent(myStrict))
-                        .addGap(87, 87, 87)))
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(webAppDirLbl)
-                    .addComponent(myWebApp, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(persistentunitcachedirLbl)
-                    .addComponent(myPersistUnitCacheDir, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(14, 14, 14)
-                        .addComponent(optimizationLbl))
-                    .addGroup(layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(myOptimizationValue, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(myOptimization, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(separator, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(myPersistenceCache)
-                    .addComponent(myStrict))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(myValidate)
-                    .addComponent(myForce))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(myCompileReport)
-                    .addComponent(mySkip))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(myTreeLogger)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
+        layout.setHorizontalGroup(layout
+                .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(
+                        layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(
+                                        layout.createParallelGroup(
+                                                javax.swing.GroupLayout.Alignment.LEADING)
+                                                .addGroup(
+                                                        layout.createSequentialGroup()
+                                                                .addComponent(
+                                                                        myTreeLogger)
+                                                                .addGap(0,
+                                                                        0,
+                                                                        Short.MAX_VALUE))
+                                                .addComponent(separator)
+                                                .addGroup(
+                                                        layout.createSequentialGroup()
+                                                                .addGroup(
+                                                                        layout.createParallelGroup(
+                                                                                javax.swing.GroupLayout.Alignment.LEADING)
+                                                                                .addComponent(
+                                                                                        persistentunitcachedirLbl)
+                                                                                .addComponent(
+                                                                                        webAppDirLbl)
+                                                                                .addComponent(
+                                                                                        optimizationLbl))
+                                                                .addPreferredGap(
+                                                                        javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                                .addGroup(
+                                                                        layout.createParallelGroup(
+                                                                                javax.swing.GroupLayout.Alignment.LEADING)
+                                                                                .addComponent(
+                                                                                        myWebApp)
+                                                                                .addComponent(
+                                                                                        myPersistUnitCacheDir)
+                                                                                .addGroup(
+                                                                                        layout.createSequentialGroup()
+                                                                                                .addComponent(
+                                                                                                        myOptimization,
+                                                                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                                                                        Short.MAX_VALUE)
+                                                                                                .addPreferredGap(
+                                                                                                        javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                                                                .addComponent(
+                                                                                                        myOptimizationValue,
+                                                                                                        javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                                                                        30,
+                                                                                                        javax.swing.GroupLayout.PREFERRED_SIZE))))
+                                                .addGroup(
+                                                        javax.swing.GroupLayout.Alignment.TRAILING,
+                                                        layout.createSequentialGroup()
+                                                                .addGroup(
+                                                                        layout.createParallelGroup(
+                                                                                javax.swing.GroupLayout.Alignment.LEADING)
+                                                                                .addComponent(
+                                                                                        myPersistenceCache)
+                                                                                .addComponent(
+                                                                                        myValidate)
+                                                                                .addComponent(
+                                                                                        myCompileReport))
+                                                                .addPreferredGap(
+                                                                        javax.swing.LayoutStyle.ComponentPlacement.RELATED,
+                                                                        108,
+                                                                        Short.MAX_VALUE)
+                                                                .addGroup(
+                                                                        layout.createParallelGroup(
+                                                                                javax.swing.GroupLayout.Alignment.LEADING)
+                                                                                .addComponent(
+                                                                                        mySkip)
+                                                                                .addComponent(
+                                                                                        myForce)
+                                                                                .addComponent(
+                                                                                        myStrict))
+                                                                .addGap(87, 87,
+                                                                        87)))
+                                .addContainerGap()));
+        layout.setVerticalGroup(layout
+                .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(
+                        layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(
+                                        layout.createParallelGroup(
+                                                javax.swing.GroupLayout.Alignment.BASELINE)
+                                                .addComponent(webAppDirLbl)
+                                                .addComponent(
+                                                        myWebApp,
+                                                        javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                        javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(
+                                        javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addGroup(
+                                        layout.createParallelGroup(
+                                                javax.swing.GroupLayout.Alignment.BASELINE)
+                                                .addComponent(
+                                                        persistentunitcachedirLbl)
+                                                .addComponent(
+                                                        myPersistUnitCacheDir,
+                                                        javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                        javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGroup(
+                                        layout.createParallelGroup(
+                                                javax.swing.GroupLayout.Alignment.LEADING)
+                                                .addGroup(
+                                                        layout.createSequentialGroup()
+                                                                .addGap(14, 14,
+                                                                        14)
+                                                                .addComponent(
+                                                                        optimizationLbl))
+                                                .addGroup(
+                                                        layout.createSequentialGroup()
+                                                                .addPreferredGap(
+                                                                        javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                                .addGroup(
+                                                                        layout.createParallelGroup(
+                                                                                javax.swing.GroupLayout.Alignment.LEADING)
+                                                                                .addComponent(
+                                                                                        myOptimizationValue,
+                                                                                        javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                                                        javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                                                .addComponent(
+                                                                                        myOptimization,
+                                                                                        javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                                                        javax.swing.GroupLayout.PREFERRED_SIZE))))
+                                .addPreferredGap(
+                                        javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(separator,
+                                        javax.swing.GroupLayout.PREFERRED_SIZE,
+                                        10,
+                                        javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(
+                                        javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(
+                                        layout.createParallelGroup(
+                                                javax.swing.GroupLayout.Alignment.BASELINE)
+                                                .addComponent(
+                                                        myPersistenceCache)
+                                                .addComponent(myStrict))
+                                .addPreferredGap(
+                                        javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addGroup(
+                                        layout.createParallelGroup(
+                                                javax.swing.GroupLayout.Alignment.BASELINE)
+                                                .addComponent(myValidate)
+                                                .addComponent(myForce))
+                                .addPreferredGap(
+                                        javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addGroup(
+                                        layout.createParallelGroup(
+                                                javax.swing.GroupLayout.Alignment.BASELINE)
+                                                .addComponent(myCompileReport)
+                                                .addComponent(mySkip))
+                                .addPreferredGap(
+                                        javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(myTreeLogger)
+                                .addContainerGap(
+                                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                                        Short.MAX_VALUE)));
 
-        webAppDirLbl.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "ACSN_WebApp")); // NOI18N
-        webAppDirLbl.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "ACSD_WebApp")); // NOI18N
-        myWebApp.getAccessibleContext().setAccessibleName(webAppDirLbl.getAccessibleContext().getAccessibleName());
-        myWebApp.getAccessibleContext().setAccessibleDescription(webAppDirLbl.getAccessibleContext().getAccessibleDescription());
-        persistentunitcachedirLbl.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "ACSN_Persistent")); // NOI18N
-        persistentunitcachedirLbl.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "ACSD_Persistent")); // NOI18N
-        myPersistUnitCacheDir.getAccessibleContext().setAccessibleName(persistentunitcachedirLbl.getAccessibleContext().getAccessibleName());
-        myPersistUnitCacheDir.getAccessibleContext().setAccessibleDescription(persistentunitcachedirLbl.getAccessibleContext().getAccessibleDescription());
-        optimizationLbl.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "ACSN_Optimization")); // NOI18N
-        optimizationLbl.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "ACSD_Optimization")); // NOI18N
-        myOptimization.getAccessibleContext().setAccessibleName(optimizationLbl.getAccessibleContext().getAccessibleName());
-        myOptimization.getAccessibleContext().setAccessibleDescription(optimizationLbl.getAccessibleContext().getAccessibleDescription());
-        myOptimizationValue.getAccessibleContext().setAccessibleName(optimizationLbl.getAccessibleContext().getAccessibleName());
-        myOptimizationValue.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "ACSD_OptimizationLevel")); // NOI18N
-        myPersistenceCache.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "ACSN_PersistenceCache")); // NOI18N
-        myPersistenceCache.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "ACSD_PersistenceCache")); // NOI18N
-        myStrict.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "ACSN_Strict")); // NOI18N
-        myStrict.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "ACSD_Strict")); // NOI18N
-        myValidate.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "ACSN_Validate")); // NOI18N
-        myValidate.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "ACSD_Validate")); // NOI18N
-        myForce.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "ACSN_Force")); // NOI18N
-        myForce.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "ACSD_Force")); // NOI18N
-        myCompileReport.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "ACSN_CompileReport")); // NOI18N
-        myCompileReport.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "ACSD_CompileReport")); // NOI18N
-        mySkip.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "ACSN_Skip")); // NOI18N
-        mySkip.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "ACSD_Skip")); // NOI18N
-        myTreeLogger.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "ACSN_TreeLogger")); // NOI18N
-        myTreeLogger.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(AdvancedGwtOptionsPanel.class, "ACSD_TreeLogger")); // NOI18N
+        webAppDirLbl.getAccessibleContext().setAccessibleName(
+                org.openide.util.NbBundle.getMessage(
+                        AdvancedGwtOptionsPanel.class, "ACSN_WebApp")); // NOI18N
+        webAppDirLbl.getAccessibleContext().setAccessibleDescription(
+                org.openide.util.NbBundle.getMessage(
+                        AdvancedGwtOptionsPanel.class, "ACSD_WebApp")); // NOI18N
+        myWebApp.getAccessibleContext().setAccessibleName(
+                webAppDirLbl.getAccessibleContext().getAccessibleName());
+        myWebApp.getAccessibleContext().setAccessibleDescription(
+                webAppDirLbl.getAccessibleContext().getAccessibleDescription());
+        persistentunitcachedirLbl.getAccessibleContext().setAccessibleName(
+                org.openide.util.NbBundle.getMessage(
+                        AdvancedGwtOptionsPanel.class, "ACSN_Persistent")); // NOI18N
+        persistentunitcachedirLbl.getAccessibleContext()
+                .setAccessibleDescription(
+                        org.openide.util.NbBundle.getMessage(
+                                AdvancedGwtOptionsPanel.class,
+                                "ACSD_Persistent")); // NOI18N
+        myPersistUnitCacheDir.getAccessibleContext().setAccessibleName(
+                persistentunitcachedirLbl.getAccessibleContext()
+                        .getAccessibleName());
+        myPersistUnitCacheDir.getAccessibleContext().setAccessibleDescription(
+                persistentunitcachedirLbl.getAccessibleContext()
+                        .getAccessibleDescription());
+        optimizationLbl.getAccessibleContext().setAccessibleName(
+                org.openide.util.NbBundle.getMessage(
+                        AdvancedGwtOptionsPanel.class, "ACSN_Optimization")); // NOI18N
+        optimizationLbl.getAccessibleContext().setAccessibleDescription(
+                org.openide.util.NbBundle.getMessage(
+                        AdvancedGwtOptionsPanel.class, "ACSD_Optimization")); // NOI18N
+        myOptimization.getAccessibleContext().setAccessibleName(
+                optimizationLbl.getAccessibleContext().getAccessibleName());
+        myOptimization.getAccessibleContext().setAccessibleDescription(
+                optimizationLbl.getAccessibleContext()
+                        .getAccessibleDescription());
+        myOptimizationValue.getAccessibleContext().setAccessibleName(
+                optimizationLbl.getAccessibleContext().getAccessibleName());
+        myOptimizationValue.getAccessibleContext().setAccessibleDescription(
+                org.openide.util.NbBundle
+                        .getMessage(AdvancedGwtOptionsPanel.class,
+                                "ACSD_OptimizationLevel")); // NOI18N
+        myPersistenceCache.getAccessibleContext()
+                .setAccessibleName(
+                        org.openide.util.NbBundle.getMessage(
+                                AdvancedGwtOptionsPanel.class,
+                                "ACSN_PersistenceCache")); // NOI18N
+        myPersistenceCache.getAccessibleContext()
+                .setAccessibleDescription(
+                        org.openide.util.NbBundle.getMessage(
+                                AdvancedGwtOptionsPanel.class,
+                                "ACSD_PersistenceCache")); // NOI18N
+        myStrict.getAccessibleContext().setAccessibleName(
+                org.openide.util.NbBundle.getMessage(
+                        AdvancedGwtOptionsPanel.class, "ACSN_Strict")); // NOI18N
+        myStrict.getAccessibleContext().setAccessibleDescription(
+                org.openide.util.NbBundle.getMessage(
+                        AdvancedGwtOptionsPanel.class, "ACSD_Strict")); // NOI18N
+        myValidate.getAccessibleContext().setAccessibleName(
+                org.openide.util.NbBundle.getMessage(
+                        AdvancedGwtOptionsPanel.class, "ACSN_Validate")); // NOI18N
+        myValidate.getAccessibleContext().setAccessibleDescription(
+                org.openide.util.NbBundle.getMessage(
+                        AdvancedGwtOptionsPanel.class, "ACSD_Validate")); // NOI18N
+        myForce.getAccessibleContext().setAccessibleName(
+                org.openide.util.NbBundle.getMessage(
+                        AdvancedGwtOptionsPanel.class, "ACSN_Force")); // NOI18N
+        myForce.getAccessibleContext().setAccessibleDescription(
+                org.openide.util.NbBundle.getMessage(
+                        AdvancedGwtOptionsPanel.class, "ACSD_Force")); // NOI18N
+        myCompileReport.getAccessibleContext().setAccessibleName(
+                org.openide.util.NbBundle.getMessage(
+                        AdvancedGwtOptionsPanel.class, "ACSN_CompileReport")); // NOI18N
+        myCompileReport.getAccessibleContext().setAccessibleDescription(
+                org.openide.util.NbBundle.getMessage(
+                        AdvancedGwtOptionsPanel.class, "ACSD_CompileReport")); // NOI18N
+        mySkip.getAccessibleContext().setAccessibleName(
+                org.openide.util.NbBundle.getMessage(
+                        AdvancedGwtOptionsPanel.class, "ACSN_Skip")); // NOI18N
+        mySkip.getAccessibleContext().setAccessibleDescription(
+                org.openide.util.NbBundle.getMessage(
+                        AdvancedGwtOptionsPanel.class, "ACSD_Skip")); // NOI18N
+        myTreeLogger.getAccessibleContext().setAccessibleName(
+                org.openide.util.NbBundle.getMessage(
+                        AdvancedGwtOptionsPanel.class, "ACSN_TreeLogger")); // NOI18N
+        myTreeLogger.getAccessibleContext().setAccessibleDescription(
+                org.openide.util.NbBundle.getMessage(
+                        AdvancedGwtOptionsPanel.class, "ACSD_TreeLogger")); // NOI18N
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox myCompileReport;
+
     private javax.swing.JCheckBox myForce;
+
     private javax.swing.JSlider myOptimization;
+
     private javax.swing.JTextField myOptimizationValue;
+
     private javax.swing.JTextField myPersistUnitCacheDir;
+
     private javax.swing.JCheckBox myPersistenceCache;
+
     private javax.swing.JCheckBox mySkip;
+
     private javax.swing.JCheckBox myStrict;
+
     private javax.swing.JCheckBox myTreeLogger;
+
     private javax.swing.JCheckBox myValidate;
+
     private javax.swing.JTextField myWebApp;
+
     private javax.swing.JLabel optimizationLbl;
+
     private javax.swing.JLabel persistentunitcachedirLbl;
+
     private javax.swing.JSeparator separator;
+
     private javax.swing.JLabel webAppDirLbl;
+
     // End of variables declaration//GEN-END:variables
 
     private final class InitWorker implements Runnable,

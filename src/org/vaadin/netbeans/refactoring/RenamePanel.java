@@ -1,7 +1,17 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates and open the template
- * in the editor.
+ * Copyright 2000-2013 Vaadin Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package org.vaadin.netbeans.refactoring;
 
@@ -90,32 +100,50 @@ class RenamePanel extends JPanel implements CustomRefactoringPanel {
         myName = new javax.swing.JTextField();
 
         renameLbl.setLabelFor(myName);
-        org.openide.awt.Mnemonics.setLocalizedText(renameLbl, org.openide.util.NbBundle.getMessage(RenamePanel.class, "LBL_NewName")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(renameLbl,
+                org.openide.util.NbBundle.getMessage(RenamePanel.class,
+                        "LBL_NewName")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(renameLbl, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(myName, javax.swing.GroupLayout.DEFAULT_SIZE, 335, Short.MAX_VALUE))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                .addComponent(myName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(renameLbl))
-        );
+        layout.setHorizontalGroup(layout
+                .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(
+                        layout.createSequentialGroup()
+                                .addComponent(renameLbl,
+                                        javax.swing.GroupLayout.PREFERRED_SIZE,
+                                        67,
+                                        javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(
+                                        javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(myName,
+                                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                                        335, Short.MAX_VALUE)));
+        layout.setVerticalGroup(layout.createParallelGroup(
+                javax.swing.GroupLayout.Alignment.LEADING).addGroup(
+                layout.createParallelGroup(
+                        javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(myName,
+                                javax.swing.GroupLayout.PREFERRED_SIZE,
+                                javax.swing.GroupLayout.DEFAULT_SIZE,
+                                javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(renameLbl)));
 
-        renameLbl.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(RenamePanel.class, "ACSN_NewName")); // NOI18N
-        renameLbl.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(RenamePanel.class, "ACSD_NewName")); // NOI18N
-        myName.getAccessibleContext().setAccessibleName(renameLbl.getAccessibleContext().getAccessibleName());
-        myName.getAccessibleContext().setAccessibleDescription(renameLbl.getAccessibleContext().getAccessibleDescription());
+        renameLbl.getAccessibleContext().setAccessibleName(
+                org.openide.util.NbBundle.getMessage(RenamePanel.class,
+                        "ACSN_NewName")); // NOI18N
+        renameLbl.getAccessibleContext().setAccessibleDescription(
+                org.openide.util.NbBundle.getMessage(RenamePanel.class,
+                        "ACSD_NewName")); // NOI18N
+        myName.getAccessibleContext().setAccessibleName(
+                renameLbl.getAccessibleContext().getAccessibleName());
+        myName.getAccessibleContext().setAccessibleDescription(
+                renameLbl.getAccessibleContext().getAccessibleDescription());
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField myName;
+
     private javax.swing.JLabel renameLbl;
     // End of variables declaration//GEN-END:variables
 }
