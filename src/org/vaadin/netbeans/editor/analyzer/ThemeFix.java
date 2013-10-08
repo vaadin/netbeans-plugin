@@ -31,9 +31,11 @@ import org.openide.NotifyDescriptor;
 import org.openide.filesystems.FileObject;
 import org.openide.util.NbBundle;
 import org.vaadin.netbeans.code.generator.JavaUtils;
+import org.vaadin.netbeans.editor.analyzer.ui.ThemePanel;
 
 import com.sun.source.tree.AnnotationTree;
 import com.sun.source.tree.ClassTree;
+import org.openide.util.Mutex;
 
 /**
  * @author denis
@@ -74,8 +76,7 @@ class ThemeFix extends AbstractJavaFix {
         return Bundle.createTheme();
     }
 
-    @NbBundle.Messages({ "setThemeName=Specify a theme's name",
-            "noWebRoot=Unable to find Web document root directory" })
+    @NbBundle.Messages("noWebRoot=Unable to find Web document root directory")
     @Override
     public ChangeInfo implement() throws Exception {
         Project project = FileOwnerQuery.getOwner(getFileObject());
@@ -114,60 +115,80 @@ class ThemeFix extends AbstractJavaFix {
             DialogDisplayer.getDefault().notify(descriptor);
             return null;
         }
-        ThemePanel panel = new ThemePanel(theme);
-        DialogDescriptor descriptor = new DialogDescriptor(panel,
-                Bundle.setThemeName());
-        Object result = DialogDisplayer.getDefault().notify(descriptor);
-        if (NotifyDescriptor.OK_OPTION.equals(result)) {
-            final String themeName = panel.getThemeName();
-            if (themes == null || themes.getFileObject(themeName) == null) {
-                createTheme(webRoot, vaadin, themes, themeName);
+
+        theme = requestThemeName(theme);
+        if (theme != null) {
+            if (themes == null || themes.getFileObject(theme) == null) {
+                createTheme(webRoot, vaadin, themes, theme);
             }
-            JavaSource javaSource = JavaSource.forFileObject(getFileObject());
-            if (javaSource == null) {
-                getLogger().log(Level.WARNING,
-                        "JavaSource is null for file {0}",
-                        getFileObject().getPath());
-                return null;
-            }
-            ModificationResult task = javaSource
-                    .runModificationTask(new Task<WorkingCopy>() {
-
-                        @Override
-                        public void run( WorkingCopy copy ) throws Exception {
-                            copy.toPhase(Phase.ELEMENTS_RESOLVED);
-
-                            TypeElement clazz = myHandle.resolve(copy);
-                            if (clazz == null) {
-                                return;
-                            }
-                            ClassTree oldTree = copy.getTrees().getTree(clazz);
-                            if (oldTree == null) {
-                                return;
-                            }
-                            TreeMaker treeMaker = copy.getTreeMaker();
-                            AnnotationTree themeAnnotation = treeMaker
-                                    .Annotation(treeMaker.Type(THEME_FQN),
-                                            Collections.singletonList(treeMaker
-                                                    .Literal(themeName)));
-                            ClassTree newTree = treeMaker.Class(treeMaker
-                                    .addModifiersAnnotation(
-                                            oldTree.getModifiers(),
-                                            themeAnnotation), oldTree
-                                    .getSimpleName(), oldTree
-                                    .getTypeParameters(), oldTree
-                                    .getExtendsClause(), oldTree
-                                    .getImplementsClause(), oldTree
-                                    .getMembers());
-                            copy.rewrite(oldTree, newTree);
-                        }
-                    });
-
-            ChangeInfo changeInfo = createChangeInfo(task);
-            task.commit();
-            return changeInfo;
+            return addThemeAnnotation(theme);
         }
         return null;
+    }
+
+    private ChangeInfo addThemeAnnotation( final String theme )
+            throws IOException
+    {
+        JavaSource javaSource = JavaSource.forFileObject(getFileObject());
+        if (javaSource == null) {
+            getLogger().log(Level.WARNING, "JavaSource is null for file {0}",
+                    getFileObject().getPath());
+            return null;
+        }
+        ModificationResult task = javaSource
+                .runModificationTask(new Task<WorkingCopy>() {
+
+                    @Override
+                    public void run( WorkingCopy copy ) throws Exception {
+                        copy.toPhase(Phase.ELEMENTS_RESOLVED);
+
+                        TypeElement clazz = myHandle.resolve(copy);
+                        if (clazz == null) {
+                            return;
+                        }
+                        ClassTree oldTree = copy.getTrees().getTree(clazz);
+                        if (oldTree == null) {
+                            return;
+                        }
+                        TreeMaker treeMaker = copy.getTreeMaker();
+                        AnnotationTree themeAnnotation = treeMaker.Annotation(
+                                treeMaker.Type(THEME_FQN),
+                                Collections.singletonList(treeMaker
+                                        .Literal(theme)));
+                        ClassTree newTree = treeMaker.Class(treeMaker
+                                .addModifiersAnnotation(oldTree.getModifiers(),
+                                        themeAnnotation), oldTree
+                                .getSimpleName(), oldTree.getTypeParameters(),
+                                oldTree.getExtendsClause(), oldTree
+                                        .getImplementsClause(), oldTree
+                                        .getMembers());
+                        copy.rewrite(oldTree, newTree);
+                    }
+                });
+
+        ChangeInfo changeInfo = createChangeInfo(task);
+        task.commit();
+        return changeInfo;
+    }
+
+    @NbBundle.Messages("setThemeName=Specify a theme's name")
+    private String requestThemeName( final String theme ) {
+        return Mutex.EVENT.readAccess(new Mutex.Action<String>() {
+
+            @Override
+            public String run() {
+                ThemePanel panel = new ThemePanel(theme);
+                DialogDescriptor descriptor = new DialogDescriptor(panel,
+                        Bundle.setThemeName());
+                Object result = DialogDisplayer.getDefault().notify(descriptor);
+                if (NotifyDescriptor.OK_OPTION.equals(result)) {
+                    return panel.getThemeName();
+                }
+                else {
+                    return null;
+                }
+            }
+        });
     }
 
     private void createTheme( FileObject webRoot, FileObject vaadin,

@@ -44,9 +44,9 @@ import org.vaadin.netbeans.editor.VaadinTaskFactory;
  */
 public class RpcInterfacesAnalyzer extends AbstractJavaBeanAnalyzer {
 
-    private static final String CLIENT_RPC = "com.vaadin.shared.communication.ClientRpc"; // NOI18N
+    static final String CLIENT_RPC = "com.vaadin.shared.communication.ClientRpc"; // NOI18N
 
-    private static final String SERVER_RPC = "com.vaadin.shared.communication.ServerRpc"; // NOI18N
+    static final String SERVER_RPC = "com.vaadin.shared.communication.ServerRpc"; // NOI18N
 
     @Override
     protected boolean isClientClass( TypeElement type, CompilationInfo info ) {
@@ -320,10 +320,13 @@ public class RpcInterfacesAnalyzer extends AbstractJavaBeanAnalyzer {
         List<Integer> positions = AbstractJavaFix.getElementPosition(info,
                 method);
         ErrorDescription description = ErrorDescriptionFactory
-                .createErrorDescription(Severity.WARNING,
-                        Bundle.methodHasReturnType(),
-                        Collections.<Fix> emptyList(), info.getFileObject(),
-                        positions.get(0), positions.get(1));
+                .createErrorDescription(Severity.WARNING, Bundle
+                        .methodHasReturnType(),
+                        Collections.<Fix> singletonList(new SetVoidMethodFix(
+                                info.getFileObject(), ElementHandle
+                                        .create(method))),
+                        info.getFileObject(), positions.get(0), positions
+                                .get(1));
         descriptions.add(description);
     }
 

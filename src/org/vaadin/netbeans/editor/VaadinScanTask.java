@@ -15,6 +15,7 @@ import org.netbeans.api.java.source.CompilationInfo;
 import org.netbeans.spi.editor.hints.ErrorDescription;
 import org.vaadin.netbeans.editor.analyzer.ConnectorAnalyzer;
 import org.vaadin.netbeans.editor.analyzer.RpcInterfacesAnalyzer;
+import org.vaadin.netbeans.editor.analyzer.RpcRegistrationAnalyzer;
 import org.vaadin.netbeans.editor.analyzer.SharedStateAnalyzer;
 import org.vaadin.netbeans.editor.analyzer.ThemeAnalyzer;
 import org.vaadin.netbeans.editor.analyzer.TypeAnalyzer;
@@ -88,5 +89,6 @@ class VaadinScanTask {
         ANALYZERS.add(new SharedStateAnalyzer());
         ANALYZERS.add(new RpcInterfacesAnalyzer());
         ANALYZERS.add(new GwtClassesAnalyzer());
+        ANALYZERS.add(new RpcRegistrationAnalyzer());
     }
 }

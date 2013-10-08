@@ -137,6 +137,16 @@
                 <attr name="position" intvalue="0"/>
             </file>
             
+	    <file name="ClientRpcStub.java"  url="nbres:/org/vaadin/netbeans/resources/ClientRpcStub.template">
+                <attr name="position" intvalue="0"/>
+                <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
+            </file>
+            
+            <file name="ServerRpcStub.java"  url="nbres:/org/vaadin/netbeans/resources/ServerRpcStub.template">
+                <attr name="position" intvalue="0"/>
+                <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
+            </file>
+            
         </folder>
     </folder>
 </filesystem>
