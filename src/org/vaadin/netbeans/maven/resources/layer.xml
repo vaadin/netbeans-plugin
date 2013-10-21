@@ -2,47 +2,46 @@
 <!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
 
 <filesystem>
-	<folder name="Loaders">
+    <folder name="Loaders">
     	<folder name="text">
-        	<folder name="xml-mime">
-         	        <folder name="Actions">
-         	        		<file name="org-vaadin-netbeans-refactoring-CustomRefactoringAction.instance">
-    							<attr name="position" intvalue="1400"/>
-    							<attr name="misplaced.action.allowed" boolvalue="true"/>
-							</file>
-        		</folder>
-         	</folder>
+            <folder name="xml-mime">
+                 <folder name="Actions">
+            	     <file name="org-vaadin-netbeans-refactoring-CustomRefactoringAction.instance">
+    			<attr name="position" intvalue="1400"/>
+    			<attr name="misplaced.action.allowed" boolvalue="true"/>
+       	             </file>
+        	</folder>
+            </folder>
         </folder>
- 	</folder>
-	<folder name="Projects">
-				<folder name="Vaadin">
-					<file name="org.vaadin.netbeans.maven.project.VaadinAction.instance">
-						<attr name="misplaced.action.allowed" boolvalue="true" />
-					</file>
-				</folder>
-				<folder name="Jetty">
-					<file name="org.vaadin.netbeans.maven.project.JettyAction.instance">
-						<attr name="misplaced.action.allowed" boolvalue="true" />
-					</file>
-				</folder>
-				
-				<folder name="org-netbeans-modules-maven">
-					<folder name="Actions">
-						<file name="Vaadin.shadow">
-    						<attr name="originalFile" stringvalue="Projects/Vaadin"/>
-    						<attr name="position" intvalue="1050"/>
-						</file>
-					</folder>
-				</folder>
-				<folder name="org-netbeans-modules-maven">
-					<folder name="Actions">
-						<file name="Jetty.shadow">
-    						<attr name="originalFile" stringvalue="Projects/Jetty"/>
-    						<attr name="position" intvalue="1060"/>
-						</file>
-					</folder>
-				</folder>
+     </folder>
+     <folder name="Projects">
+	<folder name="Vaadin">
+	    <file name="org.vaadin.netbeans.maven.project.VaadinAction.instance">
+	        <attr name="misplaced.action.allowed" boolvalue="true" />
+	    </file>
 	</folder>
+        <folder name="Jetty">
+            <file name="org.vaadin.netbeans.maven.project.JettyAction.instance">
+                <attr name="misplaced.action.allowed" boolvalue="true" />
+            </file>
+        </folder>
+	<folder name="org-netbeans-modules-maven">
+	    <folder name="Actions">
+		<file name="Vaadin.shadow">
+		<attr name="originalFile" stringvalue="Projects/Vaadin"/>
+		<attr name="position" intvalue="1050"/>
+		</file>
+	    </folder>
+	</folder>
+        <folder name="org-netbeans-modules-maven">
+            <folder name="Actions">
+                <file name="Jetty.shadow">
+                    <attr name="originalFile" stringvalue="Projects/Jetty"/>
+                    <attr name="position" intvalue="1060"/>
+                </file>
+            </folder>
+        </folder>
+    </folder>
     <folder name="Templates">
         <folder name="Project">
             <folder name="Vaadin">
@@ -52,9 +51,9 @@
         </folder>
         <folder name="Vaadin">
         	<attr name="position" intvalue="620"/>
-			<attr name="SystemFileSystem.localizingBundle" stringvalue="org.vaadin.netbeans.resources.Bundle"/>
+		<attr name="SystemFileSystem.localizingBundle" stringvalue="org.vaadin.netbeans.resources.Bundle"/>
 			
-			 <file name="Component.java"  url="nbres:/org/vaadin/netbeans/resources/FullFledgedComponent.template">
+		 <file name="Component.java"  url="nbres:/org/vaadin/netbeans/resources/FullFledgedComponent.template">
                 <attr name="position" intvalue="100"/>
                 <attr name="template" boolvalue="true"/>
                 <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
@@ -88,7 +87,7 @@
                 <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
             </file>
             
-			<file name="SharedState.java"  url="nbres:/org/vaadin/netbeans/resources/SharedState.template">
+	    <file name="SharedState.java"  url="nbres:/org/vaadin/netbeans/resources/SharedState.template">
                 <attr name="position" intvalue="0"/>
                 <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
             </file>
@@ -118,7 +117,7 @@
                 <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
             </file>
 			
-			<file name="addons.scss"  url="nbres:/org/vaadin/netbeans/resources/addons.scss.template">
+	    <file name="addons.scss"  url="nbres:/org/vaadin/netbeans/resources/addons.scss.template">
                 <attr name="position" intvalue="0"/>
                 <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
             </file>
@@ -137,7 +136,7 @@
                 <attr name="position" intvalue="0"/>
             </file>
             
-	    <file name="ClientRpcStub.java"  url="nbres:/org/vaadin/netbeans/resources/ClientRpcStub.template">
+            <file name="ClientRpcStub.java"  url="nbres:/org/vaadin/netbeans/resources/ClientRpcStub.template">
                 <attr name="position" intvalue="0"/>
                 <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
             </file>
@@ -150,4 +149,3 @@
         </folder>
     </folder>
 </filesystem>
-
