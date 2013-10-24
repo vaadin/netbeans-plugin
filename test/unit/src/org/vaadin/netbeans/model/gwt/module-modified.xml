@@ -1,0 +1,15 @@
+<?xml  version='1.0' encoding='UTF-8'?>
+
+<module>
+    <inherits name="com.vaadin.DefaultWidgetSet" />
+    <source path="b">
+	<include name="incl"/>
+    </source>
+    <set-configuration-property name="devModeRedirectEnabled" value="true" />
+    <set-property name="user.agent" value="safari"/>
+    <stylesheet src="styles.css"/>
+    <inherits name="widgetset" />
+    <source path="newPath" />
+    <stylesheet src="newStylesheet"/>
+    <set-property name="newName" value="newValue"/>
+</module>

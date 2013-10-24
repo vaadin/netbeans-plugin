@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="build/classes-generated"/>
+	<classpathentry kind="src" path="test/unit/src"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-api-annotations-common.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-api-java.jar"/>
@@ -41,5 +42,6 @@
 	<classpathentry kind="lib" path="build/public-package-jars/org-openide-util.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-openide-util-lookup.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
