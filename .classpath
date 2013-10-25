@@ -27,6 +27,7 @@
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-queries.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-refactoring-api.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-refactoring-java.jar"/>
+	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-xml-retriever.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-xml-xam.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-spi-editor-hints.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-openide-dialogs.jar"/>

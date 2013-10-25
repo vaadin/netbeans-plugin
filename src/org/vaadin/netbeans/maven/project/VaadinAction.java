@@ -17,7 +17,6 @@ package org.vaadin.netbeans.maven.project;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Collections;
@@ -50,8 +49,6 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter.Popup;
 import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.code.generator.XmlUtils;
-import org.vaadin.netbeans.model.ModelOperation;
-import org.vaadin.netbeans.model.VaadinModel;
 
 /**
  * @author denis
@@ -64,7 +61,8 @@ public class VaadinAction extends AbstractAction implements Popup,
 
     static final String VAADIN_DEBUG_DEV_MODE_GOAL = "vaadin:debug"; // NOI18N
 
-    private static final String VAADIN_SUPER_DEV_MODE_GOAL = "vaadin:run-codeserver"; // NOI18N
+    private static final String VAADIN_SUPER_DEV_MODE_GOAL =
+            "vaadin:run-codeserver"; // NOI18N
 
     private static final String COMPILE = "vaadin:compile"; // NOI18N
 
@@ -83,8 +81,8 @@ public class VaadinAction extends AbstractAction implements Popup,
             setEnabled(false);
         }
         else {
-            VaadinSupport support = myProject.getLookup().lookup(
-                    VaadinSupport.class);
+            VaadinSupport support =
+                    myProject.getLookup().lookup(VaadinSupport.class);
             setEnabled(support == null ? false : support.isEnabled()
                     && support.isWeb());
         }
@@ -131,13 +129,13 @@ public class VaadinAction extends AbstractAction implements Popup,
         if (lookup == null) {
             return null;
         }
-        Collection<? extends Project> projects = lookup
-                .lookupAll(Project.class);
+        Collection<? extends Project> projects =
+                lookup.lookupAll(Project.class);
         if (!projects.isEmpty()) {
             return projects.iterator().next();
         }
-        Collection<? extends DataObject> dataObjects = lookup
-                .lookupAll(DataObject.class);
+        Collection<? extends DataObject> dataObjects =
+                lookup.lookupAll(DataObject.class);
         if (dataObjects.isEmpty()) {
             return null;
         }
@@ -153,15 +151,16 @@ public class VaadinAction extends AbstractAction implements Popup,
 
             @Override
             public void run() {
-                String name = ProjectUtils.getInformation(myProject)
-                        .getDisplayName();
-                RunConfig config = RunUtils.createRunConfig(
-                        FileUtil.toFile(myProject.getProjectDirectory()),
-                        myProject, Bundle.compileThemeTask(name),
-                        Collections.singletonList(COMPILE_THEME));
+                String name =
+                        ProjectUtils.getInformation(myProject).getDisplayName();
+                RunConfig config =
+                        RunUtils.createRunConfig(FileUtil.toFile(myProject
+                                .getProjectDirectory()), myProject, Bundle
+                                .compileThemeTask(name), Collections
+                                .singletonList(COMPILE_THEME));
                 ExecutorTask task = RunUtils.executeMaven(config);
-                VaadinSupport support = myProject.getLookup().lookup(
-                        VaadinSupport.class);
+                VaadinSupport support =
+                        myProject.getLookup().lookup(VaadinSupport.class);
                 if (support != null) {
                     support.addAction(VaadinSupport.Action.COMPILE_THEME, task);
                 }
@@ -178,15 +177,16 @@ public class VaadinAction extends AbstractAction implements Popup,
 
             @Override
             public void run() {
-                String name = ProjectUtils.getInformation(myProject)
-                        .getDisplayName();
-                RunConfig config = RunUtils.createRunConfig(
-                        FileUtil.toFile(myProject.getProjectDirectory()),
-                        myProject, Bundle.compile(name),
-                        Collections.singletonList(COMPILE));
+                String name =
+                        ProjectUtils.getInformation(myProject).getDisplayName();
+                RunConfig config =
+                        RunUtils.createRunConfig(FileUtil.toFile(myProject
+                                .getProjectDirectory()), myProject, Bundle
+                                .compile(name), Collections
+                                .singletonList(COMPILE));
                 ExecutorTask task = RunUtils.executeMaven(config);
-                VaadinSupport support = myProject.getLookup().lookup(
-                        VaadinSupport.class);
+                VaadinSupport support =
+                        myProject.getLookup().lookup(VaadinSupport.class);
                 if (support != null) {
                     support.addAction(VaadinSupport.Action.COMPILE, task);
                 }
@@ -202,8 +202,8 @@ public class VaadinAction extends AbstractAction implements Popup,
 
             @Override
             public void actionPerformed( ActionEvent e ) {
-                CustomizerProvider2 customizer = myProject.getLookup().lookup(
-                        CustomizerProvider2.class);
+                CustomizerProvider2 customizer =
+                        myProject.getLookup().lookup(CustomizerProvider2.class);
                 customizer.showCustomizer(VaadinCustomizer.VAADIN_CATEGORY,
                         null);
             }
@@ -219,15 +219,16 @@ public class VaadinAction extends AbstractAction implements Popup,
 
             @Override
             public void run() {
-                String name = ProjectUtils.getInformation(myProject)
-                        .getDisplayName();
-                RunConfig config = RunUtils.createRunConfig(
-                        FileUtil.toFile(myProject.getProjectDirectory()),
-                        myProject, Bundle.runAppInDevMode(name),
-                        Collections.singletonList(VAADIN_DEV_MODE_GOAL));
+                String name =
+                        ProjectUtils.getInformation(myProject).getDisplayName();
+                RunConfig config =
+                        RunUtils.createRunConfig(FileUtil.toFile(myProject
+                                .getProjectDirectory()), myProject, Bundle
+                                .runAppInDevMode(name), Collections
+                                .singletonList(VAADIN_DEV_MODE_GOAL));
                 ExecutorTask task = RunUtils.executeMaven(config);
-                VaadinSupport support = myProject.getLookup().lookup(
-                        VaadinSupport.class);
+                VaadinSupport support =
+                        myProject.getLookup().lookup(VaadinSupport.class);
                 if (support != null) {
                     support.addAction(VaadinSupport.Action.DEV_MODE, task);
                 }
@@ -249,43 +250,46 @@ public class VaadinAction extends AbstractAction implements Popup,
 
             @Override
             public void run() {
-                VaadinSupport support = myProject.getLookup().lookup(
-                        VaadinSupport.class);
+                VaadinSupport support =
+                        myProject.getLookup().lookup(VaadinSupport.class);
                 if (support != null) {
-                    Collection<ExecutorTask> tasks = support
-                            .getTasks(VaadinSupport.Action.DEBUG_DEV_MODE);
+                    Collection<ExecutorTask> tasks =
+                            support.getTasks(VaadinSupport.Action.DEBUG_DEV_MODE);
                     for (ExecutorTask task : tasks) {
                         task.stop();
                     }
                 }
-                String name = ProjectUtils.getInformation(myProject)
-                        .getDisplayName();
-                RunConfig config = RunUtils.createRunConfig(
-                        FileUtil.toFile(myProject.getProjectDirectory()),
-                        myProject, Bundle.runAppInDevMode(name),
-                        Collections.singletonList(VAADIN_DEBUG_DEV_MODE_GOAL));
+                String name =
+                        ProjectUtils.getInformation(myProject).getDisplayName();
+                RunConfig config =
+                        RunUtils.createRunConfig(FileUtil.toFile(myProject
+                                .getProjectDirectory()), myProject, Bundle
+                                .runAppInDevMode(name), Collections
+                                .singletonList(VAADIN_DEBUG_DEV_MODE_GOAL));
                 ExecutorTask task = RunUtils.executeMaven(config);
                 support = myProject.getLookup().lookup(VaadinSupport.class);
                 if (support != null) {
                     support.addAction(VaadinSupport.Action.DEBUG_DEV_MODE, task);
                 }
-                InetSocketAddress address = DebugUtils
-                        .getBindAddress(myProject);
+                InetSocketAddress address =
+                        DebugUtils.getBindAddress(myProject);
                 int seconds = DebugUtils.getAttachDebuggerTimout(myProject);
                 boolean doLoop = true;
                 while (doLoop) {
                     doLoop = false;
                     boolean ready;
                     try {
-                        ready = DebugUtils.waitPort(address.getHostString(),
-                                address.getPort(), seconds * 1000, task);
+                        ready =
+                                DebugUtils.waitPort(address.getHostString(),
+                                        address.getPort(), seconds * 1000, task);
                     }
                     catch (InterruptedException e) {
                         return;
                     }
                     if (ready) {
-                        MavenDebugger debugger = myProject.getLookup().lookup(
-                                MavenDebugger.class);
+                        MavenDebugger debugger =
+                                myProject.getLookup().lookup(
+                                        MavenDebugger.class);
                         try {
                             debugger.attachDebugger(null,
                                     Bundle.debugName(name),
@@ -295,11 +299,12 @@ public class VaadinAction extends AbstractAction implements Popup,
                         }
                         catch (Exception e) {
                             LOG.log(Level.INFO, null, e);
-                            NotifyDescriptor descriptor = new NotifyDescriptor.Message(
-                                    Bundle.unableToAttach(
-                                            address.getHostString(),
-                                            String.valueOf(address.getPort())),
-                                    NotifyDescriptor.ERROR_MESSAGE);
+                            NotifyDescriptor descriptor =
+                                    new NotifyDescriptor.Message(
+                                            Bundle.unableToAttach(address
+                                                    .getHostString(), String
+                                                    .valueOf(address.getPort())),
+                                            NotifyDescriptor.ERROR_MESSAGE);
                             DialogDisplayer.getDefault().notify(descriptor);
                         }
                     }
@@ -328,10 +333,11 @@ public class VaadinAction extends AbstractAction implements Popup,
                     + "port {1} within {2} seconds" })
     private boolean askContinueWaiting( InetSocketAddress address, int seconds )
     {
-        NotifyDescriptor descriptor = new NotifyDescriptor.Message(
-                Bundle.debuggerNotStarter(address.getHostString(),
+        NotifyDescriptor descriptor =
+                new NotifyDescriptor.Message(Bundle.debuggerNotStarter(
+                        address.getHostString(),
                         String.valueOf(address.getPort()), seconds),
-                NotifyDescriptor.ERROR_MESSAGE);
+                        NotifyDescriptor.ERROR_MESSAGE);
         JButton wait = new JButton(Bundle.waitDebugger());
         JButton stop = new JButton(Bundle.stop());
         descriptor.setOptions(new Object[] { wait, stop });
@@ -347,34 +353,18 @@ public class VaadinAction extends AbstractAction implements Popup,
 
             @Override
             public void run() {
-                VaadinSupport support = myProject.getLookup().lookup(
-                        VaadinSupport.class);
+                VaadinSupport support =
+                        myProject.getLookup().lookup(VaadinSupport.class);
                 if (support != null) {
-                    final FileObject[] gwtXml = new FileObject[1];
-                    try {
-                        support.runModelOperation(new ModelOperation() {
-
-                            @Override
-                            public void run( VaadinModel model ) {
-                                if (!model.isSuperDevModeEnabled()) {
-                                    gwtXml[0] = model.getGwtXml();
-                                }
-                            }
-                        });
-                    }
-                    catch (IOException e) {
-                        LOG.log(Level.INFO, null, e);
-                    }
-                    if (gwtXml[0] != null) {
-                        XmlUtils.enableSuperDevMode(gwtXml[0]);
-                    }
+                    XmlUtils.enableSuperDevMode(support);
                 }
-                String name = ProjectUtils.getInformation(myProject)
-                        .getDisplayName();
-                RunConfig config = RunUtils.createRunConfig(
-                        FileUtil.toFile(myProject.getProjectDirectory()),
-                        myProject, Bundle.runAppInSuperDevMode(name),
-                        Collections.singletonList(VAADIN_SUPER_DEV_MODE_GOAL));
+                String name =
+                        ProjectUtils.getInformation(myProject).getDisplayName();
+                RunConfig config =
+                        RunUtils.createRunConfig(FileUtil.toFile(myProject
+                                .getProjectDirectory()), myProject, Bundle
+                                .runAppInSuperDevMode(name), Collections
+                                .singletonList(VAADIN_SUPER_DEV_MODE_GOAL));
                 ExecutorTask task = RunUtils.executeMaven(config);
                 if (support != null) {
                     support.addAction(VaadinSupport.Action.SUPER_DEV_MODE, task);

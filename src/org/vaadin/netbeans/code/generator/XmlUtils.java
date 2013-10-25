@@ -17,10 +17,8 @@ package org.vaadin.netbeans.code.generator;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -28,68 +26,44 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.swing.text.BadLocationException;
-
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.queries.FileEncodingQuery;
-import org.netbeans.editor.BaseDocument;
-import org.netbeans.editor.Utilities;
-import org.netbeans.modules.editor.indent.api.Indent;
 import org.netbeans.modules.j2ee.dd.api.common.InitParam;
 import org.netbeans.modules.j2ee.dd.api.web.DDProvider;
 import org.netbeans.modules.j2ee.dd.api.web.Servlet;
 import org.netbeans.modules.j2ee.dd.api.web.WebApp;
 import org.netbeans.modules.web.api.webmodule.WebModule;
+import org.netbeans.modules.xml.xam.Model.State;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
-import org.openide.cookies.EditorCookie;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataObject;
 import org.openide.util.NbBundle;
-import org.openide.xml.XMLUtil;
 import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.model.ModelOperation;
 import org.vaadin.netbeans.model.VaadinModel;
-import org.xml.sax.Attributes;
-import org.xml.sax.EntityResolver;
-import org.xml.sax.InputSource;
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
-import org.xml.sax.ext.DefaultHandler2;
+import org.vaadin.netbeans.model.gwt.GwtModel;
+import org.vaadin.netbeans.model.gwt.Module;
+import org.vaadin.netbeans.model.gwt.SetConfigurationProperty;
 
 /**
  * @author denis
  */
 public final class XmlUtils {
 
-    private static final String COMMENT_START = "<!--";// NOI18N
-
-    private static final String COMMENT_END = "-->";// NOI18N
-
-    private static final String CLOSING_POSTFIX = "/>";// NOI18N
-
-    private static final String CLOSING_TAG_PREFIX = "</";// NOI18N
-
-    private static final String LEXICAL_HANDLER = "http://xml.org/sax/properties/lexical-handler";// NOI18N
+    private static final String SUPER_DEV_MODE = "devModeRedirectEnabled"; // NOI18N 
 
     public static final String GWT = ".gwt";// NOI18N
 
     public static final String GWT_XML = GWT + ".xml";// NOI18N
 
-    private static final String MODULE_TEMPLATE = "Templates/Vaadin/WidgetSet.gwt.xml"; // NOI18N
+    private static final String MODULE_TEMPLATE =
+            "Templates/Vaadin/WidgetSet.gwt.xml"; // NOI18N
 
     private static final String MODULE_PREFIX = "App";// NOI18N
-
-    public static final String SUPER_DEV_PROPERTY = "devModeRedirectEnabled"; // NOI18N
-
-    public static final String CONFIG_PROPERTY = "set-configuration-property"; // NOI18N
-
-    private static final String DEV_MODE_REDIRECT_TAG = "\t<set-configuration-property "
-            + "name=\"devModeRedirectEnabled\" value=\"true\" />\n";//NOI18N
 
     public static final String NAME = "name"; // NOI18N
 
@@ -120,16 +94,18 @@ public final class XmlUtils {
         if (name.endsWith(GWT_XML)) {
             name = name.substring(0, name.length() - GWT_XML.length());
         }
-        String moduleName = JavaUtils.getFreeName(folder, MODULE_PREFIX + name,
-                GWT_XML) + GWT;
+        String moduleName =
+                JavaUtils.getFreeName(folder, MODULE_PREFIX + name, GWT_XML)
+                        + GWT;
         return createGwtXml(folder, moduleName);
     }
 
     public static FileObject createGwtXml( FileObject folder, String name )
             throws IOException
     {
-        DataObject dataObject = JavaUtils.createDataObjectFromTemplate(
-                MODULE_TEMPLATE, folder, name, null);
+        DataObject dataObject =
+                JavaUtils.createDataObjectFromTemplate(MODULE_TEMPLATE, folder,
+                        name, null);
         return dataObject.getPrimaryFile();
     }
 
@@ -142,8 +118,8 @@ public final class XmlUtils {
     }
 
     public static FileObject getWebXml( Project project ) throws IOException {
-        WebModule webModule = WebModule.getWebModule(project
-                .getProjectDirectory());
+        WebModule webModule =
+                WebModule.getWebModule(project.getProjectDirectory());
         if (webModule != null) {
             return webModule.getDeploymentDescriptor();
         }
@@ -157,8 +133,8 @@ public final class XmlUtils {
             return null;
         }
         Project project = FileOwnerQuery.getOwner(gwtXml);
-        SourceGroup[] sourceGroups = JavaUtils
-                .getResourcesSourceGroups(project);
+        SourceGroup[] sourceGroups =
+                JavaUtils.getResourcesSourceGroups(project);
         FileObject srcRoot = null;
         for (SourceGroup sourceGroup : sourceGroups) {
             FileObject root = sourceGroup.getRootFolder();
@@ -211,70 +187,72 @@ public final class XmlUtils {
         return clientPkg;
     }
 
-    public static void enableSuperDevMode( final FileObject gwtXml ) {
-        try {
-            DataObject dataObject = DataObject.find(gwtXml);
-            EditorCookie cookie = dataObject.getLookup().lookup(
-                    EditorCookie.class);
-            if (cookie == null) {
-                return;
+    public static SetConfigurationProperty getSuperDevProperty( GwtModel model )
+    {
+        if (model.getModule() == null) {
+            return null;
+        }
+        List<SetConfigurationProperty> properties =
+                model.getModule().getChildren(SetConfigurationProperty.class);
+        SetConfigurationProperty lastProperty = null;
+        for (SetConfigurationProperty property : properties) {
+            String name = property.getName();
+            if (SUPER_DEV_MODE.equals(name)) {
+                lastProperty = property;
             }
-            final BaseDocument document = (BaseDocument) cookie.openDocument();
-            document.runAtomic(new Runnable() {
+        }
+        return lastProperty;
+    }
+
+    public static void enableSuperDevMode( VaadinSupport support ) {
+        try {
+            support.runModelOperation(new ModelOperation() {
 
                 @Override
-                public void run() {
+                public void run( VaadinModel model ) {
+                    GwtModel gwtModel = model.getGwtModel();
+                    if (gwtModel == null) {
+                        return;
+                    }
                     try {
-                        String content = document.getText(0,
-                                document.getLength());
-                        DefaultHandlerImpl handler = parseGwtXml(content);
-
-                        if (handler.getRootTag() == null || handler.isEnabled())
+                        gwtModel.sync();
+                    }
+                    catch (IOException e) {
+                        LOG.log(Level.INFO, null, e);
+                    }
+                    try {
+                        gwtModel.startTransaction();
+                        Module module = gwtModel.getModule();
+                        if (gwtModel.getState().equals(State.VALID)
+                                && module != null)
                         {
-                            return;
-                        }
-
-                        boolean updated = false;
-                        if (handler.getLine() != -1) {
-                            updated = updateSuperDevModeContent(document,
-                                    handler);
-                        }
-                        else {
-                            updated = createSuperDevModeContent(document,
-                                    handler);
-                        }
-
-                        if (!updated) {
-                            int index = document.getText(0,
-                                    document.getLength()).lastIndexOf(
-                                    CLOSING_TAG_PREFIX + handler.getRootTag());
-                            if (index == -1) {
-                                return;
+                            SetConfigurationProperty property =
+                                    XmlUtils.getSuperDevProperty(gwtModel);
+                            if (property == null) {
+                                property =
+                                        gwtModel.getFactory()
+                                                .createSetConfigurationProperty();
+                                property.setName(SUPER_DEV_MODE);
+                                property.setValue(Boolean.TRUE.toString()
+                                        .toLowerCase());
+                                module.addComponent(property);
                             }
-
-                            document.insertString(index, DEV_MODE_REDIRECT_TAG,
-                                    null);
-                            Indent indent = Indent.get(document);
-                            indent.lock();
-                            try {
-                                indent.reindent(index, index
-                                        + DEV_MODE_REDIRECT_TAG.length());
-                            }
-                            finally {
-                                indent.unlock();
+                            else {
+                                String value = property.getValue();
+                                String tru =
+                                        Boolean.TRUE.toString().toLowerCase();
+                                if (!tru.equals(value)) {
+                                    property.setValue(tru);
+                                }
                             }
                         }
                     }
-                    catch (BadLocationException | SAXException | IOException e)
-                    {
-                        LOG.log(Level.INFO, null, e);
+
+                    finally {
+                        gwtModel.endTransaction();
                     }
                 }
             });
-            cookie.saveDocument();
-        }
-        catch (FileNotFoundException e) {
-            LOG.log(Level.INFO, null, e);
         }
         catch (IOException e) {
             LOG.log(Level.INFO, null, e);
@@ -336,15 +314,16 @@ public final class XmlUtils {
             List<String> srcPaths, FileObject gwtXml ) throws IOException
     {
         for (String srcPath : srcPaths) {
-            FileObject clientPkg = XmlUtils.getClientWidgetPackage(gwtXml,
-                    srcPath, false);
+            FileObject clientPkg =
+                    XmlUtils.getClientWidgetPackage(gwtXml, srcPath, false);
             if (clientPkg != null) {
                 if (serverPkg.equals(clientPkg)
                         || FileUtil.isParentOf(clientPkg, serverPkg))
                 {
-                    NotifyDescriptor descriptor = new NotifyDescriptor.Message(
-                            Bundle.serverSideInClient(),
-                            NotifyDescriptor.ERROR_MESSAGE);
+                    NotifyDescriptor descriptor =
+                            new NotifyDescriptor.Message(
+                                    Bundle.serverSideInClient(),
+                                    NotifyDescriptor.ERROR_MESSAGE);
                     DialogDisplayer.getDefault().notify(descriptor);
                     return false;
                 }
@@ -353,92 +332,12 @@ public final class XmlUtils {
         return true;
     }
 
-    private static boolean updateSuperDevModeContent( BaseDocument document,
-            DefaultHandlerImpl handler ) throws BadLocationException
-    {
-        int offset = Utilities.getRowStartFromLineOffset(document,
-                handler.getLine() - 1)
-                + handler.getColumn();
-
-        String tag = document.getText(0, offset);
-        int index = tag.lastIndexOf('<' + CONFIG_PROPERTY);
-        if (index == -1) {
-            return false;
-        }
-        document.remove(index, offset - index);
-        String newTag = DEV_MODE_REDIRECT_TAG.trim();
-        document.insertString(index, tag, null);
-        Indent indent = Indent.get(document);
-        indent.lock();
-        try {
-            indent.reindent(index, index + newTag.length());
-        }
-        finally {
-            indent.unlock();
-        }
-        return true;
-    }
-
-    private static boolean createSuperDevModeContent( BaseDocument document,
-            DefaultHandlerImpl handler ) throws BadLocationException
-    {
-        if (handler.getComment() == null) {
-            return false;
-        }
-        String text = document.getText(0, document.getLength());
-        int index = text.indexOf(handler.getComment());
-        if (index == -1) {
-            return false;
-        }
-        else {
-            int afterComment = text.indexOf(COMMENT_END, index);
-            if (afterComment == -1) {
-                return false;
-            }
-            else {
-                String tag = text.substring(0, index);
-                index = tag.lastIndexOf(COMMENT_START);
-                if (index == -1) {
-                    return false;
-                }
-                else {
-                    document.remove(index, afterComment + COMMENT_END.length()
-                            - index);
-                    document.insertString(index, handler.getComment(), null);
-                    Indent indent = Indent.get(document);
-                    indent.lock();
-                    try {
-                        indent.reindent(index, index
-                                + handler.getComment().length());
-                    }
-                    finally {
-                        indent.unlock();
-                    }
-                }
-            }
-        }
-        return true;
-    }
-
-    private static DefaultHandlerImpl parseGwtXml( String xmlContent )
-            throws IOException, SAXException
-    {
-        DefaultHandlerImpl handler = new DefaultHandlerImpl();
-
-        XMLReader reader = XMLUtil.createXMLReader();
-        reader.setProperty(LEXICAL_HANDLER, handler);
-        reader.setContentHandler(handler);
-        reader.setEntityResolver(new EmptyEntityResolver());
-
-        reader.parse(new InputSource(new StringReader(xmlContent)));
-        return handler;
-    }
-
     private static String removeTrailingName( String path, FileObject fileObject )
     {
         if (path.indexOf(fileObject.getNameExt()) > 0) {
-            String relativePath = path.substring(0, path.length()
-                    - fileObject.getNameExt().length());
+            String relativePath =
+                    path.substring(0, path.length()
+                            - fileObject.getNameExt().length());
             if (relativePath.endsWith(File.separator)) {
                 return relativePath.substring(0, relativePath.length() - 1);
             }
@@ -495,101 +394,6 @@ public final class XmlUtils {
             }
         }
         return result;
-    }
-
-    private static final class DefaultHandlerImpl extends DefaultHandler2 {
-
-        @Override
-        public void setDocumentLocator( Locator locator ) {
-            myLocator = locator;
-        }
-
-        @Override
-        public void startElement( String uri, String localName, String qName,
-                Attributes attributes ) throws SAXException
-        {
-            if (root == null) {
-                root = qName;
-            }
-
-            if (CONFIG_PROPERTY.equals(qName) && myLine == -1) {
-                if (SUPER_DEV_PROPERTY.equals(attributes.getValue(NAME))
-                        && myLine == -1)
-                {
-                    if (Boolean.FALSE.toString().equals(
-                            attributes.getValue(VALUE)))
-                    {
-                        myLine = myLocator.getLineNumber();
-                        myColumn = myLocator.getColumnNumber();
-                    }
-                    else {
-                        isEnabled = true;
-                    }
-                }
-            }
-        }
-
-        @Override
-        public void comment( char[] chars, int start, int length )
-                throws SAXException
-        {
-            if (superDevModeComment != null) {
-                return;
-            }
-            StringBuilder builder = new StringBuilder();
-            for (int i = start; i < length; i++) {
-                builder.append(chars[i]);
-            }
-            String comment = builder.toString().trim();
-            if (comment.contains(SUPER_DEV_PROPERTY)
-                    && comment.startsWith('<' + CONFIG_PROPERTY)
-                    && comment.endsWith(CLOSING_POSTFIX))
-            {
-                superDevModeComment = comment;
-            }
-        }
-
-        String getRootTag() {
-            return root;
-        }
-
-        String getComment() {
-            return superDevModeComment;
-        }
-
-        int getLine() {
-            return myLine;
-        }
-
-        int getColumn() {
-            return myColumn;
-        }
-
-        boolean isEnabled() {
-            return isEnabled;
-        }
-
-        private String root;
-
-        private String superDevModeComment;
-
-        private Locator myLocator;
-
-        private int myLine = -1;
-
-        private int myColumn;
-
-        private boolean isEnabled;
-    }
-
-    public static class EmptyEntityResolver implements EntityResolver {
-
-        @Override
-        public InputSource resolveEntity( String publicID, String systemID )
-                throws SAXException
-        {
-            return new InputSource(new StringReader(""));
-        }
     }
 
 }

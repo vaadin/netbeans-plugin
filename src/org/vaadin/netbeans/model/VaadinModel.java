@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.openide.filesystems.FileObject;
+import org.vaadin.netbeans.model.gwt.GwtModel;
 
 /**
  * @author denis
@@ -29,7 +30,7 @@ public interface VaadinModel {
 
     FileObject getGwtXml();
 
-    boolean isSuperDevModeEnabled();
+    GwtModel getGwtModel();
 
     List<String> getSourcePaths();
 

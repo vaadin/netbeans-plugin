@@ -16,14 +16,12 @@
 package org.vaadin.netbeans.impl;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,40 +29,32 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.lang.model.element.TypeElement;
-import javax.swing.text.BadLocationException;
 
 import org.netbeans.api.java.source.ElementHandle;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.SourceGroup;
-import org.netbeans.editor.BaseDocument;
 import org.netbeans.modules.j2ee.dd.api.common.InitParam;
 import org.netbeans.modules.j2ee.dd.api.web.Servlet;
 import org.netbeans.modules.j2ee.dd.api.web.WebApp;
-import org.openide.cookies.EditorCookie;
+import org.netbeans.modules.xml.retriever.catalog.Utilities;
+import org.netbeans.modules.xml.xam.ModelSource;
+import org.netbeans.modules.xml.xam.locator.CatalogModelException;
 import org.openide.filesystems.FileObject;
-import org.openide.loaders.DataObject;
-import org.openide.xml.XMLUtil;
 import org.vaadin.netbeans.code.generator.JavaUtils;
 import org.vaadin.netbeans.code.generator.XmlUtils;
 import org.vaadin.netbeans.model.ServletConfiguration;
 import org.vaadin.netbeans.model.VaadinModel;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
+import org.vaadin.netbeans.model.gwt.GwtModel;
+import org.vaadin.netbeans.model.gwt.GwtModelFactory;
+import org.vaadin.netbeans.model.gwt.Module;
+import org.vaadin.netbeans.model.gwt.Source;
 
 /**
  * @author denis
  */
 class VaadinModelImpl implements VaadinModel {
 
-    private static final String SOURCE = "source";//NOI18N
-
     private static final String CLIENT = "client"; // NOI18N
-
-    private static final String PATH = "path"; // NOI18N
 
     private static final Logger LOG = Logger.getLogger(VaadinModelImpl.class
             .getName());
@@ -95,33 +85,55 @@ class VaadinModelImpl implements VaadinModel {
     }
 
     @Override
-    public FileObject getGwtXml() {
-        if (myGwtXml == null) {
-            return XmlUtils.findGwtXml(myProject);
-        }
-        return myGwtXml;
-    }
-
-    @Override
-    public boolean isSuperDevModeEnabled() {
-        return isSuperDevModeEnabled;
-    }
-
-    @Override
     public List<String> getSourcePaths() {
-        return mySourcePaths;
+        if (myGwtModel == null) {
+            return null;
+        }
+        else {
+            Module module = myGwtModel.getModule();
+            if (module == null) {
+                return Collections.singletonList(CLIENT);
+            }
+            List<Source> sources = module.getChildren(Source.class);
+            if (sources.isEmpty()) {
+                return Collections.singletonList(CLIENT);
+            }
+            else {
+                List<String> paths = new ArrayList<>();
+                for (Source source : sources) {
+                    paths.add(source.getPath());
+                }
+                return paths;
+            }
+        }
+    }
+
+    @Override
+    public GwtModel getGwtModel() {
+        return myGwtModel;
+    }
+
+    @Override
+    public FileObject getGwtXml() {
+        return getGwtXml(true);
     }
 
     void initGwtXml() {
-        myGwtXml = findGwtXml();
-        reparseGwtXml();
-    }
-
-    FileObject doGwtGwtXml() {
-        return myGwtXml;
-    }
-
-    void setGwtXml( FileObject gwtXml ) {
+        FileObject gwtXml = findGwtXml();
+        if (gwtXml == null) {
+            myGwtModel = null;
+        }
+        else if (!gwtXml.equals(myGwtXml)) {
+            myGwtModel =
+                    GwtModelFactory.getInstance().getModel(
+                            getModelSource(gwtXml));
+            try {
+                myGwtModel.sync();
+            }
+            catch (IOException e) {
+                LOG.log(Level.INFO, null, e);
+            }
+        }
         myGwtXml = gwtXml;
     }
 
@@ -141,7 +153,7 @@ class VaadinModelImpl implements VaadinModel {
         }
         else {
             myGwtXml = null;
-            reparseGwtXml();
+            myGwtModel = null;
         }
     }
 
@@ -177,82 +189,21 @@ class VaadinModelImpl implements VaadinModel {
         }
     }
 
-    void reparseGwtXml() {
-        try {
-            doReparseGwtXml();
+    public FileObject getGwtXml( boolean init ) {
+        if (init && myGwtXml == null) {
+            return XmlUtils.findGwtXml(myProject);
         }
-        finally {
-            if (mySourcePaths == null) {
-                mySourcePaths = Collections.singletonList(CLIENT);
-            }
-        }
+        return myGwtXml;
     }
 
-    void doReparseGwtXml() {
-        mySourcePaths = null;
-        isSuperDevModeEnabled = false;
-        if (myGwtXml != null) {
-            try {
-                DataObject dataObject = DataObject.find(myGwtXml);
-                EditorCookie cookie = dataObject.getLookup().lookup(
-                        EditorCookie.class);
-                if (cookie == null) {
-                    return;
-                }
-
-                final BaseDocument baseDocument = (BaseDocument) cookie
-                        .openDocument();
-                final String[] content = new String[1];
-                baseDocument.runAtomic(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        try {
-                            content[0] = baseDocument.getText(0,
-                                    baseDocument.getLength());
-                        }
-                        catch (BadLocationException ignore) {
-                        }
-                    }
-                });
-                if (content[0] == null) {
-                    return;
-                }
-
-                Document document = XMLUtil.parse(new InputSource(
-                        new StringReader(content[0])), false, false, null,
-                        new XmlUtils.EmptyEntityResolver());
-                Element module = document.getDocumentElement();
-                NodeList children = module.getChildNodes();
-                List<String> paths = new LinkedList<>();
-                for (int i = 0; i < children.getLength(); i++) {
-                    Node item = children.item(i);
-                    if (item instanceof Element
-                            && SOURCE.equals(item.getNodeName()))
-                    {
-                        paths.add(((Element) item).getAttribute(PATH));
-                    }
-                    if (item instanceof Element
-                            && XmlUtils.CONFIG_PROPERTY.equals(item
-                                    .getNodeName()) && !isSuperDevModeEnabled)
-                    {
-                        String name = ((Element) item)
-                                .getAttribute(XmlUtils.NAME);
-                        if (XmlUtils.SUPER_DEV_PROPERTY.equals(name)) {
-                            isSuperDevModeEnabled = Boolean.TRUE.toString()
-                                    .equals(((Element) item)
-                                            .getAttribute(XmlUtils.VALUE));
-                        }
-                    }
-                }
-                if (!paths.isEmpty()) {
-                    mySourcePaths = paths;
-                }
-            }
-            catch (SAXException | IOException e) {
-                LOG.log(Level.INFO, null, e);
-            }
+    private ModelSource getModelSource( FileObject fileObject ) {
+        try {
+            return Utilities.createModelSource(fileObject, true);
         }
+        catch (CatalogModelException ex) {
+            LOG.log(Level.SEVERE, ex.getMessage(), ex);
+        }
+        return null;
     }
 
     private List<ServletConfiguration> getWebXmlConfigs() {
@@ -274,7 +225,8 @@ class VaadinModelImpl implements VaadinModel {
                 if (JavaUtils.WIDGETSET.equals(initParam.getParamName())
                         && initParam.getParamValue() != null)
                 {
-                    ServletConfigurationImpl impl = new ServletConfigurationImpl();
+                    ServletConfigurationImpl impl =
+                            new ServletConfigurationImpl();
                     impl.setWidgetset(initParam.getParamValue());
                     result.add(impl);
                 }
@@ -289,12 +241,13 @@ class VaadinModelImpl implements VaadinModel {
             return Collections.emptySet();
         }
 
-        SourceGroup[] javaSourceGroups = JavaUtils
-                .getJavaSourceGroups(myProject);
-        SourceGroup[] resourcesSourceGroups = JavaUtils
-                .getResourcesSourceGroups(myProject);
-        List<SourceGroup> sourceGroups = new ArrayList<>(
-                javaSourceGroups.length + resourcesSourceGroups.length);
+        SourceGroup[] javaSourceGroups =
+                JavaUtils.getJavaSourceGroups(myProject);
+        SourceGroup[] resourcesSourceGroups =
+                JavaUtils.getResourcesSourceGroups(myProject);
+        List<SourceGroup> sourceGroups =
+                new ArrayList<>(javaSourceGroups.length
+                        + resourcesSourceGroups.length);
         sourceGroups.addAll(Arrays.asList(javaSourceGroups));
         sourceGroups.addAll(Arrays.asList(resourcesSourceGroups));
 
@@ -326,12 +279,10 @@ class VaadinModelImpl implements VaadinModel {
 
     private FileObject myGwtXml;
 
-    private List<String> mySourcePaths;
-
-    private boolean isSuperDevModeEnabled;
-
     private final Project myProject;
 
     private final boolean isWeb;
+
+    private GwtModel myGwtModel;
 
 }

@@ -83,33 +83,6 @@ final class ResourcesListener extends FileChangeAdapter implements
     @Override
     public void fileChanged( FileEvent fe ) {
         updateResourceClassFile(fe.getFile());
-        final FileObject file = fe.getFile();
-        if (file != null && file.getNameExt().endsWith(XmlUtils.GWT_XML)) {
-            VaadinSupportImpl.REQUEST_PROCESSOR.execute(new Runnable() {
-
-                @Override
-                public void run() {
-                    try {
-                        mySupport.invoke(new Task<CompilationController>() {
-
-                            @Override
-                            public void run( CompilationController arg0 )
-                                    throws Exception
-                            {
-                                FileObject gwtXml = mySupport.getModel()
-                                        .doGwtGwtXml();
-                                if (file.equals(gwtXml)) {
-                                    mySupport.getModel().reparseGwtXml();
-                                }
-                            }
-                        }, false);
-                    }
-                    catch (IOException e) {
-                        LOG.log(Level.FINE, null, e);
-                    }
-                }
-            });
-        }
     }
 
     @Override
@@ -142,10 +115,10 @@ final class ResourcesListener extends FileChangeAdapter implements
             if (classResource == null) {
                 return;
             }
-            classResource = new File(classResource, fe.getName() + '.'
-                    + fe.getExt());
-            FileObject oldClassResource = FileUtil.toFileObject(FileUtil
-                    .normalizeFile(classResource));
+            classResource =
+                    new File(classResource, fe.getName() + '.' + fe.getExt());
+            FileObject oldClassResource =
+                    FileUtil.toFileObject(FileUtil.normalizeFile(classResource));
             if (oldClassResource != null) {
                 try {
                     oldClassResource.delete();
@@ -240,8 +213,8 @@ final class ResourcesListener extends FileChangeAdapter implements
                 }
             }
             else {
-                FileObject resource = copy(fileObject,
-                        getBuildResourcePath(fileObject));
+                FileObject resource =
+                        copy(fileObject, getBuildResourcePath(fileObject));
                 if (resource != null) {
                     try {
                         resource.setAttribute(GWT_DEBUG, Boolean.TRUE);
@@ -266,9 +239,10 @@ final class ResourcesListener extends FileChangeAdapter implements
                         public void run( CompilationController arg0 )
                                 throws Exception
                         {
-                            FileObject gwtXml = mySupport.getModel()
-                                    .doGwtGwtXml();
-                            if (file == null || file.equals(gwtXml)) {
+                            if (file == null
+                                    || file.equals(mySupport.getModel()
+                                            .getGwtXml(false)))
+                            {
                                 mySupport.getModel().initGwtXml();
                             }
                         }
@@ -332,10 +306,10 @@ final class ResourcesListener extends FileChangeAdapter implements
     }
 
     private FileObject getClassesFolder() {
-        NbMavenProject project = mySupport.getProject().getLookup()
-                .lookup(NbMavenProject.class);
-        String classes = project.getMavenProject().getBuild()
-                .getOutputDirectory();
+        NbMavenProject project =
+                mySupport.getProject().getLookup().lookup(NbMavenProject.class);
+        String classes =
+                project.getMavenProject().getBuild().getOutputDirectory();
         /*
          * Object classes = PluginPropertyUtils.createEvaluator(
          * mySupport.getProject()).evaluate(
@@ -365,11 +339,11 @@ final class ResourcesListener extends FileChangeAdapter implements
         {
             return null;
         }
-        FileObject srcRoot = getSrcRoot(src,
-                JavaUtils.getJavaSourceGroups(project));
+        FileObject srcRoot =
+                getSrcRoot(src, JavaUtils.getJavaSourceGroups(project));
         if (srcRoot == null) {
-            srcRoot = getSrcRoot(src,
-                    JavaUtils.getResourcesSourceGroups(project));
+            srcRoot =
+                    getSrcRoot(src, JavaUtils.getResourcesSourceGroups(project));
         }
         if (srcRoot == null) {
             return null;
