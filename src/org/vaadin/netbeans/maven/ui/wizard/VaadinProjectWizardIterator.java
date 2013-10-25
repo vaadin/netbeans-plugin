@@ -69,19 +69,23 @@ public class VaadinProjectWizardIterator implements InstantiatingIterator {
     private static final Logger LOG = Logger
             .getLogger(VaadinProjectWizardIterator.class.getName());
 
-    private static final String APPLICATION_ARTIFACT_ID = "vaadin-archetype-application";// NOI18N
+    private static final String APPLICATION_ARTIFACT_ID =
+            "vaadin-archetype-application";// NOI18N
 
-    private static final String PORTLET_ARTIFACT_ID = "vaadin-archetype-portlet"; // NOI18N
+    private static final String PORTLET_ARTIFACT_ID =
+            "vaadin-archetype-portlet"; // NOI18N
 
     private static final String ADD_ON_ARTIFACT_ID = "vaadin-archetype-widget";// NOI18N
 
-    private static final String TOUCHKIT_ARTIFACT_ID = "vaadin-archetype-touchkit";// NOI18N
+    private static final String TOUCHKIT_ARTIFACT_ID =
+            "vaadin-archetype-touchkit";// NOI18N
 
     private static final String GROUP_ID = "com.vaadin"; // NOI18N
 
     private static final String MAVEN_ARTIFACT_ID = "vaadin-maven-plugin";// NOI18N
 
-    private static final String REPOSITORY = "http://repo.maven.apache.org/maven2/";// NOI18N
+    private static final String REPOSITORY =
+            "http://repo.maven.apache.org/maven2/";// NOI18N
 
     private static final String APPLICATION_VERSION = "7.0.7";// NOI18N
 
@@ -99,6 +103,8 @@ public class VaadinProjectWizardIterator implements InstantiatingIterator {
 
     private static final String WEB_APP = "webApp";// NOI18N
 
+    private static final String SCAN_INTERVAL = "scanIntervalSeconds"; // NOI18N
+
     private static final String CONTEXT_PATH = "contextPath";// NOI18N
 
     private static final String UTF_8 = "UTF-8";// NOI18N
@@ -108,7 +114,8 @@ public class VaadinProjectWizardIterator implements InstantiatingIterator {
     }
 
     @StaticResource
-    public static final String PROJECT_ICON = "org/vaadin/netbeans/maven/ui/resources/vaadin.png"; // NOI18N
+    public static final String PROJECT_ICON =
+            "org/vaadin/netbeans/maven/ui/resources/vaadin.png"; // NOI18N
 
     @TemplateRegistration(folder = "Project/Vaadin",
             displayName = "#VaadinNewServletProject",
@@ -214,23 +221,23 @@ public class VaadinProjectWizardIterator implements InstantiatingIterator {
             List<FileObject> poms = new LinkedList<>();
             for (Object project : result) {
                 if (project instanceof FileObject) {
-                    FileObject pom = ((FileObject) project)
-                            .getFileObject("pom.xml"); //NOI18N
+                    FileObject pom =
+                            ((FileObject) project).getFileObject("pom.xml"); //NOI18N
                     if (pom == null) {
                         continue;
                     }
                     final String[] packaging = new String[1];
-                    ModelOperation<POMModel> operation = new ModelOperation<POMModel>()
-                    {
+                    ModelOperation<POMModel> operation =
+                            new ModelOperation<POMModel>() {
 
-                        @Override
-                        public void performOperation( POMModel model ) {
-                            Project project = model.getProject();
-                            if (project != null) {
-                                packaging[0] = project.getPackaging();
-                            }
-                        }
-                    };
+                                @Override
+                                public void performOperation( POMModel model ) {
+                                    Project project = model.getProject();
+                                    if (project != null) {
+                                        packaging[0] = project.getPackaging();
+                                    }
+                                }
+                            };
                     Utilities.performPOMModelOperations(pom,
                             Collections.singletonList(operation));
                     if ("war".equals(packaging[0])) { //NOI18N
@@ -247,31 +254,32 @@ public class VaadinProjectWizardIterator implements InstantiatingIterator {
             else {
                 final boolean prefixName = !poms.isEmpty();
                 final String name = wizard.getProperty("name").toString();// NOI18N
-                ModelOperation<POMModel> operation = new ModelOperation<POMModel>()
-                {
+                ModelOperation<POMModel> operation =
+                        new ModelOperation<POMModel>() {
 
-                    @Override
-                    public void performOperation( POMModel model ) {
-                        Project project = model.getProject();
+                            @Override
+                            public void performOperation( POMModel model ) {
+                                Project project = model.getProject();
 
-                        if (prefixName) {
-                            project.setName(name + NAME_SEPARATOR
-                                    + project.getName());
-                        }
-                        else {
-                            project.setName(name);
-                        }
+                                if (prefixName) {
+                                    project.setName(name + NAME_SEPARATOR
+                                            + project.getName());
+                                }
+                                else {
+                                    project.setName(name);
+                                }
 
-                        try {
-                            String uri = URLEncoder.encode(name, UTF_8);
-                            setJettyContextPath(uri, model);
-                            setRunTarget(uri, model);
-                        }
-                        catch (UnsupportedEncodingException ignore) {
-                            LOG.log(Level.FINE, null, ignore);
-                        }
-                    }
-                };
+                                try {
+                                    String uri = URLEncoder.encode(name, UTF_8);
+                                    setJettyContextPath(uri, model);
+                                    setScanInterval(5, model);
+                                    setRunTarget(uri, model);
+                                }
+                                catch (UnsupportedEncodingException ignore) {
+                                    LOG.log(Level.FINE, null, ignore);
+                                }
+                            }
+                        };
                 Utilities.performPOMModelOperations(warPom,
                         Collections.singletonList(operation));
 
@@ -309,8 +317,8 @@ public class VaadinProjectWizardIterator implements InstantiatingIterator {
             plugin.setConfiguration(configuration);
         }
         else {
-            List<POMExtensibilityElement> children = configuration
-                    .getExtensibilityElements();
+            List<POMExtensibilityElement> children =
+                    configuration.getExtensibilityElements();
             for (POMExtensibilityElement child : children) {
                 if (RUN_TARGET.equals(child.getQName().getLocalPart())) {
                     String target = child.getElementText();
@@ -343,12 +351,69 @@ public class VaadinProjectWizardIterator implements InstantiatingIterator {
 
     private POMExtensibilityElement createRunTarget( String name, POMModel model )
     {
-        QName qname = POMQName.createQName(RUN_TARGET, model.getPOMQNames()
-                .isNSAware());
-        POMExtensibilityElement runTarget = model.getFactory()
-                .createPOMExtensibilityElement(qname);
+        QName qname =
+                POMQName.createQName(RUN_TARGET, model.getPOMQNames()
+                        .isNSAware());
+        POMExtensibilityElement runTarget =
+                model.getFactory().createPOMExtensibilityElement(qname);
         runTarget.setElementText("http://localhost:8080/" + name); // NOI18N
         return runTarget;
+    }
+
+    private void setScanInterval( int interval, POMModel model ) {
+        Project project = model.getProject();
+        Build build = project.getBuild();
+        if (build == null) {
+            return;
+        }
+        List<Plugin> plugins = build.getPlugins();
+        for (Plugin plugin : plugins) {
+            if (JETTY_ARTIFACT_ID.equals(plugin.getArtifactId())
+                    && JETTY_GROUP_ID.equals(plugin.getGroupId()))
+            {
+                Configuration configuration = plugin.getConfiguration();
+                assert configuration != null; // configuration exists or has been created previously by the method setJettyContextPath
+
+                List<POMExtensibilityElement> children =
+                        configuration.getExtensibilityElements();
+                POMExtensibilityElement scanInterval = null;
+                for (POMExtensibilityElement component : children) {
+                    if (SCAN_INTERVAL.equals(component.getQName()
+                            .getLocalPart()))
+                    {
+                        scanInterval = component;
+                        break;
+                    }
+                }
+                if (scanInterval == null) {
+                    scanInterval =
+                            model.getFactory().createPOMExtensibilityElement(
+                                    POMQName.createQName(SCAN_INTERVAL, model
+                                            .getPOMQNames().isNSAware()));
+                    scanInterval.setElementText(String.valueOf(interval));
+                    configuration.addExtensibilityElement(scanInterval);
+                    return;
+                }
+                else {
+                    String value = scanInterval.getElementText();
+                    if (value == null) {
+                        scanInterval.setElementText(String.valueOf(interval));
+                    }
+                    else {
+                        int currentInterval = 0;
+                        try {
+                            currentInterval = Integer.parseInt(value);
+                        }
+                        catch (NumberFormatException ignore) {
+                        }
+                        if (currentInterval == 0) {
+                            scanInterval.setElementText(String
+                                    .valueOf(interval));
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private void setJettyContextPath( String name, POMModel model ) {
@@ -367,8 +432,8 @@ public class VaadinProjectWizardIterator implements InstantiatingIterator {
                     plugin.setConfiguration(createConfiguration(name, model));
                     return;
                 }
-                List<POMExtensibilityElement> children = configuration
-                        .getExtensibilityElements();
+                List<POMExtensibilityElement> children =
+                        configuration.getExtensibilityElements();
                 POMExtensibilityElement webApp = null;
                 for (POMExtensibilityElement component : children) {
                     if (WEB_APP.equals(component.getQName().getLocalPart())) {
@@ -410,10 +475,11 @@ public class VaadinProjectWizardIterator implements InstantiatingIterator {
     private POMExtensibilityElement createContextPath( String name,
             POMModel model )
     {
-        QName qname = POMQName.createQName(CONTEXT_PATH, model.getPOMQNames()
-                .isNSAware());
-        POMExtensibilityElement contextPath = model.getFactory()
-                .createPOMExtensibilityElement(qname);
+        QName qname =
+                POMQName.createQName(CONTEXT_PATH, model.getPOMQNames()
+                        .isNSAware());
+        POMExtensibilityElement contextPath =
+                model.getFactory().createPOMExtensibilityElement(qname);
         String cPath = "/";
         try {
             cPath += URLEncoder.encode(name, UTF_8);
@@ -427,10 +493,10 @@ public class VaadinProjectWizardIterator implements InstantiatingIterator {
     private POMExtensibilityElement createWebApp( String name, POMModel model )
     {
         POMExtensibilityElement contextPath = createContextPath(name, model);
-        QName qname = POMQName.createQName(WEB_APP, model.getPOMQNames()
-                .isNSAware());
-        POMExtensibilityElement webApp = model.getFactory()
-                .createPOMExtensibilityElement(qname);
+        QName qname =
+                POMQName.createQName(WEB_APP, model.getPOMQNames().isNSAware());
+        POMExtensibilityElement webApp =
+                model.getFactory().createPOMExtensibilityElement(qname);
         webApp.addExtensibilityElement(contextPath);
         return webApp;
     }
@@ -467,8 +533,9 @@ public class VaadinProjectWizardIterator implements InstantiatingIterator {
     private static WizardDescriptor.InstantiatingIterator<?> newProject(
             final String artifactId, String title )
     {
-        InstantiatingIterator<?> iterator = ArchetypeWizards.definedArchetype(
-                GROUP_ID, artifactId, "LATEST", REPOSITORY, title); //NOI18N
+        InstantiatingIterator<?> iterator =
+                ArchetypeWizards.definedArchetype(GROUP_ID, artifactId,
+                        "LATEST", REPOSITORY, title); //NOI18N
         return new VaadinProjectWizardIterator(iterator);
     }
 
@@ -507,8 +574,9 @@ public class VaadinProjectWizardIterator implements InstantiatingIterator {
             repository = archetype[0].getRepository();
         }
 
-        InstantiatingIterator<?> iterator = ArchetypeWizards.definedArchetype(
-                GROUP_ID, artifactId, useVersion, repository, title);
+        InstantiatingIterator<?> iterator =
+                ArchetypeWizards.definedArchetype(GROUP_ID, artifactId,
+                        useVersion, repository, title);
         return new VaadinProjectWizardIterator(iterator);
     }
 
