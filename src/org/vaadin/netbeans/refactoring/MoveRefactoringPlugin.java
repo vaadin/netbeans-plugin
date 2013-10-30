@@ -16,6 +16,7 @@
 package org.vaadin.netbeans.refactoring;
 
 import java.io.File;
+import java.util.List;
 import java.util.Set;
 
 import javax.lang.model.element.AnnotationMirror;
@@ -26,7 +27,10 @@ import org.netbeans.api.java.source.WorkingCopy;
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
 import org.netbeans.modules.refactoring.api.MoveRefactoring;
+import org.netbeans.modules.refactoring.api.Problem;
+import org.netbeans.modules.refactoring.spi.RefactoringElementsBag;
 import org.openide.filesystems.FileObject;
+import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.code.generator.JavaUtils;
 
 /**
@@ -38,6 +42,27 @@ class MoveRefactoringPlugin extends
 
     MoveRefactoringPlugin( MoveRefactoring refactoring ) {
         super(refactoring);
+    }
+
+    @Override
+    protected Problem setWidgetsetAddon( RefactoringElementsBag bag ) {
+        Project project = getTargetProject();
+        VaadinSupport support = project.getLookup().lookup(VaadinSupport.class);
+        if (support == null || support.isWeb()) {
+            return null;
+        }
+        List<String> widgetsets = support.getAddonWidgetsets();
+        if (widgetsets != null && project.equals(getProject())
+                && widgetsets.size() == 1
+                && getAcceptor().accept(widgetsets.get(0)))
+        {
+            return bag.add(getRefactoring(),
+                    new AddOnRefactoringElementImplementation(support,
+                            widgetsets, getTargetWidgetset()));
+        }
+        else {
+            return super.setWidgetsetAddon(bag);
+        }
     }
 
     @Override
@@ -92,6 +117,16 @@ class MoveRefactoringPlugin extends
         return getRefactoring().getTarget().lookup(Project.class);
     }
 
+    @Override
+    protected String getTargetWidgetset() {
+        if (getTargetPackageFqn().length() > 0) {
+            return getTargetPackageFqn() + '.' + getGwtName();
+        }
+        else {
+            return getGwtName();
+        }
+    }
+
     private boolean acceptMoveTarget( TypeElement type,
             CompilationController controller )
     {
@@ -117,8 +152,9 @@ class MoveRefactoringPlugin extends
             else {
                 if (!getProject().equals(project)) {
                     // set annotation for target project
-                    AnnotationMirror annotation = getVaadinServletWidgetAnnotation(
-                            type, getTargetAcceptor());
+                    AnnotationMirror annotation =
+                            getVaadinServletWidgetAnnotation(type,
+                                    getTargetAcceptor());
                     if (annotation != null) {
                         renameVaadinServletAnnotation(type, copy, annotation,
                                 null);
@@ -140,13 +176,14 @@ class MoveRefactoringPlugin extends
             else {
                 if (!getProject().equals(project)) {
                     // set annotation for target project
-                    ServletWidgetsetPresence presence = getWidgetsetPresence(
-                            type, copy);
+                    ServletWidgetsetPresence presence =
+                            getWidgetsetPresence(type, copy);
                     if (presence == null) {
                         return;
                     }
-                    AnnotationMirror annotation = JavaUtils.getAnnotation(type,
-                            JavaUtils.SERVLET_ANNOTATION);
+                    AnnotationMirror annotation =
+                            JavaUtils.getAnnotation(type,
+                                    JavaUtils.SERVLET_ANNOTATION);
                     if (ServletWidgetsetPresence.EMPTY_WIDGETSET
                             .equals(presence))
                     {
@@ -192,12 +229,7 @@ class MoveRefactoringPlugin extends
 
         @Override
         protected String getNewWidgetsetFqn() {
-            if (getTargetPackageFqn().length() > 0) {
-                return getTargetPackageFqn() + '.' + getGwtName();
-            }
-            else {
-                return getGwtName();
-            }
+            return getTargetWidgetset();
         }
 
     }

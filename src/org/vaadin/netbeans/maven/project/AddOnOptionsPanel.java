@@ -40,11 +40,8 @@ import org.netbeans.modules.maven.api.NbMavenProject;
 import org.netbeans.modules.maven.api.customizer.ModelHandle2;
 import org.netbeans.modules.maven.model.ModelOperation;
 import org.netbeans.modules.maven.model.Utilities;
-import org.netbeans.modules.maven.model.pom.Build;
-import org.netbeans.modules.maven.model.pom.Configuration;
 import org.netbeans.modules.maven.model.pom.POMExtensibilityElement;
 import org.netbeans.modules.maven.model.pom.POMModel;
-import org.netbeans.modules.maven.model.pom.Plugin;
 import org.netbeans.modules.maven.model.pom.Properties;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -68,21 +65,12 @@ import org.vaadin.netbeans.code.generator.XmlUtils;
  */
 public class AddOnOptionsPanel extends VersionPanel {
 
-    private static final String VAADIN_WIDGETSETS = "Vaadin-Widgetsets"; // NOI18N
-
     private static final String IMPLEMENTATION_VENDOR = "Implementation-Vendor"; // NOI18N
 
     private static final String IMPLEMENTATION_TITLE = "Implementation-Title"; // NOI18N
 
-    private static final String IMPLEMENTATION_VERSION = "Implementation-Version"; // NOI18N
-
-    private static final String MAVEN_PLUGINS_GROUP = "org.apache.maven.plugins"; // NOI18N
-
-    private static final String JAR_ARTIFACT_ID = "maven-jar-plugin"; // NOI18N
-
-    private static final String ARCHIVE = "archive"; // NOI18N
-
-    private static final String MANIFEST = "manifestEntries"; // NOI18N
+    private static final String IMPLEMENTATION_VERSION =
+            "Implementation-Version"; // NOI18N
 
     public AddOnOptionsPanel( Lookup context ) {
         myProject = context.lookup(Project.class);
@@ -98,8 +86,9 @@ public class AddOnOptionsPanel extends VersionPanel {
 
             @Override
             public void itemStateChanged( ItemEvent e ) {
-                final StringWrapper version = (StringWrapper) myVaadinVersion
-                        .getModel().getSelectedItem();
+                final StringWrapper version =
+                        (StringWrapper) myVaadinVersion.getModel()
+                                .getSelectedItem();
                 if (version == null || version.equals(StringWrapper.WAIT)) {
                     return;
                 }
@@ -139,8 +128,8 @@ public class AddOnOptionsPanel extends VersionPanel {
 
     private void readOptions( Lookup context ) {
         Project project = context.lookup(Project.class);
-        NbMavenProject mvnProject = project.getLookup().lookup(
-                NbMavenProject.class);
+        NbMavenProject mvnProject =
+                project.getLookup().lookup(NbMavenProject.class);
         MavenProject mavenProject = mvnProject.getMavenProject();
         File file = mavenProject.getFile();
         FileObject pom = FileUtil.toFileObject(FileUtil.normalizeFile(file));
@@ -159,7 +148,8 @@ public class AddOnOptionsPanel extends VersionPanel {
                     title[0] = properties.getProperty(IMPLEMENTATION_TITLE);
                     vendor[0] = properties.getProperty(IMPLEMENTATION_VENDOR);
                 }
-                POMExtensibilityElement widgetsets = getWidgetsets(model);
+                POMExtensibilityElement widgetsets =
+                        POMUtils.getWidgetsets(model);
                 if (widgetsets != null) {
                     widgetset[0] = widgetsets.getElementText();
                     if (widgetset[0] != null) {
@@ -180,97 +170,14 @@ public class AddOnOptionsPanel extends VersionPanel {
     private void addModification( ModelHandle2 handle,
             AddonModification newOperation )
     {
-        List<ModelOperation<POMModel>> pomOperations = handle
-                .getPOMOperations();
+        List<ModelOperation<POMModel>> pomOperations =
+                handle.getPOMOperations();
         for (ModelOperation<POMModel> operation : pomOperations) {
             if (operation instanceof AddonModification) {
                 handle.removePOMModification(operation);
             }
         }
         handle.addPOMModification(newOperation);
-    }
-
-    private Plugin getJarPlugin( POMModel model ) {
-        Build build = model.getProject().getBuild();
-        if (build == null) {
-            return null;
-        }
-        List<Plugin> plugins = build.getPlugins();
-        Plugin jarPlugin = null;
-        for (Plugin plugin : plugins) {
-            if (MAVEN_PLUGINS_GROUP.equals(plugin.getGroupId())
-                    && JAR_ARTIFACT_ID.equals(plugin.getArtifactId()))
-            {
-                jarPlugin = plugin;
-                break;
-            }
-        }
-        return jarPlugin;
-    }
-
-    private POMExtensibilityElement getManifestEntries( POMModel model ) {
-        Plugin plugin = getJarPlugin(model);
-        if (plugin == null) {
-            return null;
-        }
-        Configuration configuration = plugin.getConfiguration();
-        if (configuration == null) {
-            return null;
-        }
-        POMExtensibilityElement archive = getArchive(configuration);
-        if (archive == null) {
-            return null;
-        }
-        return getManifestEntries(archive);
-    }
-
-    private POMExtensibilityElement getManifestEntries(
-            POMExtensibilityElement archive )
-    {
-        List<POMExtensibilityElement> elements = archive
-                .getExtensibilityElements();
-        for (POMExtensibilityElement element : elements) {
-            String name = element.getQName().getLocalPart();
-            if (MANIFEST.equals(name)) {
-                return element;
-            }
-        }
-        return null;
-    }
-
-    private POMExtensibilityElement getArchive( Configuration configuration ) {
-        List<POMExtensibilityElement> elements = configuration
-                .getExtensibilityElements();
-        POMExtensibilityElement archive = null;
-        for (POMExtensibilityElement element : elements) {
-            String name = element.getQName().getLocalPart();
-            if (ARCHIVE.equals(name)) {
-                archive = element;
-            }
-        }
-        return archive;
-    }
-
-    private POMExtensibilityElement getWidgetsets( POMModel model ) {
-        POMExtensibilityElement manifest = getManifestEntries(model);
-        if (manifest == null) {
-            return null;
-        }
-        return getWidgetset(manifest);
-    }
-
-    private POMExtensibilityElement getWidgetset(
-            POMExtensibilityElement manifest )
-    {
-        List<POMExtensibilityElement> elements = manifest
-                .getExtensibilityElements();
-        for (POMExtensibilityElement element : elements) {
-            String name = element.getQName().getLocalPart();
-            if (VAADIN_WIDGETSETS.equals(name)) {
-                return element;
-            }
-        }
-        return null;
     }
 
     /**
@@ -529,32 +436,35 @@ public class AddOnOptionsPanel extends VersionPanel {
         root.setDisplayName(ProjectUtils.getInformation(myProject)
                 .getDisplayName());
         try {
-            Node[] result = NodeOperation.getDefault().select(
-                    Bundle.selectWidgetset(), Bundle.existingWidgetset(), root,
-                    new NodeAcceptor() {
+            Node[] result =
+                    NodeOperation.getDefault().select(Bundle.selectWidgetset(),
+                            Bundle.existingWidgetset(), root,
+                            new NodeAcceptor() {
 
-                        @Override
-                        public boolean acceptNodes( Node[] nodes ) {
-                            if (nodes.length != 1) {
-                                return false;
-                            }
-                            FileObject fileObject = nodes[0].getLookup()
-                                    .lookup(FileObject.class);
-                            if (fileObject == null) {
-                                return false;
-                            }
-                            return fileObject.getNameExt().endsWith(
-                                    XmlUtils.GWT_XML);
-                        }
-                    });
+                                @Override
+                                public boolean acceptNodes( Node[] nodes ) {
+                                    if (nodes.length != 1) {
+                                        return false;
+                                    }
+                                    FileObject fileObject =
+                                            nodes[0].getLookup().lookup(
+                                                    FileObject.class);
+                                    if (fileObject == null) {
+                                        return false;
+                                    }
+                                    return fileObject.getNameExt().endsWith(
+                                            XmlUtils.GWT_XML);
+                                }
+                            });
             if (result.length == 1) {
-                FileObject widgetset = result[0].getLookup().lookup(
-                        FileObject.class);
-                ClassPath classPath = ClassPath.getClassPath(widgetset,
-                        ClassPath.SOURCE);
+                FileObject widgetset =
+                        result[0].getLookup().lookup(FileObject.class);
+                ClassPath classPath =
+                        ClassPath.getClassPath(widgetset, ClassPath.SOURCE);
                 String name = classPath.getResourceName(widgetset, '.', true);
-                name = name.substring(0,
-                        name.length() - XmlUtils.GWT_XML.length());
+                name =
+                        name.substring(0,
+                                name.length() - XmlUtils.GWT_XML.length());
                 myWidgetset.setText(name);
             }
         }
@@ -567,8 +477,9 @@ public class AddOnOptionsPanel extends VersionPanel {
         for (SourceGroup sourceGroup : groups) {
             FileObject rootFolder = sourceGroup.getRootFolder();
             try {
-                FilterNode node = new FilterNode(DataObject.find(rootFolder)
-                        .getNodeDelegate());
+                FilterNode node =
+                        new FilterNode(DataObject.find(rootFolder)
+                                .getNodeDelegate());
                 nodes.add(node);
             }
             catch (DataObjectNotFoundException ignore) {
@@ -585,20 +496,22 @@ public class AddOnOptionsPanel extends VersionPanel {
             if (needProperties) {
                 properties = model.getFactory().createProperties();
             }
-            List<POMExtensibilityElement> props = properties
-                    .getExtensibilityElements();
+            List<POMExtensibilityElement> props =
+                    properties.getExtensibilityElements();
             Map<String, POMExtensibilityElement> values = new HashMap<>();
             for (POMExtensibilityElement param : props) {
                 values.put(param.getQName().getLocalPart(), param);
             }
-            StringWrapper version = (StringWrapper) myVaadinVersion.getModel()
-                    .getSelectedItem();
+            StringWrapper version =
+                    (StringWrapper) myVaadinVersion.getModel()
+                            .getSelectedItem();
             if (version != null && !version.equals(StringWrapper.WAIT)) {
-                POMExtensibilityElement versionElement = values
-                        .get(VAADIN_PLUGIN_VERSION);
+                POMExtensibilityElement versionElement =
+                        values.get(VAADIN_PLUGIN_VERSION);
                 if (versionElement == null) {
-                    versionElement = POMUtils.createElement(model,
-                            VAADIN_PLUGIN_VERSION, version.toString());
+                    versionElement =
+                            POMUtils.createElement(model,
+                                    VAADIN_PLUGIN_VERSION, version.toString());
                     properties.addExtensibilityElement(versionElement);
                 }
                 else {
@@ -620,88 +533,15 @@ public class AddOnOptionsPanel extends VersionPanel {
                 model.getProject().setProperties(properties);
             }
 
-            POMExtensibilityElement widgetsets = getWidgetsets(model);
+            POMExtensibilityElement widgetsets = POMUtils.getWidgetsets(model);
             if (widgetsets == null) {
-                createWidgetset(model);
+                POMUtils.createWidgetset(model, myWidgetset.getText().trim());
             }
             else {
-                setWidgetset(widgetsets);
+                POMUtils.setWidgetset(widgetsets, myWidgetset.getText().trim());
             }
         }
 
-        private void createWidgetset( POMModel model ) {
-            POMExtensibilityElement manifest = getManifestEntries(model);
-            if (manifest == null) {
-                Plugin plugin = getJarPlugin(model);
-                if (plugin != null) {
-                    Configuration configuration = plugin.getConfiguration();
-                    if (configuration == null) {
-                        configuration = model.getFactory()
-                                .createConfiguration();
-                        createArchive(configuration);
-                        plugin.setConfiguration(configuration);
-                    }
-                    else {
-                        createWidgetset(configuration);
-                    }
-                }
-            }
-            else {
-                createWidgetset(manifest);
-            }
-        }
-
-        private void createWidgetset( Configuration configuration ) {
-            POMExtensibilityElement archive = getArchive(configuration);
-            if (archive == null) {
-                archive = createArchive(configuration);
-                configuration.addExtensibilityElement(archive);
-            }
-            else {
-                POMExtensibilityElement manifestEntries = getManifestEntries(archive);
-                if (manifestEntries == null) {
-                    manifestEntries = createManifestEntries(archive);
-                    archive.addExtensibilityElement(manifestEntries);
-                }
-                else {
-                    createWidgetset(manifestEntries);
-                }
-            }
-        }
-
-        private POMExtensibilityElement createArchive(
-                Configuration configuration )
-        {
-            POMExtensibilityElement archive = POMUtils.createElement(
-                    configuration.getModel(), ARCHIVE, null);
-            POMExtensibilityElement manifestEntries = createManifestEntries(archive);
-            archive.addExtensibilityElement(manifestEntries);
-            return archive;
-        }
-
-        private POMExtensibilityElement createManifestEntries(
-                POMExtensibilityElement archive )
-        {
-            POMExtensibilityElement manifest = POMUtils.createElement(
-                    archive.getModel(), MANIFEST, null);
-            createWidgetset(manifest);
-            return manifest;
-        }
-
-        private void createWidgetset( POMExtensibilityElement manifest ) {
-            POMExtensibilityElement widgetset = POMUtils.createElement(manifest
-                    .getModel(), VAADIN_WIDGETSETS, myWidgetset.getText()
-                    .trim());
-            manifest.addExtensibilityElement(widgetset);
-        }
-
-        private void setWidgetset( POMExtensibilityElement widgetsets ) {
-            String newValue = myWidgetset.getText().trim();
-            String oldValue = POMUtils.getValue(widgetsets);
-            if (oldValue == null || !oldValue.equals(newValue)) {
-                widgetsets.setElementText(newValue);
-            }
-        }
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

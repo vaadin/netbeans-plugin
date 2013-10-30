@@ -17,6 +17,7 @@ package org.vaadin.netbeans.refactoring;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.modules.refactoring.api.Problem;
@@ -24,6 +25,7 @@ import org.netbeans.modules.refactoring.api.RenameRefactoring;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
+import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.code.generator.XmlUtils;
 
 /**
@@ -56,14 +58,37 @@ class RenameRefactoringPlugin extends RenamePackageRefactoringPlugin {
         return new RenameGwtTransformTask();
     }
 
+    @Override
+    protected String getTargetWidgetset( VaadinSupport support ) {
+        List<String> widgetsets = support.getAddonWidgetsets();
+        if (widgetsets == null || widgetsets.size() == 0) {
+            FileObject gwtXml =
+                    getRefactoring().getRefactoringSource().lookup(
+                            FileObject.class);
+            FileObject pkg = gwtXml.getParent();
+            ClassPath classPath = ClassPath.getClassPath(pkg, ClassPath.SOURCE);
+            String pkgPrefix = classPath.getResourceName(pkg, '.', true);
+            return getTargetWidgetset(pkgPrefix + '.');
+        }
+        if (widgetsets != null && widgetsets.size() == 1
+                && getAcceptor().accept(widgetsets.get(0)))
+        {
+            return renameWidgetset(widgetsets.get(0));
+        }
+        else {
+            return null;
+        }
+    }
+
     @NbBundle.Messages({
             "# {0} - file",
             "# {1} - folder",
             "fileAlreadyExists=GWT Module file {0} already exists in package {1}",
             "invalidFileName=Invalid file name {0}" })
     private Problem doCheckParameters() {
-        FileObject fileObject = getRefactoring().getRefactoringSource().lookup(
-                FileObject.class);
+        FileObject fileObject =
+                getRefactoring().getRefactoringSource()
+                        .lookup(FileObject.class);
         FileObject folder = fileObject.getParent();
 
         ClassPath classPath = ClassPath.getClassPath(folder, ClassPath.SOURCE);
@@ -85,26 +110,45 @@ class RenameRefactoringPlugin extends RenamePackageRefactoringPlugin {
         }
     }
 
+    private String renameWidgetset( String widgetset ) {
+        FileObject gwtXml =
+                getRefactoring().getRefactoringSource()
+                        .lookup(FileObject.class);
+        String name = removeExtension(gwtXml);
+        String prefix =
+                widgetset.substring(0, widgetset.length() - name.length());
+        return getTargetWidgetset(prefix);
+    }
+
+    private String getTargetWidgetset( String prefix ) {
+        String newName = getRefactoring().getNewName();
+        if (newName.endsWith(XmlUtils.GWT)) {
+            // should always happen
+            newName =
+                    newName.substring(0,
+                            newName.length() - XmlUtils.GWT.length());
+        }
+        return prefix + newName;
+    }
+
+    private String removeExtension( String fileName ) {
+        if (fileName.endsWith(XmlUtils.GWT_XML)) {
+            fileName =
+                    fileName.substring(0,
+                            fileName.length() - XmlUtils.GWT_XML.length());
+        }
+        return fileName;
+    }
+
+    private String removeExtension( FileObject fileObject ) {
+        return removeExtension(fileObject.getNameExt());
+    }
+
     class RenameGwtTransformTask extends RenameGwtTask {
 
         @Override
         protected String getNewWidgetsetFqn( String oldFqn ) {
-            FileObject gwtXml = getRefactoring().getRefactoringSource().lookup(
-                    FileObject.class);
-            String name = gwtXml.getNameExt();
-            if (name.endsWith(XmlUtils.GWT_XML)) {
-                name = name.substring(0,
-                        name.length() - XmlUtils.GWT_XML.length());
-            }
-            String prefix = oldFqn
-                    .substring(0, oldFqn.length() - name.length());
-            String newName = getRefactoring().getNewName();
-            if (newName.endsWith(XmlUtils.GWT)) {
-                // should always happen
-                newName = newName.substring(0,
-                        newName.length() - XmlUtils.GWT.length());
-            }
-            return prefix + newName;
+            return renameWidgetset(oldFqn);
         }
     }
 }

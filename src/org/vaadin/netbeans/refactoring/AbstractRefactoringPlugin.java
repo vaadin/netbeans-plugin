@@ -78,13 +78,15 @@ abstract class AbstractRefactoringPlugin<R extends AbstractRefactoring> extends
 
         GwtModuleAcceptor acceptor = getAcceptor();
         Set<FileObject> files = getAffectedJavaFiles(project, acceptor);
-        Set<FileObject> additionalFiles = getAffectedConfigFiles(project,
-                acceptor);
+        Set<FileObject> additionalFiles =
+                getAffectedConfigFiles(project, acceptor);
         fireProgressListenerStart(AbstractRefactoring.PREPARE, files.size()
                 + additionalFiles.size());
-        Problem problem = createAndAddElements(files, getTransformTask(), bag,
-                getRefactoring());
-        Problem configProblem = createAndAddConfigElements(additionalFiles, bag);
+        Problem problem =
+                createAndAddElements(files, getTransformTask(), bag,
+                        getRefactoring());
+        Problem configProblem =
+                createAndAddConfigElements(additionalFiles, bag);
         fireProgressListenerStop();
         if (problem != null) {
             problem.setNext(configProblem);
@@ -93,13 +95,6 @@ abstract class AbstractRefactoringPlugin<R extends AbstractRefactoring> extends
         else {
             return configProblem;
         }
-    }
-
-    protected Problem createAndAddConfigElements(
-            Set<FileObject> additionalFiles, RefactoringElementsBag bag )
-    {
-        // TODO : add transaction and element implementations for web.xml if any
-        return null;
     }
 
     @Override
@@ -121,22 +116,27 @@ abstract class AbstractRefactoringPlugin<R extends AbstractRefactoring> extends
         return null;
     }
 
+    protected abstract Problem createAndAddConfigElements(
+            Set<FileObject> additionalFiles, RefactoringElementsBag bag );
+
     protected Project getProject() {
         FileObject pkg = getFolder();
         if (pkg != null) {
             return FileOwnerQuery.getOwner(pkg);
         }
 
-        FileObject gwtXml = getRefactoring().getRefactoringSource().lookup(
-                FileObject.class);
+        FileObject gwtXml =
+                getRefactoring().getRefactoringSource()
+                        .lookup(FileObject.class);
         assert gwtXml != null : "Unable to get current project: "
                 + "both Package and FileObject queries failed";
         return FileOwnerQuery.getOwner(gwtXml);
     }
 
     protected FileObject getFolder() {
-        NonRecursiveFolder pkg = getRefactoring().getRefactoringSource()
-                .lookup(NonRecursiveFolder.class);
+        NonRecursiveFolder pkg =
+                getRefactoring().getRefactoringSource().lookup(
+                        NonRecursiveFolder.class);
         if (pkg != null) {
             return pkg.getFolder();
         }
@@ -193,8 +193,9 @@ abstract class AbstractRefactoringPlugin<R extends AbstractRefactoring> extends
             CompilationController controller, GwtModuleAcceptor acceptor,
             Project project ) throws InterruptedException
     {
-        List<TypeElement> servlets = JavaUtils.findAnnotatedElements(
-                JavaUtils.SERVLET_ANNOTATION, controller);
+        List<TypeElement> servlets =
+                JavaUtils.findAnnotatedElements(JavaUtils.SERVLET_ANNOTATION,
+                        controller);
         for (TypeElement typeElement : servlets) {
             if (acceptServletWidgetAnnoation(typeElement, controller, acceptor,
                     project))
@@ -216,21 +217,21 @@ abstract class AbstractRefactoringPlugin<R extends AbstractRefactoring> extends
     protected AnnotationMirror getServletWidgetAnnotation( TypeElement type,
             GwtModuleAcceptor acceptor )
     {
-        AnnotationMirror annotation = JavaUtils.getAnnotation(type,
-                JavaUtils.SERVLET_ANNOTATION);
+        AnnotationMirror annotation =
+                JavaUtils.getAnnotation(type, JavaUtils.SERVLET_ANNOTATION);
         if (annotation == null) {
             return null;
         }
-        List<?> params = JavaUtils.getArrayValue(annotation,
-                JavaUtils.INIT_PARAMS);
+        List<?> params =
+                JavaUtils.getArrayValue(annotation, JavaUtils.INIT_PARAMS);
         if (params != null) {
             for (Object param : params) {
                 if (param instanceof AnnotationMirror) {
                     AnnotationMirror mirror = (AnnotationMirror) param;
                     String name = JavaUtils.getValue(mirror, JavaUtils.NAME);
                     if (JavaUtils.WIDGETSET.equalsIgnoreCase(name)) {
-                        String widgetset = JavaUtils.getValue(mirror,
-                                JavaUtils.VALUE);
+                        String widgetset =
+                                JavaUtils.getValue(mirror, JavaUtils.VALUE);
                         if (acceptor.accept(widgetset)) {
                             return annotation;
                         }
@@ -275,8 +276,9 @@ abstract class AbstractRefactoringPlugin<R extends AbstractRefactoring> extends
             CompilationController controller, GwtModuleAcceptor acceptor,
             Project project ) throws InterruptedException
     {
-        List<TypeElement> servlets = JavaUtils.findAnnotatedElements(
-                JavaUtils.VAADIN_SERVLET_CONFIGURATION, controller);
+        List<TypeElement> servlets =
+                JavaUtils.findAnnotatedElements(
+                        JavaUtils.VAADIN_SERVLET_CONFIGURATION, controller);
 
         for (TypeElement typeElement : servlets) {
             if (getVaadinServletWidgetAnnotation(typeElement, acceptor) != null)
@@ -291,8 +293,9 @@ abstract class AbstractRefactoringPlugin<R extends AbstractRefactoring> extends
     protected AnnotationMirror getVaadinServletWidgetAnnotation(
             TypeElement type, GwtModuleAcceptor acceptor )
     {
-        AnnotationMirror annotation = JavaUtils.getAnnotation(type,
-                JavaUtils.VAADIN_SERVLET_CONFIGURATION);
+        AnnotationMirror annotation =
+                JavaUtils.getAnnotation(type,
+                        JavaUtils.VAADIN_SERVLET_CONFIGURATION);
         if (annotation == null) {
             return null;
         }
@@ -327,8 +330,8 @@ abstract class AbstractRefactoringPlugin<R extends AbstractRefactoring> extends
     }
 
     protected static String getWidgetset( AnnotationTree tree ) {
-        AssignmentTree assignment = getAnnotationTreeAttribute(tree,
-                JavaUtils.NAME);
+        AssignmentTree assignment =
+                getAnnotationTreeAttribute(tree, JavaUtils.NAME);
         ExpressionTree name = assignment.getExpression();
         if (name instanceof LiteralTree) {
             LiteralTree literal = (LiteralTree) name;
@@ -364,8 +367,8 @@ abstract class AbstractRefactoringPlugin<R extends AbstractRefactoring> extends
         public void run( WorkingCopy compiler ) throws IOException {
             compiler.toPhase(JavaSource.Phase.ELEMENTS_RESOLVED);
             try {
-                List<? extends TypeElement> typeElements = compiler
-                        .getTopLevelElements();
+                List<? extends TypeElement> typeElements =
+                        compiler.getTopLevelElements();
                 for (TypeElement typeElement : typeElements) {
                     processTypeElement(typeElement, compiler);
                 }
@@ -386,8 +389,8 @@ abstract class AbstractRefactoringPlugin<R extends AbstractRefactoring> extends
         protected void processTypeElement( TypeElement type, WorkingCopy copy )
         {
             doProcessTypeElement(type, copy);
-            List<TypeElement> subtypes = ElementFilter.typesIn(type
-                    .getEnclosedElements());
+            List<TypeElement> subtypes =
+                    ElementFilter.typesIn(type.getEnclosedElements());
             for (TypeElement subType : subtypes) {
                 processTypeElement(subType, copy);
             }
@@ -402,8 +405,8 @@ abstract class AbstractRefactoringPlugin<R extends AbstractRefactoring> extends
         protected void updateWebServletAnnotation( TypeElement type,
                 WorkingCopy copy )
         {
-            AnnotationMirror annotation = getServletWidgetAnnotation(type,
-                    myAcceptor);
+            AnnotationMirror annotation =
+                    getServletWidgetAnnotation(type, myAcceptor);
             if (annotation != null) {
                 String currentValue = JavaUtils.getWidgetsetWebInit(annotation);
                 doUpdateWebServletAnnotation(type, copy, annotation,
@@ -414,11 +417,11 @@ abstract class AbstractRefactoringPlugin<R extends AbstractRefactoring> extends
         protected void updateVaadinServletAnnotation( TypeElement type,
                 WorkingCopy copy )
         {
-            AnnotationMirror annotation = getVaadinServletWidgetAnnotation(
-                    type, myAcceptor);
+            AnnotationMirror annotation =
+                    getVaadinServletWidgetAnnotation(type, myAcceptor);
             if (annotation != null) {
-                String currentValue = JavaUtils.getValue(annotation,
-                        JavaUtils.WIDGETSET);
+                String currentValue =
+                        JavaUtils.getValue(annotation, JavaUtils.WIDGETSET);
                 doUpdateVaadinServletAnnotation(type, copy, annotation,
                         currentValue);
             }
@@ -427,8 +430,9 @@ abstract class AbstractRefactoringPlugin<R extends AbstractRefactoring> extends
         protected AnnotationTree getWidgetsetWebInit(
                 AnnotationTree annotationTree )
         {
-            ExpressionTree expressionTree = getAnnotationTreeAttribute(
-                    annotationTree, JavaUtils.INIT_PARAMS);
+            ExpressionTree expressionTree =
+                    getAnnotationTreeAttribute(annotationTree,
+                            JavaUtils.INIT_PARAMS);
             if (expressionTree instanceof AssignmentTree) {
                 AssignmentTree assignmentTree = (AssignmentTree) expressionTree;
                 ExpressionTree expression = assignmentTree.getExpression();
@@ -440,11 +444,12 @@ abstract class AbstractRefactoringPlugin<R extends AbstractRefactoring> extends
                 }
                 else if (expression instanceof NewArrayTree) {
                     NewArrayTree arrayTree = (NewArrayTree) expression;
-                    List<? extends ExpressionTree> expressions = arrayTree
-                            .getInitializers();
+                    List<? extends ExpressionTree> expressions =
+                            arrayTree.getInitializers();
                     for (ExpressionTree webInitAnnotation : expressions) {
                         if (webInitAnnotation instanceof AnnotationTree) {
-                            AnnotationTree tree = (AnnotationTree) webInitAnnotation;
+                            AnnotationTree tree =
+                                    (AnnotationTree) webInitAnnotation;
                             if (getWidgetset(tree) != null) {
                                 return tree;
                             }
@@ -458,18 +463,19 @@ abstract class AbstractRefactoringPlugin<R extends AbstractRefactoring> extends
         protected AnnotationTree replaceWidgetset( TreeMaker treeMaker,
                 AnnotationTree annotationTree, String widgetset, String attrName )
         {
-            ExpressionTree widgetsetTree = getAnnotationTreeAttribute(
-                    annotationTree, attrName);
+            ExpressionTree widgetsetTree =
+                    getAnnotationTreeAttribute(annotationTree, attrName);
 
-            AnnotationTree newTree = treeMaker.removeAnnotationAttrValue(
-                    annotationTree, widgetsetTree);
+            AnnotationTree newTree =
+                    treeMaker.removeAnnotationAttrValue(annotationTree,
+                            widgetsetTree);
 
-            ExpressionTree newWidgetsetTree = treeMaker.Assignment(
-                    treeMaker.Identifier(attrName),
-                    treeMaker.Literal(getNewWidgetsetFqn(widgetset)));
+            ExpressionTree newWidgetsetTree =
+                    treeMaker.Assignment(treeMaker.Identifier(attrName),
+                            treeMaker.Literal(getNewWidgetsetFqn(widgetset)));
 
-            newTree = treeMaker.addAnnotationAttrValue(newTree,
-                    newWidgetsetTree);
+            newTree =
+                    treeMaker.addAnnotationAttrValue(newTree, newWidgetsetTree);
             return newTree;
         }
 

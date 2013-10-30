@@ -15,12 +15,20 @@
  */
 package org.vaadin.netbeans.refactoring;
 
+import java.util.List;
+import java.util.Set;
+
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.TypeElement;
 
 import org.netbeans.api.java.source.TreeMaker;
 import org.netbeans.api.java.source.WorkingCopy;
+import org.netbeans.api.project.Project;
+import org.netbeans.modules.refactoring.api.Problem;
 import org.netbeans.modules.refactoring.api.RenameRefactoring;
+import org.netbeans.modules.refactoring.spi.RefactoringElementsBag;
+import org.openide.filesystems.FileObject;
+import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.code.generator.JavaUtils;
 
 import com.sun.source.tree.AnnotationTree;
@@ -42,6 +50,46 @@ class RenamePackageRefactoringPlugin extends
         return new RenameGwtTask();
     }
 
+    @Override
+    protected Problem createAndAddConfigElements(
+            Set<FileObject> additionalFiles, RefactoringElementsBag bag )
+    {
+        return setWidgetsetAddon(bag);
+    }
+
+    protected Problem setWidgetsetAddon( RefactoringElementsBag bag ) {
+        Project project = getProject();
+        VaadinSupport support = project.getLookup().lookup(VaadinSupport.class);
+        if (support == null || support.isWeb()) {
+            return null;
+        }
+        String targetWidgetset = getTargetWidgetset(support);
+        if (targetWidgetset == null) {
+            return null;
+        }
+        else {
+            return bag.add(
+                    getRefactoring(),
+                    new AddOnRefactoringElementImplementation(support, support
+                            .getAddonWidgetsets(), targetWidgetset));
+        }
+    }
+
+    protected String getTargetWidgetset( VaadinSupport support ) {
+        List<String> widgetsets = support.getAddonWidgetsets();
+        if (widgetsets == null || widgetsets.size() != 1) {
+            return null;
+        }
+        if (getAcceptor().accept(widgetsets.get(0))) {
+            String postfix =
+                    widgetsets.get(0).substring(getPackageName().length());
+            return getRefactoring().getNewName() + postfix;
+        }
+        else {
+            return null;
+        }
+    }
+
     class RenameGwtTask extends AbstractTransformTask {
 
         RenameGwtTask() {
@@ -56,12 +104,14 @@ class RenamePackageRefactoringPlugin extends
             TreeMaker treeMaker = copy.getTreeMaker();
             Tree tree = copy.getTrees().getTree(type, annotation);
             if (tree instanceof AnnotationTree) {
-                AnnotationTree annotationTree = getWidgetsetWebInit((AnnotationTree) tree);
+                AnnotationTree annotationTree =
+                        getWidgetsetWebInit((AnnotationTree) tree);
                 if (annotationTree == null) {
                     return;
                 }
-                AnnotationTree newTree = replaceWidgetset(treeMaker,
-                        annotationTree, widgetsetFqn, JavaUtils.VALUE);
+                AnnotationTree newTree =
+                        replaceWidgetset(treeMaker, annotationTree,
+                                widgetsetFqn, JavaUtils.VALUE);
                 copy.rewrite(annotationTree, newTree);
             }
         }
@@ -81,8 +131,9 @@ class RenamePackageRefactoringPlugin extends
                 return;
             }
 
-            AnnotationTree newTree = replaceWidgetset(treeMaker,
-                    annotationTree, widgetsetFqn, JavaUtils.WIDGETSET);
+            AnnotationTree newTree =
+                    replaceWidgetset(treeMaker, annotationTree, widgetsetFqn,
+                            JavaUtils.WIDGETSET);
 
             copy.rewrite(annotationTree, newTree);
         }

@@ -37,14 +37,14 @@ class CopyRefactoringPlugin extends
         AbstractCopyRefactoringPlugin<SingleCopyRefactoring>
 {
 
-    private static final GwtModuleAcceptor NO_ACCEPTOR = new GwtModuleAcceptor()
-    {
+    private static final GwtModuleAcceptor NO_ACCEPTOR =
+            new GwtModuleAcceptor() {
 
-        @Override
-        public boolean accept( String moduleFqn ) {
-            return false;
-        }
-    };
+                @Override
+                public boolean accept( String moduleFqn ) {
+                    return false;
+                }
+            };
 
     CopyRefactoringPlugin( SingleCopyRefactoring refactoring ) {
         super(refactoring);
@@ -93,23 +93,27 @@ class CopyRefactoringPlugin extends
         return new CopyGwtTransformTask();
     }
 
+    @Override
+    protected String getTargetWidgetset() {
+        ClassPath classPath =
+                ClassPath.getClassPath(getTargetPackage(), ClassPath.SOURCE);
+        String pkg = classPath.getResourceName(getTargetPackage(), '.', true);
+        String name = getTarget().getName();
+        assert name.endsWith(XmlUtils.GWT_XML);
+        name = name.substring(0, name.length() - XmlUtils.GWT_XML.length());
+        if (pkg.length() == 0) {
+            return name;
+        }
+        else {
+            return pkg + '.' + name;
+        }
+    }
+
     class CopyGwtTransformTask extends AbstractCopyGwtTransformTask {
 
         @Override
         protected String getNewWidgetsetFqn() {
-            ClassPath classPath = ClassPath.getClassPath(getTargetPackage(),
-                    ClassPath.SOURCE);
-            String pkg = classPath.getResourceName(getTargetPackage(), '.',
-                    true);
-            String name = getTarget().getName();
-            assert name.endsWith(XmlUtils.GWT_XML);
-            name = name.substring(0, name.length() - XmlUtils.GWT_XML.length());
-            if (pkg.length() == 0) {
-                return name;
-            }
-            else {
-                return pkg + '.' + name;
-            }
+            return getTargetWidgetset();
         }
 
         @Override
@@ -117,12 +121,13 @@ class CopyRefactoringPlugin extends
                 WorkingCopy copy )
         {
             // set annotation for target project
-            ServletWidgetsetPresence presence = getWidgetsetPresence(type, copy);
+            ServletWidgetsetPresence presence =
+                    getWidgetsetPresence(type, copy);
             if (presence == null) {
                 return;
             }
-            AnnotationMirror annotation = JavaUtils.getAnnotation(type,
-                    JavaUtils.SERVLET_ANNOTATION);
+            AnnotationMirror annotation =
+                    JavaUtils.getAnnotation(type, JavaUtils.SERVLET_ANNOTATION);
             if (ServletWidgetsetPresence.EMPTY_WIDGETSET.equals(presence)) {
                 renameWebServletAnnotation(type, copy, annotation, null);
             }
@@ -135,8 +140,8 @@ class CopyRefactoringPlugin extends
         protected void updateVaadinServletAnnotation( TypeElement type,
                 WorkingCopy copy )
         {
-            AnnotationMirror annotation = getVaadinServletWidgetAnnotation(
-                    type, getTargetAcceptor());
+            AnnotationMirror annotation =
+                    getVaadinServletWidgetAnnotation(type, getTargetAcceptor());
             if (annotation != null) {
                 renameVaadinServletAnnotation(type, copy, annotation, null);
             }

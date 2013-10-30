@@ -19,6 +19,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.TypeElement;
@@ -30,8 +31,10 @@ import org.netbeans.api.java.source.WorkingCopy;
 import org.netbeans.api.project.Project;
 import org.netbeans.modules.refactoring.api.AbstractRefactoring;
 import org.netbeans.modules.refactoring.api.Problem;
+import org.netbeans.modules.refactoring.spi.RefactoringElementsBag;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
+import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.code.generator.JavaUtils;
 import org.vaadin.netbeans.code.generator.XmlUtils;
 
@@ -79,6 +82,8 @@ abstract class AbstractCopyRefactoringPlugin<R extends AbstractRefactoring>
 
     protected abstract Project getTargetProject();
 
+    protected abstract String getTargetWidgetset();
+
     protected GwtModuleAcceptor getTargetAcceptor() {
         return new NullValueGwtModuleAcceptor();
     }
@@ -106,16 +111,40 @@ abstract class AbstractCopyRefactoringPlugin<R extends AbstractRefactoring>
         return classPath.getResourceName(folder, '.', true);
     }
 
+    @Override
+    protected Problem createAndAddConfigElements(
+            Set<FileObject> additionalFiles, RefactoringElementsBag bag )
+    {
+        return setWidgetsetAddon(bag);
+    }
+
+    protected Problem setWidgetsetAddon( RefactoringElementsBag bag ) {
+        Project project = getTargetProject();
+        VaadinSupport support = project.getLookup().lookup(VaadinSupport.class);
+        if (support == null || support.isWeb()) {
+            return null;
+        }
+        List<String> widgetsets = support.getAddonWidgetsets();
+        if (!project.equals(getProject())) {
+            if (widgetsets == null || widgetsets.size() == 0) {
+                return bag.add(getRefactoring(),
+                        new AddOnRefactoringElementImplementation(support,
+                                null, getTargetWidgetset()));
+            }
+        }
+        return null;
+    }
+
     protected ServletWidgetsetPresence getWidgetsetPresence( TypeElement type,
             CompilationController controller )
     {
-        AnnotationMirror annotation = JavaUtils.getAnnotation(type,
-                JavaUtils.SERVLET_ANNOTATION);
+        AnnotationMirror annotation =
+                JavaUtils.getAnnotation(type, JavaUtils.SERVLET_ANNOTATION);
         if (annotation == null) {
             return null;
         }
-        List<?> params = JavaUtils.getArrayValue(annotation,
-                JavaUtils.INIT_PARAMS);
+        List<?> params =
+                JavaUtils.getArrayValue(annotation, JavaUtils.INIT_PARAMS);
         if (params != null) {
             boolean hasUi = false;
             boolean emptyWidgetset = false;
@@ -125,12 +154,14 @@ abstract class AbstractCopyRefactoringPlugin<R extends AbstractRefactoring>
                     AnnotationMirror mirror = (AnnotationMirror) param;
                     String name = JavaUtils.getValue(mirror, JavaUtils.NAME);
                     if (JavaUtils.UI.equalsIgnoreCase(name)) {
-                        String widgetset = JavaUtils.getValue(mirror,
-                                JavaUtils.VALUE);
-                        TypeElement typeElement = controller.getElements()
-                                .getTypeElement(widgetset);
-                        TypeElement ui = controller.getElements()
-                                .getTypeElement(JavaUtils.VAADIN_UI_FQN);
+                        String widgetset =
+                                JavaUtils.getValue(mirror, JavaUtils.VALUE);
+                        TypeElement typeElement =
+                                controller.getElements().getTypeElement(
+                                        widgetset);
+                        TypeElement ui =
+                                controller.getElements().getTypeElement(
+                                        JavaUtils.VAADIN_UI_FQN);
                         if (typeElement != null
                                 && ui != null
                                 && controller.getTypes().isSubtype(
@@ -140,11 +171,12 @@ abstract class AbstractCopyRefactoringPlugin<R extends AbstractRefactoring>
                         }
                     }
                     else if (JavaUtils.WIDGETSET.equalsIgnoreCase(name)) {
-                        String widgetset = JavaUtils.getValue(mirror,
-                                JavaUtils.VALUE);
+                        String widgetset =
+                                JavaUtils.getValue(mirror, JavaUtils.VALUE);
                         noWidgetset = widgetset == null;
-                        emptyWidgetset = widgetset != null
-                                && widgetset.trim().length() == 0;
+                        emptyWidgetset =
+                                widgetset != null
+                                        && widgetset.trim().length() == 0;
                     }
                 }
             }
@@ -161,8 +193,9 @@ abstract class AbstractCopyRefactoringPlugin<R extends AbstractRefactoring>
     }
 
     protected String getGwtNameExt() {
-        FileObject gwtXml = getRefactoring().getRefactoringSource().lookup(
-                FileObject.class);
+        FileObject gwtXml =
+                getRefactoring().getRefactoringSource()
+                        .lookup(FileObject.class);
         return gwtXml.getNameExt();
     }
 
@@ -196,10 +229,12 @@ abstract class AbstractCopyRefactoringPlugin<R extends AbstractRefactoring>
             Tree newTree = null;
             if (tree instanceof AnnotationTree) {
                 AnnotationTree annotationTree = (AnnotationTree) tree;
-                ExpressionTree expressionTree = getAnnotationTreeAttribute(
-                        annotationTree, JavaUtils.INIT_PARAMS);
+                ExpressionTree expressionTree =
+                        getAnnotationTreeAttribute(annotationTree,
+                                JavaUtils.INIT_PARAMS);
                 if (expressionTree instanceof AssignmentTree) {
-                    AssignmentTree assignmentTree = (AssignmentTree) expressionTree;
+                    AssignmentTree assignmentTree =
+                            (AssignmentTree) expressionTree;
                     ExpressionTree expression = assignmentTree.getExpression();
                     if (expression instanceof AnnotationTree) {
                         oldTree = expression;
@@ -207,15 +242,17 @@ abstract class AbstractCopyRefactoringPlugin<R extends AbstractRefactoring>
                         initializers.add(expression);
                         initializers.add(createWidgetsetWebInit(treeMaker));
 
-                        newTree = treeMaker.NewArray(null,
-                                Collections.<ExpressionTree> emptyList(),
-                                initializers);
+                        newTree =
+                                treeMaker.NewArray(null, Collections
+                                        .<ExpressionTree> emptyList(),
+                                        initializers);
                     }
                     else if (expression instanceof NewArrayTree) {
                         NewArrayTree arrayTree = (NewArrayTree) expression;
                         oldTree = arrayTree;
-                        newTree = treeMaker.addNewArrayInitializer(arrayTree,
-                                createWidgetsetWebInit(treeMaker));
+                        newTree =
+                                treeMaker.addNewArrayInitializer(arrayTree,
+                                        createWidgetsetWebInit(treeMaker));
                     }
                 }
             }
@@ -225,12 +262,12 @@ abstract class AbstractCopyRefactoringPlugin<R extends AbstractRefactoring>
         }
 
         protected ExpressionTree createWidgetsetWebInit( TreeMaker treeMaker ) {
-            ExpressionTree nameAttrTree = treeMaker.Assignment(
-                    treeMaker.Identifier(JavaUtils.NAME),
-                    treeMaker.Literal(JavaUtils.WIDGETSET));
-            ExpressionTree widgetsetTree = treeMaker.Assignment(
-                    treeMaker.Identifier(JavaUtils.VALUE),
-                    treeMaker.Literal(getNewWidgetsetFqn()));
+            ExpressionTree nameAttrTree =
+                    treeMaker.Assignment(treeMaker.Identifier(JavaUtils.NAME),
+                            treeMaker.Literal(JavaUtils.WIDGETSET));
+            ExpressionTree widgetsetTree =
+                    treeMaker.Assignment(treeMaker.Identifier(JavaUtils.VALUE),
+                            treeMaker.Literal(getNewWidgetsetFqn()));
 
             List<ExpressionTree> expressions = new ArrayList<>(2);
             expressions.add(nameAttrTree);
@@ -253,8 +290,9 @@ abstract class AbstractCopyRefactoringPlugin<R extends AbstractRefactoring>
                 return;
             }
 
-            AnnotationTree newTree = replaceWidgetset(treeMaker,
-                    annotationTree, widgetsetFqn, JavaUtils.WIDGETSET);
+            AnnotationTree newTree =
+                    replaceWidgetset(treeMaker, annotationTree, widgetsetFqn,
+                            JavaUtils.WIDGETSET);
 
             copy.rewrite(annotationTree, newTree);
         }
@@ -266,12 +304,14 @@ abstract class AbstractCopyRefactoringPlugin<R extends AbstractRefactoring>
             TreeMaker treeMaker = copy.getTreeMaker();
             Tree tree = copy.getTrees().getTree(type, annotation);
             if (tree instanceof AnnotationTree) {
-                AnnotationTree annotationTree = getWidgetsetWebInit((AnnotationTree) tree);
+                AnnotationTree annotationTree =
+                        getWidgetsetWebInit((AnnotationTree) tree);
                 if (annotationTree == null) {
                     return;
                 }
-                AnnotationTree newTree = replaceWidgetset(treeMaker,
-                        annotationTree, widgetsetFqn, JavaUtils.VALUE);
+                AnnotationTree newTree =
+                        replaceWidgetset(treeMaker, annotationTree,
+                                widgetsetFqn, JavaUtils.VALUE);
                 copy.rewrite(annotationTree, newTree);
             }
         }
