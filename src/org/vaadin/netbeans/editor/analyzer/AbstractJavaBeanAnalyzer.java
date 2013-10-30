@@ -59,17 +59,19 @@ abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
 
     private static final String IS = "is"; // NOI18N
 
-    private static final AccessorNameExtractor BOOLEAN_EXTRACTOR = new BooleanAccessorExtractor();
+    private static final AccessorNameExtractor BOOLEAN_EXTRACTOR =
+            new BooleanAccessorExtractor();
 
-    private static final AccessorNameExtractor REGULAR_EXTRACTOR = new RegularAccessorExtractor();
+    private static final AccessorNameExtractor REGULAR_EXTRACTOR =
+            new RegularAccessorExtractor();
 
     protected void checkJavaBean( VariableElement checkTarget,
             DeclaredType type, CompilationInfo info,
             Collection<ErrorDescription> descriptions,
             VaadinTaskFactory factory, AtomicBoolean cancel )
     {
-        List<VariableElement> fields = ElementFilter.fieldsIn(type.asElement()
-                .getEnclosedElements());
+        List<VariableElement> fields =
+                ElementFilter.fieldsIn(type.asElement().getEnclosedElements());
         List<VariableElement> localFields = new ArrayList<>(fields.size());
         for (VariableElement field : fields) {
             Set<Modifier> modifiers = field.getModifiers();
@@ -115,10 +117,10 @@ abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
         if (fields.isEmpty()) {
             return;
         }
-        Set<ExecutableElement> allMethods = getPossibleAccessorMethods(type
-                .asElement());
-        TypeElement booleanElement = info.getElements().getTypeElement(
-                Boolean.class.getName());
+        Set<ExecutableElement> allMethods =
+                getPossibleAccessorMethods(type.asElement());
+        TypeElement booleanElement =
+                info.getElements().getTypeElement(Boolean.class.getName());
         TypeMirror booleanType = null;
         if (booleanElement != null) {
             booleanType = booleanElement.asType();
@@ -134,20 +136,23 @@ abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
             VariableElement field = iterator.next();
             String name = field.getSimpleName().toString();
             TypeMirror fieldType = info.getTypes().asMemberOf(type, field);
-            boolean isBoolean = fieldType.getKind() == TypeKind.BOOLEAN
-                    || (booleanType != null && info.getTypes().isSubtype(
-                            fieldType, booleanType));
+            boolean isBoolean =
+                    fieldType.getKind() == TypeKind.BOOLEAN
+                            || (booleanType != null && info.getTypes()
+                                    .isSubtype(fieldType, booleanType));
             boolean hasGetter;
             if (isBoolean) {
-                hasGetter = checkBooleanGetter(fieldType, type, allMethods,
-                        info, name);
+                hasGetter =
+                        checkBooleanGetter(fieldType, type, allMethods, info,
+                                name);
             }
             else {
-                hasGetter = checkRegularGetter(fieldType, type, allMethods,
-                        info, name);
+                hasGetter =
+                        checkRegularGetter(fieldType, type, allMethods, info,
+                                name);
             }
-            boolean hasSetter = checkSetter(fieldType, type, allMethods, info,
-                    name);
+            boolean hasSetter =
+                    checkSetter(fieldType, type, allMethods, info, name);
             if (hasGetter && hasSetter) {
                 iterator.remove();
             }
@@ -179,8 +184,8 @@ abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
             VariableElement field, boolean hasGetter, CompilationInfo info,
             Collection<ErrorDescription> descriptions )
     {
-        List<Integer> positions = AbstractJavaFix.getElementPosition(info,
-                target);
+        List<Integer> positions =
+                AbstractJavaFix.getElementPosition(info, target);
         String msg;
         if (hasGetter) {
             msg = getNoSetterMessage(target, field);
@@ -188,10 +193,11 @@ abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
         else {
             msg = getNoGetterMessage(target, field);
         }
-        ErrorDescription description = ErrorDescriptionFactory
-                .createErrorDescription(Severity.WARNING, msg,
-                        Collections.<Fix> emptyList(), info.getFileObject(),
-                        positions.get(0), positions.get(1));
+        ErrorDescription description =
+                ErrorDescriptionFactory.createErrorDescription(
+                        Severity.WARNING, msg, Collections.<Fix> emptyList(),
+                        info.getFileObject(), positions.get(0),
+                        positions.get(1));
         descriptions.add(description);
     }
 
@@ -200,23 +206,10 @@ abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
             Set<ExecutableElement> methods, CompilationInfo info,
             Collection<ErrorDescription> descriptions )
     {
-        // TODO : improve check for accessors via getter source tree analysis
-        if (booleanFields.size() == 1) {
-            VariableElement field = booleanFields.get(0);
-            if (!hasAccessors(info.getTypes().asMemberOf(type, field), type,
-                    BOOLEAN_EXTRACTOR, methods, info))
-            {
-                addNoAccessorsWarning(
-                        checkTarget == null ? field : checkTarget, field, info,
-                        descriptions);
-            }
-        }
-        else if (booleanFields.size() > 1) {
-            for (VariableElement field : booleanFields) {
-                addNoAccessorsWarning(
-                        checkTarget == null ? field : checkTarget, field, info,
-                        descriptions);
-            }
+        VariableElement field = booleanFields.get(0);
+        if (!hasAccessors(field, type, BOOLEAN_EXTRACTOR, methods, info)) {
+            addNoAccessorsWarning(checkTarget == null ? field : checkTarget,
+                    field, info, descriptions);
         }
     }
 
@@ -224,58 +217,11 @@ abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
             List<VariableElement> fields, Set<ExecutableElement> methods,
             CompilationInfo info, Collection<ErrorDescription> descriptions )
     {
-        // TODO : improve check for accessors via getter source tree analysis
-        refineFieldsDeclarations(checkTarget, type, fields, info, descriptions);
         for (VariableElement field : fields) {
-            if (!hasAccessors(info.getTypes().asMemberOf(type, field), type,
-                    REGULAR_EXTRACTOR, methods, info))
-            {
+            if (!hasAccessors(field, type, REGULAR_EXTRACTOR, methods, info)) {
                 addNoAccessorsWarning(
                         checkTarget == null ? field : checkTarget, field, info,
                         descriptions);
-            }
-        }
-    }
-
-    /*
-     * Walk through all fields and find those with same type. Add editor warning
-     * for such fields and remove them from <code>fields</code>. Remaining
-     * fields are declared using unique type.
-     */
-    private void refineFieldsDeclarations( VariableElement checkTarget,
-            DeclaredType clazz, List<VariableElement> fields,
-            CompilationInfo info, Collection<ErrorDescription> descriptions )
-    {
-        Set<TypeMirrorWrapper> multipleTypeDeclarations = new HashSet<>();
-        Map<TypeMirrorWrapper, VariableElement> singleTypeDeclarations = new HashMap<>();
-
-        for (Iterator<VariableElement> iterator = fields.iterator(); iterator
-                .hasNext();)
-        {
-            VariableElement field = iterator.next();
-            TypeMirror type = info.getTypes().asMemberOf(clazz, field);
-            TypeMirrorWrapper wrapper = new TypeMirrorWrapper(type, info);
-            if (multipleTypeDeclarations.contains(wrapper)) {
-                addNoAccessorsWarning(
-                        checkTarget == null ? field : checkTarget, field, info,
-                        descriptions);
-                iterator.remove();
-            }
-            else {
-                VariableElement existingField = singleTypeDeclarations
-                        .get(wrapper);
-                if (existingField != null) {
-                    multipleTypeDeclarations.add(wrapper);
-                    addNoAccessorsWarning(checkTarget == null ? existingField
-                            : checkTarget, existingField, info, descriptions);
-                    addNoAccessorsWarning(checkTarget == null ? field
-                            : checkTarget, field, info, descriptions);
-                    iterator.remove();
-                    singleTypeDeclarations.remove(wrapper);
-                }
-                else {
-                    singleTypeDeclarations.put(wrapper, field);
-                }
             }
         }
     }
@@ -284,19 +230,19 @@ abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
             VariableElement field, CompilationInfo info,
             Collection<ErrorDescription> descriptions )
     {
-        List<Integer> positions = AbstractJavaFix.getElementPosition(info,
-                target);
-        ErrorDescription description = ErrorDescriptionFactory
-                .createErrorDescription(Severity.WARNING,
-                        getNoAccessorsMessage(target, field),
+        List<Integer> positions =
+                AbstractJavaFix.getElementPosition(info, target);
+        ErrorDescription description =
+                ErrorDescriptionFactory.createErrorDescription(
+                        Severity.WARNING, getNoAccessorsMessage(target, field),
                         Collections.<Fix> emptyList(), info.getFileObject(),
                         positions.get(0), positions.get(1));
         descriptions.add(description);
     }
 
     private Set<ExecutableElement> getPossibleAccessorMethods( Element clazz ) {
-        List<ExecutableElement> methods = ElementFilter.methodsIn(clazz
-                .getEnclosedElements());
+        List<ExecutableElement> methods =
+                ElementFilter.methodsIn(clazz.getEnclosedElements());
         Set<ExecutableElement> allMethods = new HashSet<>();
         for (ExecutableElement method : methods) {
             if (method.getParameters().size() > 1
@@ -313,12 +259,12 @@ abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
             VariableElement field, TypeMirror type, CompilationInfo info,
             Collection<ErrorDescription> descriptions )
     {
-        TypeElement collectionType = info.getElements().getTypeElement(
-                Collection.class.getName());
-        TypeElement mapType = info.getElements().getTypeElement(
-                Map.class.getName());
-        TypeElement serializable = info.getElements().getTypeElement(
-                Serializable.class.getName());
+        TypeElement collectionType =
+                info.getElements().getTypeElement(Collection.class.getName());
+        TypeElement mapType =
+                info.getElements().getTypeElement(Map.class.getName());
+        TypeElement serializable =
+                info.getElements().getTypeElement(Serializable.class.getName());
         if (serializable == null) {
             return;
         }
@@ -328,8 +274,8 @@ abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
                     && info.getTypes().isSubtype(info.getTypes().erasure(type),
                             info.getTypes().erasure(collectionType.asType())))
             {
-                List<? extends TypeMirror> args = declaredType
-                        .getTypeArguments();
+                List<? extends TypeMirror> args =
+                        declaredType.getTypeArguments();
                 if (args.size() == 1) {
                     checkPublicField(checkTarget, field, args.get(0), info,
                             descriptions);
@@ -339,8 +285,8 @@ abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
                     && info.getTypes().isSubtype(info.getTypes().erasure(type),
                             info.getTypes().erasure(mapType.asType())))
             {
-                List<? extends TypeMirror> args = declaredType
-                        .getTypeArguments();
+                List<? extends TypeMirror> args =
+                        declaredType.getTypeArguments();
                 if (args.size() == 2) {
                     checkPublicField(checkTarget, field, args.get(0), info,
                             descriptions);
@@ -352,16 +298,17 @@ abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
                 Element typeElement = info.getTypes().asElement(type);
                 String fqn;
                 if (typeElement instanceof TypeElement) {
-                    fqn = ((TypeElement) typeElement).getQualifiedName()
-                            .toString();
+                    fqn =
+                            ((TypeElement) typeElement).getQualifiedName()
+                                    .toString();
                 }
                 else {
                     fqn = type.toString();
                 }
-                List<Integer> positions = AbstractJavaFix.getElementPosition(
-                        info, checkTarget);
-                ErrorDescription description = ErrorDescriptionFactory
-                        .createErrorDescription(
+                List<Integer> positions =
+                        AbstractJavaFix.getElementPosition(info, checkTarget);
+                ErrorDescription description =
+                        ErrorDescriptionFactory.createErrorDescription(
                                 Severity.ERROR,
                                 getNotSerializableFieldMessage(checkTarget,
                                         field, fqn), Collections
@@ -421,46 +368,61 @@ abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
                         boxedPrimitive(type2, info));
     }
 
-    private boolean hasAccessors( TypeMirror requiredType, DeclaredType clazz,
+    private boolean hasAccessors( VariableElement field, DeclaredType clazz,
             AccessorNameExtractor extractor, Set<ExecutableElement> methods,
             CompilationInfo info )
     {
-        Set<String> getters = new HashSet<>();
-        Set<String> setters = new HashSet<>();
+        TypeMirror requiredType = info.getTypes().asMemberOf(clazz, field);
+        String getter = null;
+        Map<String, ExecutableElement> setters = new HashMap<>();
         for (Iterator<ExecutableElement> iterator = methods.iterator(); iterator
                 .hasNext();)
         {
             ExecutableElement method = iterator.next();
-            ExecutableType methodType = (ExecutableType) info.getTypes()
-                    .asMemberOf(clazz, method);
-            if (method.getParameters().isEmpty()) {
-                String name = extractor.extractGetter(method.getSimpleName()
-                        .toString());
+            ExecutableType methodType =
+                    (ExecutableType) info.getTypes().asMemberOf(clazz, method);
+            if (getter == null && method.getParameters().isEmpty()) {
+                String name =
+                        extractor.extractGetter(method.getSimpleName()
+                                .toString());
                 if (name != null
                         && isSameType(methodType.getReturnType(), requiredType,
                                 info))
                 {
-                    getters.add(name);
-                    iterator.remove();
+                    ReturnStatementScanner scanner =
+                            new ReturnStatementScanner(field);
+                    scanner.scan(info.getTrees().getPath(method), info);
+                    if (scanner.isFound()) {
+                        getter = name;
+                        iterator.remove();
+                    }
                 }
             }
             else if (method.getParameters().size() == 1
                     && methodType.getReturnType().getKind()
                             .equals(TypeKind.VOID))
             {
-                String name = extractor.extractSetter(method.getSimpleName()
-                        .toString());
+                String name =
+                        extractor.extractSetter(method.getSimpleName()
+                                .toString());
                 if (name != null
                         && isSameType(methodType.getParameterTypes().get(0),
                                 requiredType, info))
                 {
-                    setters.add(name);
-                    iterator.remove();
+                    setters.put(name, method);
                 }
             }
         }
-        getters.retainAll(setters);
-        return !getters.isEmpty();
+        if (getter == null) {
+            return false;
+        }
+        else {
+            ExecutableElement setter = setters.remove(getter);
+            if (setter != null) {
+                methods.remove(setter);
+            }
+            return setter != null;
+        }
     }
 
     private boolean checkBooleanGetter( TypeMirror fieldType,
@@ -516,8 +478,9 @@ abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
             if (getter.contentEquals(method.getSimpleName())
                     && method.getParameters().isEmpty())
             {
-                ExecutableType methodType = (ExecutableType) info.getTypes()
-                        .asMemberOf(clazz, method);
+                ExecutableType methodType =
+                        (ExecutableType) info.getTypes().asMemberOf(clazz,
+                                method);
                 TypeMirror returnType = methodType.getReturnType();
                 if (isSameType(returnType, fieldType, info)) {
                     iterator.remove();
@@ -619,4 +582,5 @@ abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
 
         private final CompilationInfo myInfo;
     }
+
 }
