@@ -30,7 +30,6 @@ import org.netbeans.api.project.Project;
 import org.netbeans.spi.project.ui.templates.support.Templates;
 import org.openide.WizardDescriptor;
 import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataObject;
 import org.openide.util.NbBundle;
 import org.vaadin.netbeans.VaadinSupport;
@@ -43,6 +42,11 @@ import org.vaadin.netbeans.model.VaadinModel;
 abstract class SimpleConnectorGenerator implements WidgetGenerator {
 
     private static final String SERVER_COMPONENT_FQN = "server_component_fqn";//NOI18N
+
+    private static final String SELECTED_COMPONENT_FQN =
+            "selected_component_fqn"; //NOI18N
+
+    private static final String SELECTED_COMPONENT = "selected_component"; //NOI18N
 
     private static final String SERVER_COMPONENT = "server_component";//NOI18N
 
@@ -57,9 +61,23 @@ abstract class SimpleConnectorGenerator implements WidgetGenerator {
 
         // Generate server component
         handle.progress(getComponentClassGenerationMessage());
-        DataObject dataObject = JavaUtils
-                .createDataObjectFromTemplate(getComponentTemplate(),
-                        targetPackage, componentClassName, null);
+
+        Object component = wizard.getProperty(COMPONENT_PROPERTY);
+        Map<String, String> params = null;
+        if (component != null) {
+            String fqn = component.toString();
+            int index = fqn.lastIndexOf('.');
+            String name = fqn;
+            if (index != -1) {
+                name = fqn.substring(index + 1);
+            }
+            params = new HashMap<>();
+            params.put(SELECTED_COMPONENT, name);
+            params.put(SELECTED_COMPONENT_FQN, fqn);
+        }
+        DataObject dataObject =
+                JavaUtils.createDataObjectFromTemplate(getComponentTemplate(),
+                        targetPackage, componentClassName, params);
 
         FileObject serverComponent = dataObject.getPrimaryFile();
         classes.add(dataObject.getPrimaryFile());
@@ -94,8 +112,9 @@ abstract class SimpleConnectorGenerator implements WidgetGenerator {
             return Collections.emptySet();
         }
 
-        FileObject clientPackage = XmlUtils.getClientWidgetPackage(gwtXml[0],
-                srcPaths.get(0), true);
+        FileObject clientPackage =
+                XmlUtils.getClientWidgetPackage(gwtXml[0], srcPaths.get(0),
+                        true);
 
         if (clientPackage == null) {
             Logger.getLogger(ConnectorOnlyWidgetGenerator.class.getName())
@@ -104,15 +123,17 @@ abstract class SimpleConnectorGenerator implements WidgetGenerator {
         }
 
         // Generate connector
-        String connectorName = JavaUtils.getFreeName(clientPackage,
-                componentClassName + CONNECTOR, JavaUtils.JAVA_SUFFIX);
+        String connectorName =
+                JavaUtils.getFreeName(clientPackage, componentClassName
+                        + CONNECTOR, JavaUtils.JAVA_SUFFIX);
 
         handle.progress(getConnectorClassGenerationMessage());
         Map<String, String> map = new HashMap<>();
         map.put(getServerClassNameParam(), componentClassName);
         map.put(getServerClassFqnParam(), JavaUtils.getFqn(serverComponent));
-        dataObject = JavaUtils.createDataObjectFromTemplate(
-                getConnectorTemplate(), clientPackage, connectorName, map);
+        dataObject =
+                JavaUtils.createDataObjectFromTemplate(getConnectorTemplate(),
+                        clientPackage, connectorName, map);
         classes.add(dataObject.getPrimaryFile());
 
         return classes;

@@ -3,13 +3,12 @@ package ${package};
 </#if>
 
 import com.vaadin.server.AbstractExtension;
-import com.vaadin.ui.AbstractComponent;
+import ${selected_component_fqn};
 
 
 public class ${name} extends AbstractExtension {
 
-    // TODO: use some specific Vaadin component as a type argument here instead of  AbstractComponent
-	public void extend(AbstractComponent target) {
+	public void extend(${selected_component} target) {
         super.extend(target);
     }
 }

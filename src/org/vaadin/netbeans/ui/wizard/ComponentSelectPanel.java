@@ -22,28 +22,32 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.netbeans.api.java.source.ClasspathInfo;
 import org.netbeans.api.project.Project;
 import org.netbeans.spi.project.ui.templates.support.Templates;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.vaadin.netbeans.VaadinSupport;
+import org.vaadin.netbeans.code.generator.WidgetGenerator;
 
 /**
  * @author denis
  */
-class WidgetTypePanel implements WizardDescriptor.Panel<WizardDescriptor> {
+class ComponentSelectPanel implements WizardDescriptor.Panel<WizardDescriptor> {
 
-    enum Template {
-        FULL_FLEDGED,
-        CONNECTOR_ONLY,
-        EXTENSION
+    ComponentSelectPanel( WizardDescriptor wizard ) {
+        Project project = Templates.getProject(wizard);
+        VaadinSupport support = project.getLookup().lookup(VaadinSupport.class);
+        myInfo = support.getClassPathInfo();
     }
 
+    @NbBundle.Messages("additionalConfiguration=Additional Configuration")
     @Override
     public Component getComponent() {
         if (myComponent == null) {
-            myComponent = new WidgetTemplatePanel(this);
+            myComponent = new VaadinComponentSelectPanel(this);
+            myComponent.setName(Bundle.additionalConfiguration());
         }
         return myComponent;
     }
@@ -60,24 +64,22 @@ class WidgetTypePanel implements WizardDescriptor.Panel<WizardDescriptor> {
 
     @Override
     public void storeSettings( WizardDescriptor settings ) {
+        settings.putProperty(WidgetGenerator.COMPONENT_PROPERTY,
+                myComponent.getSelectedComponent());
     }
 
-    @NbBundle.Messages("noVaadinSupport=Chosen project has no Vaadin support.")
+    @NbBundle.Messages("noSelectedComponent=Select a component from list.")
     @Override
     public boolean isValid() {
         if (myDescriptor == null) {
             return true;
         }
-        Project project = Templates.getProject(myDescriptor);
-        VaadinSupport support = project.getLookup().lookup(VaadinSupport.class);
-        if (support != null && support.isEnabled()) {
-            return true;
-        }
-        else {
-            myDescriptor.putProperty(WizardDescriptor.PROP_ERROR_MESSAGE,
-                    Bundle.noVaadinSupport());
+        if (myComponent.getSelectedComponent() == null) {
+            myDescriptor.putProperty(WizardDescriptor.PROP_INFO_MESSAGE,
+                    Bundle.noSelectedComponent());
             return false;
         }
+        return true;
     }
 
     @Override
@@ -90,24 +92,22 @@ class WidgetTypePanel implements WizardDescriptor.Panel<WizardDescriptor> {
         myListeners.remove(listener);
     }
 
+    ClasspathInfo getClassPathInfo() {
+        return myInfo;
+    }
+
     void fireChange() {
         for (ChangeListener listener : myListeners) {
             listener.stateChanged(new ChangeEvent(this));
         }
     }
 
-    boolean isConfigured() {
-        return !getSelectedTemplate().equals(Template.EXTENSION);
-    }
-
-    Template getSelectedTemplate() {
-        return myComponent.getSelectedTemplate();
-    }
-
     private List<ChangeListener> myListeners = new CopyOnWriteArrayList<>();
 
-    private WidgetTemplatePanel myComponent;
+    private VaadinComponentSelectPanel myComponent;
 
     private WizardDescriptor myDescriptor;
+
+    private ClasspathInfo myInfo;
 
 }

@@ -47,8 +47,8 @@ public class NewWidgetWizardIterator implements
         ProgressInstantiatingIterator<WizardDescriptor>
 {
 
-    private static final Map<Template, WidgetGenerator> TEMPLATE_GENERATORS = new EnumMap<>(
-            WidgetTypePanel.Template.class);
+    private static final Map<Template, WidgetGenerator> TEMPLATE_GENERATORS =
+            new EnumMap<>(WidgetTypePanel.Template.class);
 
     static {
         TEMPLATE_GENERATORS.put(Template.FULL_FLEDGED,
@@ -70,18 +70,20 @@ public class NewWidgetWizardIterator implements
         Project project = Templates.getProject(wizard);
 
         SourceGroup[] sourceGroups = JavaUtils.getJavaSourceGroups(project);
-        myPanel = new WidgetTypePanel();
-        WizardDescriptor.Panel<WizardDescriptor> firstPanel = new FinishableWizardPanel(
-                JavaTemplates.createPackageChooser(project, sourceGroups,
-                        myPanel, true));
-        myPanels = new WizardDescriptor.Panel[] { firstPanel };
+        myWidgetPanel = new WidgetTypePanel();
+        WizardDescriptor.Panel<WizardDescriptor> firstPanel =
+                new FinishableWizardPanel(JavaTemplates.createPackageChooser(
+                        project, sourceGroups, myWidgetPanel, true),
+                        myWidgetPanel);
+        mySelectPanel = new ComponentSelectPanel(wizard);
+        myPanels = new WizardDescriptor.Panel[] { firstPanel, mySelectPanel };
         setSteps();
     }
 
     @Override
     public void uninitialize( WizardDescriptor wizard ) {
         myPanels = null;
-        myPanel = null;
+        myWidgetPanel = null;
     }
 
     @Override
@@ -95,7 +97,13 @@ public class NewWidgetWizardIterator implements
 
     @Override
     public boolean hasNext() {
-        return myIndex < myPanels.length - 1;
+        FinishableWizardPanel panel = (FinishableWizardPanel) myPanels[0];
+        if (!panel.isFinishPanel()) {
+            return myIndex < myPanels.length - 1;
+        }
+        else {
+            return false;
+        }
     }
 
     @Override
@@ -132,7 +140,7 @@ public class NewWidgetWizardIterator implements
     public Set<?> instantiate( ProgressHandle handle ) throws IOException {
         handle.start();
 
-        Template template = myPanel.getSelectedTemplate();
+        Template template = myWidgetPanel.getSelectedTemplate();
         WidgetGenerator generator = TEMPLATE_GENERATORS.get(template);
         Set<FileObject> files = generator.generate(myWizard, handle);
 
@@ -141,13 +149,15 @@ public class NewWidgetWizardIterator implements
     }
 
     private void setSteps() {
-        Object contentData = myWizard
-                .getProperty(WizardDescriptor.PROP_CONTENT_DATA);
+        Object contentData =
+                myWizard.getProperty(WizardDescriptor.PROP_CONTENT_DATA);
         if (contentData instanceof String[]) {
-            String steps[] = (String[]) contentData;
+            String existingSteps[] = (String[]) contentData;
+            int existingCount = 1;
+            String steps[] = new String[myPanels.length + existingCount];
+            System.arraycopy(existingSteps, 0, steps, 0, existingCount);
             for (int i = 0; i < myPanels.length; i++) {
-                steps[steps.length - myPanels.length + i] = myPanels[i]
-                        .getComponent().getName();
+                steps[existingCount + i] = myPanels[i].getComponent().getName();
                 Panel<?> panel = myPanels[i];
                 JComponent component = (JComponent) panel.getComponent();
                 component.putClientProperty(WizardDescriptor.PROP_CONTENT_DATA,
@@ -168,7 +178,9 @@ public class NewWidgetWizardIterator implements
 
     private WizardDescriptor.Panel<WizardDescriptor>[] myPanels;
 
-    private WidgetTypePanel myPanel;
+    private WidgetTypePanel myWidgetPanel;
+
+    private ComponentSelectPanel mySelectPanel;
 
     private int myIndex;
 

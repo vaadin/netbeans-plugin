@@ -15,6 +15,9 @@
  */
 package org.vaadin.netbeans.ui.wizard;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
 import org.vaadin.netbeans.ui.wizard.WidgetTypePanel.Template;
 
 /**
@@ -25,9 +28,20 @@ public class WidgetTemplatePanel extends javax.swing.JPanel {
     /**
      * Creates new form WidgetTemplatePanel
      */
-    public WidgetTemplatePanel() {
+    public WidgetTemplatePanel( final WidgetTypePanel panel ) {
         initComponents();
         myFullFledged.setSelected(true);
+
+        ActionListener listener = new ActionListener() {
+
+            @Override
+            public void actionPerformed( ActionEvent e ) {
+                panel.fireChange();
+            }
+        };
+        myFullFledged.addActionListener(listener);
+        myConnector.addActionListener(listener);
+        myExtension.addActionListener(listener);
     }
 
     Template getSelectedTemplate() {
@@ -77,7 +91,8 @@ public class WidgetTemplatePanel extends javax.swing.JPanel {
                 org.openide.util.NbBundle.getMessage(WidgetTemplatePanel.class,
                         "LBL_Extension")); // NOI18N
 
-        javax.swing.GroupLayout panelLayout = new javax.swing.GroupLayout(panel);
+        javax.swing.GroupLayout panelLayout =
+                new javax.swing.GroupLayout(panel);
         panel.setLayout(panelLayout);
         panelLayout
                 .setHorizontalGroup(panelLayout

@@ -30,6 +30,8 @@ public interface WidgetGenerator {
 
     String CONNECTOR = "Connector"; // NOI18N
 
+    String COMPONENT_PROPERTY = "vaadinComponent"; // NOI18N
+
     Set<FileObject> generate( WizardDescriptor wizard, ProgressHandle handle )
             throws IOException;
 

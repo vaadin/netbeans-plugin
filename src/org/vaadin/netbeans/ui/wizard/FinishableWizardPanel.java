@@ -27,13 +27,16 @@ class FinishableWizardPanel implements
         WizardDescriptor.FinishablePanel<WizardDescriptor>
 {
 
-    FinishableWizardPanel( WizardDescriptor.Panel<WizardDescriptor> original ) {
+    FinishableWizardPanel( WizardDescriptor.Panel<WizardDescriptor> original,
+            WidgetTypePanel panel )
+    {
         delegate = original;
+        myOptionalPanel = panel;
     }
 
     @Override
     public boolean isFinishPanel() {
-        return true;
+        return myOptionalPanel.isConfigured();
     }
 
     @Override
@@ -64,12 +67,16 @@ class FinishableWizardPanel implements
     @Override
     public void addChangeListener( ChangeListener listener ) {
         delegate.addChangeListener(listener);
+        myOptionalPanel.addChangeListener(listener);
     }
 
     @Override
     public void removeChangeListener( ChangeListener listener ) {
         delegate.removeChangeListener(listener);
+        myOptionalPanel.removeChangeListener(listener);
     }
 
     private final WizardDescriptor.Panel<WizardDescriptor> delegate;
+
+    private final WidgetTypePanel myOptionalPanel;
 }
