@@ -26,7 +26,7 @@ import org.openide.filesystems.FileObject;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
-import org.vaadin.netbeans.code.generator.XmlUtils;
+import org.vaadin.netbeans.utils.XmlUtils;
 
 /**
  * @author denis

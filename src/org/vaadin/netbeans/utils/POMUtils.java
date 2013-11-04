@@ -13,8 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.vaadin.netbeans.maven.project;
+package org.vaadin.netbeans.utils;
 
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 
@@ -22,6 +23,9 @@ import javax.swing.JCheckBox;
 import javax.swing.JTextField;
 import javax.xml.namespace.QName;
 
+import org.netbeans.api.project.Project;
+import org.netbeans.modules.maven.api.ModelUtils;
+import org.netbeans.modules.maven.api.NbMavenProject;
 import org.netbeans.modules.maven.model.pom.Build;
 import org.netbeans.modules.maven.model.pom.Configuration;
 import org.netbeans.modules.maven.model.pom.POMComponent;
@@ -29,11 +33,21 @@ import org.netbeans.modules.maven.model.pom.POMExtensibilityElement;
 import org.netbeans.modules.maven.model.pom.POMModel;
 import org.netbeans.modules.maven.model.pom.POMQName;
 import org.netbeans.modules.maven.model.pom.Plugin;
+import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 
 /**
  * @author denis
  */
 public final class POMUtils {
+
+    public static final String VAADIN_GROUP_ID = "com.vaadin"; // NOI18N
+
+    public static final String VAADIN_PLUGIN = "vaadin-maven-plugin"; // NOI18N
+
+    public static final String JETTY_GROUP_ID = "org.mortbay.jetty"; // NOI18N
+
+    public static final String JETTY_PLUGIN = "jetty-maven-plugin"; // NOI18N
 
     private static final String VAADIN_WIDGETSETS = "Vaadin-Widgetsets"; // NOI18N
 
@@ -196,7 +210,7 @@ public final class POMUtils {
         return null;
     }
 
-    static Plugin getJarPlugin( POMModel model ) {
+    public static Plugin getJarPlugin( POMModel model ) {
         Build build = model.getProject().getBuild();
         if (build == null) {
             return null;
@@ -214,7 +228,7 @@ public final class POMUtils {
         return jarPlugin;
     }
 
-    static Plugin getVaadinPlugin( POMModel model ) {
+    public static Plugin getVaadinPlugin( POMModel model ) {
         Build build = model.getProject().getBuild();
         if (build == null) {
             return null;
@@ -222,9 +236,8 @@ public final class POMUtils {
         List<Plugin> plugins = build.getPlugins();
         Plugin vaadinPlugin = null;
         for (Plugin plugin : plugins) {
-            if (VaadinCustomizer.VAADIN_GROUP_ID.equals(plugin.getGroupId())
-                    && VaadinCustomizer.VAADIN_PLUGIN.equals(plugin
-                            .getArtifactId()))
+            if (VAADIN_GROUP_ID.equals(plugin.getGroupId())
+                    && VAADIN_PLUGIN.equals(plugin.getArtifactId()))
             {
                 vaadinPlugin = plugin;
                 break;
@@ -233,7 +246,7 @@ public final class POMUtils {
         return vaadinPlugin;
     }
 
-    static Plugin getJettyPlugin( POMModel model ) {
+    public static Plugin getJettyPlugin( POMModel model ) {
         Build build = model.getProject().getBuild();
         if (build == null) {
             return null;
@@ -241,9 +254,8 @@ public final class POMUtils {
         List<Plugin> plugins = build.getPlugins();
         Plugin jettyPlugin = null;
         for (Plugin plugin : plugins) {
-            if (VaadinCustomizer.JETTY_GROUP_ID.equals(plugin.getGroupId())
-                    && VaadinCustomizer.JETTY_PLUGIN.equals(plugin
-                            .getArtifactId()))
+            if (JETTY_GROUP_ID.equals(plugin.getGroupId())
+                    && JETTY_PLUGIN.equals(plugin.getArtifactId()))
             {
                 jettyPlugin = plugin;
                 break;
@@ -252,7 +264,7 @@ public final class POMUtils {
         return jettyPlugin;
     }
 
-    static void setTextField( String optionName,
+    public static void setTextField( String optionName,
             Map<String, POMExtensibilityElement> values, JTextField textField,
             POMComponent component )
     {
@@ -268,11 +280,11 @@ public final class POMUtils {
         }
     }
 
-    static String getValue( POMExtensibilityElement element ) {
+    public static String getValue( POMExtensibilityElement element ) {
         return element.getElementText().trim();
     }
 
-    static void setBooleanVaue( String optionName,
+    public static void setBooleanVaue( String optionName,
             Map<String, POMExtensibilityElement> values, JCheckBox checkBox,
             Configuration configuration )
     {
@@ -293,8 +305,8 @@ public final class POMUtils {
         }
     }
 
-    static POMExtensibilityElement createElement( POMModel model, String name,
-            String value )
+    public static POMExtensibilityElement createElement( POMModel model,
+            String name, String value )
     {
         QName qname =
                 POMQName.createQName(name, model.getPOMQNames().isNSAware());
@@ -304,5 +316,17 @@ public final class POMUtils {
             element.setElementText(value);
         }
         return element;
+    }
+
+    public static void addDependency( Project project, String groupId,
+            String artifactId, String version, String scope )
+    {
+        NbMavenProject mavenProject =
+                project.getLookup().lookup(NbMavenProject.class);
+        File file = mavenProject.getMavenProject().getFile();
+        FileObject pom = FileUtil.toFileObject(FileUtil.normalizeFile(file));
+        ModelUtils.addDependency(pom, groupId, artifactId, version, null,
+                scope, null, false);
+        mavenProject.downloadDependencyAndJavadocSource(false);
     }
 }

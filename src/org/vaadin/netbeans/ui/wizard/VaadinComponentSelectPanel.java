@@ -40,7 +40,7 @@ import org.netbeans.api.java.source.CompilationController;
 import org.netbeans.api.java.source.JavaSource;
 import org.netbeans.api.java.source.Task;
 import org.openide.util.NbBundle;
-import org.vaadin.netbeans.code.generator.JavaUtils;
+import org.vaadin.netbeans.utils.JavaUtils;
 
 /**
  * @author denis

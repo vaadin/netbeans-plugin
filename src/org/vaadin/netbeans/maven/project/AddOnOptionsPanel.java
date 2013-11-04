@@ -57,8 +57,9 @@ import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.UserCancelException;
-import org.vaadin.netbeans.code.generator.JavaUtils;
-import org.vaadin.netbeans.code.generator.XmlUtils;
+import org.vaadin.netbeans.utils.JavaUtils;
+import org.vaadin.netbeans.utils.POMUtils;
+import org.vaadin.netbeans.utils.XmlUtils;
 
 /**
  * @author denis

@@ -43,7 +43,7 @@ import org.netbeans.spi.project.ProjectServiceProvider;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
 import org.openide.util.Utilities;
 import org.vaadin.netbeans.VaadinSupport;
-import org.vaadin.netbeans.code.generator.JavaUtils;
+import org.vaadin.netbeans.utils.JavaUtils;
 
 /**
  * @author denis

@@ -31,8 +31,8 @@ import org.netbeans.spi.editor.hints.ErrorDescriptionFactory;
 import org.netbeans.spi.editor.hints.Fix;
 import org.netbeans.spi.editor.hints.Severity;
 import org.openide.util.NbBundle;
-import org.vaadin.netbeans.code.generator.JavaUtils;
 import org.vaadin.netbeans.editor.VaadinTaskFactory;
+import org.vaadin.netbeans.utils.JavaUtils;
 
 import com.sun.source.tree.AnnotationTree;
 import com.sun.source.tree.ExpressionTree;

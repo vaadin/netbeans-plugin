@@ -7,7 +7,7 @@
             <folder name="xml-mime">
                  <folder name="Actions">
             	     <file name="org-vaadin-netbeans-refactoring-CustomRefactoringAction.instance">
-    			<attr name="position" intvalue="1400"/>
+    			<attr name="position" intvalue="1350"/>
     			<attr name="misplaced.action.allowed" boolvalue="true"/>
        	             </file>
         	</folder>

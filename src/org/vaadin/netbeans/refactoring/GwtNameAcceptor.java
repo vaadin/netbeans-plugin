@@ -17,8 +17,8 @@ package org.vaadin.netbeans.refactoring;
 
 import org.netbeans.api.java.classpath.ClassPath;
 import org.openide.filesystems.FileObject;
-import org.vaadin.netbeans.code.generator.XmlUtils;
 import org.vaadin.netbeans.refactoring.AbstractRefactoringPlugin.GwtModuleAcceptor;
+import org.vaadin.netbeans.utils.XmlUtils;
 
 /**
  * @author denis

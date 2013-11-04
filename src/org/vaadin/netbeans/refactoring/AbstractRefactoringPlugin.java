@@ -48,8 +48,8 @@ import org.netbeans.modules.refactoring.java.spi.JavaRefactoringPlugin;
 import org.netbeans.modules.refactoring.spi.RefactoringElementsBag;
 import org.openide.filesystems.FileObject;
 import org.vaadin.netbeans.VaadinSupport;
-import org.vaadin.netbeans.code.generator.JavaUtils;
-import org.vaadin.netbeans.code.generator.XmlUtils;
+import org.vaadin.netbeans.utils.JavaUtils;
+import org.vaadin.netbeans.utils.XmlUtils;
 
 import com.sun.source.tree.AnnotationTree;
 import com.sun.source.tree.AssignmentTree;

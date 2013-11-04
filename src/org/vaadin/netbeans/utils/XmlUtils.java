@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.vaadin.netbeans.code.generator;
+package org.vaadin.netbeans.utils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -280,37 +280,8 @@ public final class XmlUtils {
         }
     }
 
-    static void waitGwtXml( final VaadinSupport support,
-            final List<String> srcPath )
-    {
-        try {
-            final boolean[] gwtXmlCreated = new boolean[1];
-            support.runModelOperation(new ModelOperation() {
-
-                @Override
-                public void run( VaadinModel model ) {
-                    if (model.getGwtXml() != null) {
-                        gwtXmlCreated[0] = true;
-                        srcPath.add(model.getSourcePaths().get(0));
-                    }
-                }
-            });
-            if (!gwtXmlCreated[0]) {
-                try {
-                    Thread.sleep(100);
-                }
-                catch (InterruptedException ignore) {
-                }
-                waitGwtXml(support, srcPath);
-            }
-        }
-        catch (IOException e) {
-            LOG.log(Level.INFO, null, e);
-        }
-    }
-
     @NbBundle.Messages("serverSideInClient=Selected package should be used only for client side classes")
-    static boolean checkServerPackage( FileObject serverPkg,
+    public static boolean checkServerPackage( FileObject serverPkg,
             List<String> srcPaths, FileObject gwtXml ) throws IOException
     {
         for (String srcPath : srcPaths) {

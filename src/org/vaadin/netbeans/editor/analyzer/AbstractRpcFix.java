@@ -27,9 +27,9 @@ import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
 import org.openide.filesystems.FileObject;
 import org.vaadin.netbeans.VaadinSupport;
-import org.vaadin.netbeans.code.generator.XmlUtils;
 import org.vaadin.netbeans.model.ModelOperation;
 import org.vaadin.netbeans.model.VaadinModel;
+import org.vaadin.netbeans.utils.XmlUtils;
 
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.IdentifierTree;

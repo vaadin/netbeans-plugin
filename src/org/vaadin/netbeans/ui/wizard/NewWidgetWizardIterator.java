@@ -36,9 +36,9 @@ import org.openide.filesystems.FileObject;
 import org.vaadin.netbeans.code.generator.ConnectorOnlyWidgetGenerator;
 import org.vaadin.netbeans.code.generator.ExtensionWidgetGenerator;
 import org.vaadin.netbeans.code.generator.FullFledgedWidgetGenerator;
-import org.vaadin.netbeans.code.generator.JavaUtils;
 import org.vaadin.netbeans.code.generator.WidgetGenerator;
 import org.vaadin.netbeans.ui.wizard.WidgetTypePanel.Template;
+import org.vaadin.netbeans.utils.JavaUtils;
 
 /**
  * @author denis

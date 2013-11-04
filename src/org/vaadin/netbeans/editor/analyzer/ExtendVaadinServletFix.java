@@ -29,7 +29,7 @@ import org.netbeans.api.java.source.JavaSource.Phase;
 import org.netbeans.spi.editor.hints.ChangeInfo;
 import org.openide.filesystems.FileObject;
 import org.openide.util.NbBundle;
-import org.vaadin.netbeans.code.generator.JavaUtils;
+import org.vaadin.netbeans.utils.JavaUtils;
 
 import com.sun.source.tree.ClassTree;
 

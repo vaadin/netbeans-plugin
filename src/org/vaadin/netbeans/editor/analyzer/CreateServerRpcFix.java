@@ -45,8 +45,8 @@ import org.openide.NotifyDescriptor;
 import org.openide.filesystems.FileObject;
 import org.openide.util.Mutex;
 import org.openide.util.NbBundle;
-import org.vaadin.netbeans.code.generator.JavaUtils;
 import org.vaadin.netbeans.editor.analyzer.ui.RpcInterfacePanel;
+import org.vaadin.netbeans.utils.JavaUtils;
 
 import com.sun.source.tree.BlockTree;
 import com.sun.source.tree.ClassTree;

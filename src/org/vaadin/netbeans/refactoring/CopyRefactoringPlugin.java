@@ -27,8 +27,8 @@ import org.netbeans.api.java.source.WorkingCopy;
 import org.netbeans.api.project.Project;
 import org.netbeans.modules.refactoring.api.SingleCopyRefactoring;
 import org.openide.filesystems.FileObject;
-import org.vaadin.netbeans.code.generator.JavaUtils;
-import org.vaadin.netbeans.code.generator.XmlUtils;
+import org.vaadin.netbeans.utils.JavaUtils;
+import org.vaadin.netbeans.utils.XmlUtils;
 
 /**
  * @author denis

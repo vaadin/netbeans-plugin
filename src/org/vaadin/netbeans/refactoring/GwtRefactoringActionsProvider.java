@@ -27,7 +27,7 @@ import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.actions.SystemAction;
 import org.openide.util.lookup.ServiceProvider;
-import org.vaadin.netbeans.code.generator.XmlUtils;
+import org.vaadin.netbeans.utils.XmlUtils;
 
 /**
  * @author denis

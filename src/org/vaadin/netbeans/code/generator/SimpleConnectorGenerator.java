@@ -35,6 +35,8 @@ import org.openide.util.NbBundle;
 import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.model.ModelOperation;
 import org.vaadin.netbeans.model.VaadinModel;
+import org.vaadin.netbeans.utils.JavaUtils;
+import org.vaadin.netbeans.utils.XmlUtils;
 
 /**
  * @author denis
@@ -103,7 +105,7 @@ abstract class SimpleConnectorGenerator implements WidgetGenerator {
             gwtXml[0] = XmlUtils.createGwtXml(targetPackage);
             classes.add(gwtXml[0]);
             if (support != null) {
-                XmlUtils.waitGwtXml(support, srcPaths);
+                FullFledgedWidgetGenerator.waitGwtXml(support, srcPaths);
             }
         }
         else if (!XmlUtils.checkServerPackage(targetPackage, srcPaths,

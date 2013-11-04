@@ -37,10 +37,10 @@ import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
 import org.vaadin.netbeans.VaadinSupport;
-import org.vaadin.netbeans.code.generator.XmlUtils;
 import org.vaadin.netbeans.editor.VaadinTaskFactory;
 import org.vaadin.netbeans.model.ModelOperation;
 import org.vaadin.netbeans.model.VaadinModel;
+import org.vaadin.netbeans.utils.XmlUtils;
 
 /**
  * @author denis

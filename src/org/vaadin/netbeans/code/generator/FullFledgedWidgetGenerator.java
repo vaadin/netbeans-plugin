@@ -23,6 +23,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.project.Project;
@@ -33,9 +35,11 @@ import org.openide.loaders.DataFolder;
 import org.openide.loaders.DataObject;
 import org.openide.util.NbBundle;
 import org.vaadin.netbeans.VaadinSupport;
-import org.vaadin.netbeans.code.generator.JavaUtils.JavaModelElement;
 import org.vaadin.netbeans.model.ModelOperation;
 import org.vaadin.netbeans.model.VaadinModel;
+import org.vaadin.netbeans.utils.JavaUtils;
+import org.vaadin.netbeans.utils.XmlUtils;
+import org.vaadin.netbeans.utils.JavaUtils.JavaModelElement;
 
 /**
  * @author denis
@@ -64,15 +68,20 @@ public class FullFledgedWidgetGenerator implements WidgetGenerator {
 
     private static final String SERVER_COMPONENT = "server_component";//NOI18N
 
-    private static final String CONNECTOR_TEMPLATE = "Templates/Vaadin/FullFledgedConnector.java"; // NOI18N
+    private static final String CONNECTOR_TEMPLATE =
+            "Templates/Vaadin/FullFledgedConnector.java"; // NOI18N
 
-    private static final String SHARED_STATE_TEMPLATE = "Templates/Vaadin/SharedState.java"; // NOI18N
+    private static final String SHARED_STATE_TEMPLATE =
+            "Templates/Vaadin/SharedState.java"; // NOI18N
 
-    private static final String WIDGET_TEMPLATE = "Templates/Vaadin/FullFledgedWidget.java";// NOI18N
+    private static final String WIDGET_TEMPLATE =
+            "Templates/Vaadin/FullFledgedWidget.java";// NOI18N
 
-    private static final String SERVER_RPC_TEMPLATE = "Templates/Vaadin/ServerRpc.java";// NOI18N
+    private static final String SERVER_RPC_TEMPLATE =
+            "Templates/Vaadin/ServerRpc.java";// NOI18N
 
-    private static final String CLIENT_RPC_TEMPLATE = "Templates/Vaadin/ClientRpc.java";// NOI18N
+    private static final String CLIENT_RPC_TEMPLATE =
+            "Templates/Vaadin/ClientRpc.java";// NOI18N
 
     private static final String CLIENT_RPC_SUFFIX = "ClientRpc";// NOI18N
 
@@ -115,7 +124,7 @@ public class FullFledgedWidgetGenerator implements WidgetGenerator {
             gwtXml[0] = XmlUtils.createGwtXml(targetPackage);
             classes.add(gwtXml[0]);
             if (support != null) {
-                XmlUtils.waitGwtXml(support, srcPaths);
+                waitGwtXml(support, srcPaths);
             }
         }
         else if (!XmlUtils.checkServerPackage(targetPackage, srcPaths,
@@ -124,27 +133,29 @@ public class FullFledgedWidgetGenerator implements WidgetGenerator {
             return Collections.emptySet();
         }
 
-        FileObject clientPackage = XmlUtils.getClientWidgetPackage(gwtXml[0],
-                srcPaths.get(0), true);
+        FileObject clientPackage =
+                XmlUtils.getClientWidgetPackage(gwtXml[0], srcPaths.get(0),
+                        true);
 
         // Generate rpcs, shared state
         handle.progress(Bundle.generateClientRpc());
-        FileObject clientRpc = createClientRpc(componentClassName,
-                clientPackage, project);
+        FileObject clientRpc =
+                createClientRpc(componentClassName, clientPackage, project);
         classes.add(clientRpc);
         handle.progress(Bundle.generateServerRpc());
-        FileObject serverRpc = createServerRpc(componentClassName,
-                clientPackage, project);
+        FileObject serverRpc =
+                createServerRpc(componentClassName, clientPackage, project);
         classes.add(serverRpc);
         handle.progress(Bundle.generateState());
-        FileObject sharedState = createSharedState(componentClassName,
-                clientPackage, project, Templates.getTargetName(wizard));
+        FileObject sharedState =
+                createSharedState(componentClassName, clientPackage, project,
+                        Templates.getTargetName(wizard));
         classes.add(sharedState);
 
-        JavaModelElement clientRpcElement = JavaUtils
-                .getModlelElement(clientRpc);
-        JavaModelElement serverRpcElement = JavaUtils
-                .getModlelElement(serverRpc);
+        JavaModelElement clientRpcElement =
+                JavaUtils.getModlelElement(clientRpc);
+        JavaModelElement serverRpcElement =
+                JavaUtils.getModlelElement(serverRpc);
         JavaModelElement stateElement = JavaUtils.getModlelElement(sharedState);
 
         // Generate server component
@@ -159,19 +170,21 @@ public class FullFledgedWidgetGenerator implements WidgetGenerator {
         template.setAttribute(SHARED_STATE, stateElement.getName());
         DataObject dataTemplate = DataObject.find(template);
         DataFolder dataFolder = DataFolder.findFolder(targetPackage);
-        DataObject dataObject = dataTemplate.createFromTemplate(dataFolder,
-                componentClassName);
+        DataObject dataObject =
+                dataTemplate.createFromTemplate(dataFolder, componentClassName);
         FileObject serverComponent = dataObject.getPrimaryFile();
         classes.add(dataObject.getPrimaryFile());
 
         handle.progress(Bundle.generateConnector());
-        String connectorName = JavaUtils.getFreeName(clientPackage,
-                componentClassName + CONNECTOR, JavaUtils.JAVA_SUFFIX);
+        String connectorName =
+                JavaUtils.getFreeName(clientPackage, componentClassName
+                        + CONNECTOR, JavaUtils.JAVA_SUFFIX);
 
         // Generate widget
         handle.progress(Bundle.generateWidget());
-        FileObject widget = createWidget(componentClassName, clientPackage,
-                project, connectorName, sharedState.getName());
+        FileObject widget =
+                createWidget(componentClassName, clientPackage, project,
+                        connectorName, sharedState.getName());
         classes.add(widget);
 
         // Generate connector
@@ -183,8 +196,9 @@ public class FullFledgedWidgetGenerator implements WidgetGenerator {
         map.put(CLIENT_RPC, clientRpc.getName());
         map.put(SHARED_STATE, stateElement.getName());
         map.put(WIDGET, widget.getName());
-        dataObject = JavaUtils.createDataObjectFromTemplate(CONNECTOR_TEMPLATE,
-                clientPackage, connectorName, map);
+        dataObject =
+                JavaUtils.createDataObjectFromTemplate(CONNECTOR_TEMPLATE,
+                        clientPackage, connectorName, map);
         classes.add(dataObject.getPrimaryFile());
 
         return classes;
@@ -194,8 +208,9 @@ public class FullFledgedWidgetGenerator implements WidgetGenerator {
             FileObject clientPackage, Project project, String connectorName,
             String stateName ) throws IOException
     {
-        String name = JavaUtils.getFreeName(clientPackage, componentClassName
-                + WIDGET_SUFFIX, JavaUtils.JAVA_SUFFIX);
+        String name =
+                JavaUtils.getFreeName(clientPackage, componentClassName
+                        + WIDGET_SUFFIX, JavaUtils.JAVA_SUFFIX);
         Map<String, String> map = new HashMap<>();
         map.put(SHARED_STATE, stateName);
         map.put(CONNECTOR_VAR, connectorName);
@@ -207,8 +222,9 @@ public class FullFledgedWidgetGenerator implements WidgetGenerator {
             FileObject clientPackage, Project project, String componentName )
             throws IOException
     {
-        String name = JavaUtils.getFreeName(clientPackage, componentClassName
-                + SHARED_STATE_SUFFIX, JavaUtils.JAVA_SUFFIX);
+        String name =
+                JavaUtils.getFreeName(clientPackage, componentClassName
+                        + SHARED_STATE_SUFFIX, JavaUtils.JAVA_SUFFIX);
         return JavaUtils.createDataObjectFromTemplate(SHARED_STATE_TEMPLATE,
                 clientPackage, name,
                 Collections.singletonMap(COMPONENT_VAR, componentName))
@@ -218,8 +234,9 @@ public class FullFledgedWidgetGenerator implements WidgetGenerator {
     private FileObject createServerRpc( String componentClassName,
             FileObject clientPackage, Project project ) throws IOException
     {
-        String name = JavaUtils.getFreeName(clientPackage, componentClassName
-                + SERVER_RPC_SUFFIX, JavaUtils.JAVA_SUFFIX);
+        String name =
+                JavaUtils.getFreeName(clientPackage, componentClassName
+                        + SERVER_RPC_SUFFIX, JavaUtils.JAVA_SUFFIX);
         return JavaUtils.createDataObjectFromTemplate(SERVER_RPC_TEMPLATE,
                 clientPackage, name, null).getPrimaryFile();
     }
@@ -227,9 +244,40 @@ public class FullFledgedWidgetGenerator implements WidgetGenerator {
     private FileObject createClientRpc( String componentClassName,
             FileObject clientPackage, Project project ) throws IOException
     {
-        String name = JavaUtils.getFreeName(clientPackage, componentClassName
-                + CLIENT_RPC_SUFFIX, JavaUtils.JAVA_SUFFIX);
+        String name =
+                JavaUtils.getFreeName(clientPackage, componentClassName
+                        + CLIENT_RPC_SUFFIX, JavaUtils.JAVA_SUFFIX);
         return JavaUtils.createDataObjectFromTemplate(CLIENT_RPC_TEMPLATE,
                 clientPackage, name, null).getPrimaryFile();
+    }
+
+    static void waitGwtXml( final VaadinSupport support,
+            final List<String> srcPath )
+    {
+        try {
+            final boolean[] gwtXmlCreated = new boolean[1];
+            support.runModelOperation(new ModelOperation() {
+
+                @Override
+                public void run( VaadinModel model ) {
+                    if (model.getGwtXml() != null) {
+                        gwtXmlCreated[0] = true;
+                        srcPath.add(model.getSourcePaths().get(0));
+                    }
+                }
+            });
+            if (!gwtXmlCreated[0]) {
+                try {
+                    Thread.sleep(100);
+                }
+                catch (InterruptedException ignore) {
+                }
+                waitGwtXml(support, srcPath);
+            }
+        }
+        catch (IOException e) {
+            Logger.getLogger(FullFledgedWidgetGenerator.class.getName()).log(
+                    Level.INFO, null, e);
+        }
     }
 }

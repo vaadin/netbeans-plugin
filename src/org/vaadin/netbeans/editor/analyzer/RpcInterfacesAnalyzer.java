@@ -51,8 +51,8 @@ import org.netbeans.spi.editor.hints.Severity;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
-import org.vaadin.netbeans.code.generator.JavaUtils;
 import org.vaadin.netbeans.editor.VaadinTaskFactory;
+import org.vaadin.netbeans.utils.JavaUtils;
 
 /**
  * @author denis

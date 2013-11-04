@@ -40,14 +40,14 @@ import org.netbeans.modules.xml.retriever.catalog.Utilities;
 import org.netbeans.modules.xml.xam.ModelSource;
 import org.netbeans.modules.xml.xam.locator.CatalogModelException;
 import org.openide.filesystems.FileObject;
-import org.vaadin.netbeans.code.generator.JavaUtils;
-import org.vaadin.netbeans.code.generator.XmlUtils;
 import org.vaadin.netbeans.model.ServletConfiguration;
 import org.vaadin.netbeans.model.VaadinModel;
 import org.vaadin.netbeans.model.gwt.GwtModel;
 import org.vaadin.netbeans.model.gwt.GwtModelFactory;
 import org.vaadin.netbeans.model.gwt.Module;
 import org.vaadin.netbeans.model.gwt.Source;
+import org.vaadin.netbeans.utils.JavaUtils;
+import org.vaadin.netbeans.utils.XmlUtils;
 
 /**
  * @author denis

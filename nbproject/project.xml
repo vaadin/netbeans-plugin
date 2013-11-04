@@ -399,7 +399,14 @@
                     </test-dependency>
                 </test-type>
             </test-dependencies>
-            <public-packages/>
+            <friend-packages>
+                <friend>com.vaadin.netbeans.experimental</friend>
+                <package>org.vaadin.netbeans</package>
+                <package>org.vaadin.netbeans.model</package>
+                <package>org.vaadin.netbeans.model.gwt</package>
+                <package>org.vaadin.netbeans.retriever</package>
+                <package>org.vaadin.netbeans.utils</package>
+            </friend-packages>
         </data>
     </configuration>
 </project>

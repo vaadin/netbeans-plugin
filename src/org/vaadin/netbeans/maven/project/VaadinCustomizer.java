@@ -38,19 +38,12 @@ public class VaadinCustomizer implements
         ProjectCustomizer.CompositeCategoryProvider
 {
 
-    static final String VAADIN_GROUP_ID = "com.vaadin"; // NOI18N
-
-    static final String VAADIN_PLUGIN = "vaadin-maven-plugin"; // NOI18N
-
-    static final String JETTY_GROUP_ID = "org.mortbay.jetty"; // NOI18N
-
-    static final String JETTY_PLUGIN = "jetty-maven-plugin"; // NOI18N
-
     static final String VAADIN_CATEGORY = "Vaadin"; // NOI18N
 
     private static final String GWT_COMPILER_CATEGORY = "GwtCompiler";// NOI18N
 
-    private static final String ADVANCED_GWT_COMPILER_CATEGORY = "AdvancedGwtCompiler";// NOI18N
+    private static final String ADVANCED_GWT_COMPILER_CATEGORY =
+            "AdvancedGwtCompiler";// NOI18N
 
     private static final String DEV_MODE_CATEGORY = "GwtHosted";// NOI18N
 
@@ -69,21 +62,25 @@ public class VaadinCustomizer implements
         }
         BufferedImage image = null;
         try {
-            image = ImageIO
-                    .read(VaadinCustomizer.class
+            image =
+                    ImageIO.read(VaadinCustomizer.class
                             .getResource('/' + VaadinProjectWizardIterator.PROJECT_ICON));
         }
         catch (IOException ignore) {
         }
         if (support.isWeb()) {
-            Category gwt = Category.create(GWT_COMPILER_CATEGORY,
-                    Bundle.gwtCategoryName(), null);
-            Category advanced = Category.create(ADVANCED_GWT_COMPILER_CATEGORY,
-                    Bundle.advancedCategoryName(), null);
-            Category devMode = Category.create(DEV_MODE_CATEGORY,
-                    Bundle.devModeCategoryName(), null);
-            Category jetty = Category.create(JETTY_CATEGORY,
-                    Bundle.jettyCategoryName(), null);
+            Category gwt =
+                    Category.create(GWT_COMPILER_CATEGORY,
+                            Bundle.gwtCategoryName(), null);
+            Category advanced =
+                    Category.create(ADVANCED_GWT_COMPILER_CATEGORY,
+                            Bundle.advancedCategoryName(), null);
+            Category devMode =
+                    Category.create(DEV_MODE_CATEGORY,
+                            Bundle.devModeCategoryName(), null);
+            Category jetty =
+                    Category.create(JETTY_CATEGORY, Bundle.jettyCategoryName(),
+                            null);
 
             return ProjectCustomizer.Category.create(VAADIN_CATEGORY,
                     Bundle.vaadinCategoryName(), image, gwt, advanced, devMode,

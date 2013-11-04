@@ -48,7 +48,7 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter.Popup;
 import org.vaadin.netbeans.VaadinSupport;
-import org.vaadin.netbeans.code.generator.XmlUtils;
+import org.vaadin.netbeans.utils.XmlUtils;
 
 /**
  * @author denis

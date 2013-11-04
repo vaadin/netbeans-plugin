@@ -67,9 +67,9 @@ import org.openide.filesystems.FileUtil;
 import org.openide.util.RequestProcessor;
 import org.openide.util.TaskListener;
 import org.vaadin.netbeans.VaadinSupport;
-import org.vaadin.netbeans.code.generator.JavaUtils;
-import org.vaadin.netbeans.maven.project.POMUtils;
 import org.vaadin.netbeans.model.ModelOperation;
+import org.vaadin.netbeans.utils.JavaUtils;
+import org.vaadin.netbeans.utils.POMUtils;
 
 /**
  * @author denis

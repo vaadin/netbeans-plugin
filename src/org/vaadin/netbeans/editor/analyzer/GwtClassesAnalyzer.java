@@ -24,7 +24,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 
 import org.netbeans.api.java.source.CompilationInfo;
-import org.vaadin.netbeans.code.generator.JavaUtils;
+import org.vaadin.netbeans.utils.JavaUtils;
 
 /**
  * @author denis

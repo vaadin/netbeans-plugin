@@ -41,6 +41,7 @@ import org.netbeans.modules.maven.model.pom.Plugin;
 import org.openide.execution.ExecutorTask;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
+import org.vaadin.netbeans.utils.POMUtils;
 
 /**
  * @author denis

@@ -18,35 +18,27 @@ package org.vaadin.netbeans.maven.project;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.openide.filesystems.FileUtil;
-import org.openide.modules.Places;
+import org.vaadin.netbeans.retriever.AbstractRetriever;
 
 /**
  * @author denis
  */
-public final class VaadinVersions {
+public final class VaadinVersions extends AbstractRetriever {
 
     private static final String VERSIONS = "versions"; // NOI18N
 
-    private static final String VAADIN = "vaadin"; // NOI18N
-
-    private static final String UTF_8 = "UTF-8"; // NOI18N
-
     private static final VaadinVersions INSTANCE = new VaadinVersions();
 
-    private static final String VERSIONS_URL = "http://vaadin.com/download/VERSIONS_7"; // NOI18N
+    private static final String VERSIONS_URL =
+            "http://vaadin.com/download/VERSIONS_7"; // NOI18N
 
     private static final Logger LOG = Logger.getLogger(VaadinVersions.class
             .getName()); // NOI18N  
@@ -63,38 +55,25 @@ public final class VaadinVersions {
         return versions;
     }
 
-    private void requestVersions() {
-        InputStream inputStream = null;
-        try {
-            URL url = new URL(VERSIONS_URL);
-            URLConnection connection = url.openConnection();
-            connection.connect();
-            inputStream = connection.getInputStream();
-            File temp = File.createTempFile(VAADIN, VERSIONS);
-            temp.deleteOnExit();
-            save(inputStream, temp);
+    @Override
+    protected String getCachedFileName() {
+        return VERSIONS;
+    }
 
-            File versionsFile = getCachedVersionsFile();
-            versionsFile.createNewFile();
-            copy(temp, versionsFile);
-        }
-        catch (MalformedURLException e) {
-            LOG.log(Level.INFO, null, e);
-        }
-        catch (IOException e) {
-            LOG.log(Level.INFO, null, e);
-        }
-        finally {
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                }
-                catch (IOException e) {
-                    LOG.log(Level.INFO, null, e);
-                }
-            }
-        }
-        File cached = getCachedVersionsFile();
+    @Override
+    protected String getUrl() {
+        return VERSIONS_URL;
+    }
+
+    @Override
+    protected Object getFileLock( File file ) {
+        return this;
+    }
+
+    private void requestVersions() {
+        requestData();
+
+        File cached = getCachedFile();
         if (cached.exists()) {
             try {
                 readVersions(cached);
@@ -105,60 +84,26 @@ public final class VaadinVersions {
         }
     }
 
-    private File getCachedVersionsFile() {
-        File cache = Places.getCacheSubdirectory(VAADIN);
-        File versionsFile = new File(cache, VERSIONS);
-        return versionsFile;
-    }
-
-    private void save( InputStream inputStream, File file ) throws IOException {
-        FileOutputStream stream = new FileOutputStream(file);
-        try {
-            FileUtil.copy(inputStream, stream);
-        }
-        finally {
-            try {
-                stream.close();
-            }
-            catch (IOException e) {
-                LOG.log(Level.INFO, null, e);
-            }
-        }
-    }
-
-    private void copy( File source, File dest ) throws IOException {
-        FileInputStream inputStream = new FileInputStream(source);
-        try {
-            save(inputStream, dest);
-        }
-        finally {
-            try {
-                inputStream.close();
-            }
-            catch (IOException e) {
-                LOG.log(Level.INFO, null, e);
-            }
-        }
-    }
-
     private void readVersions( File file ) throws IOException {
-        FileInputStream inputStream = new FileInputStream(file);
-        try {
-            readVersions(inputStream);
-        }
-        finally {
+        synchronized (getFileLock(file)) {
+            FileInputStream inputStream = new FileInputStream(file);
             try {
-                inputStream.close();
+                readVersions(inputStream);
             }
-            catch (IOException e) {
-                LOG.log(Level.INFO, null, e);
+            finally {
+                try {
+                    inputStream.close();
+                }
+                catch (IOException e) {
+                    LOG.log(Level.INFO, null, e);
+                }
             }
         }
     }
 
     private void readVersions( InputStream stream ) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(
-                stream, UTF_8));
+        BufferedReader reader =
+                new BufferedReader(new InputStreamReader(stream, UTF_8));
         List<String> result = new LinkedList<>();
         String line;
         while ((line = reader.readLine()) != null) {
