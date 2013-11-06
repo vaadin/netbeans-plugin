@@ -87,6 +87,22 @@ public abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
         return myNoAccessors;
     }
 
+    protected boolean hasNoArgCtor( TypeElement type ) {
+        List<ExecutableElement> ctors =
+                ElementFilter.constructorsIn(type.getEnclosedElements());
+        if (ctors.isEmpty()) {
+            return true;
+        }
+        for (ExecutableElement ctor : ctors) {
+            if (ctor.getModifiers().contains(Modifier.PUBLIC)) {
+                if (ctor.getParameters().isEmpty()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     protected void checkJavaBean( VariableElement checkTarget, DeclaredType type )
     {
         List<VariableElement> fields =

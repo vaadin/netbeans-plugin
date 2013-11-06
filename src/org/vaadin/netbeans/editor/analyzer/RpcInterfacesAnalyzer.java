@@ -262,23 +262,7 @@ public class RpcInterfacesAnalyzer extends AbstractJavaBeanAnalyzer {
     protected void checkJavaBean( VariableElement checkTarget, DeclaredType type )
     {
         CompilationInfo info = getInfo();
-        TypeElement serializable =
-                info.getElements().getTypeElement(Serializable.class.getName());
-        if (serializable != null
-                && !info.getTypes().isSubtype(type, serializable.asType()))
-        {
-            List<Integer> positions =
-                    AbstractJavaFix.getElementPosition(info, checkTarget);
-            ErrorDescription description =
-                    ErrorDescriptionFactory.createErrorDescription(
-                            getSeverity(Severity.WARNING),
-                            Bundle.nonSerializableDeclarationType(type),
-                            Collections.<Fix> emptyList(),
-                            info.getFileObject(), positions.get(0),
-                            positions.get(1));
-            getNonSerializables().add(description);
-            getDescriptions().add(description);
-        }
+        checkSerializable(checkTarget, type, info);
         if (isCanceled()) {
             return;
         }
@@ -301,8 +285,54 @@ public class RpcInterfacesAnalyzer extends AbstractJavaBeanAnalyzer {
         if (!isInSource || isCanceled()) {
             return;
         }
-        // TODO : check parameter's class location (call refactored checkClientPackage() methods) 
+        checkDefaultCtor(checkTarget, type, info);
         super.checkJavaBean(checkTarget, type);
+    }
+
+    @NbBundle.Messages({
+            "#{0} - type",
+            "nonDefaultCtor=Parameter''s type refers to class {0} which doesn''t have public no-arg contructor" })
+    private void checkDefaultCtor( VariableElement checkTarget,
+            DeclaredType type, CompilationInfo info )
+    {
+        Element element = type.asElement();
+        if (element instanceof TypeElement) {
+            if (!hasNoArgCtor((TypeElement) element)) {
+                List<Integer> positions =
+                        AbstractJavaFix.getElementPosition(info, checkTarget);
+                ErrorDescription description =
+                        ErrorDescriptionFactory.createErrorDescription(
+                                getSeverity(Severity.WARNING),
+                                Bundle.nonDefaultCtor(type),
+                                Collections.<Fix> emptyList(),
+                                info.getFileObject(), positions.get(0),
+                                positions.get(1));
+                getNonSerializables().add(description);
+                getDescriptions().add(description);
+            }
+        }
+    }
+
+    private void checkSerializable( VariableElement checkTarget,
+            DeclaredType type, CompilationInfo info )
+    {
+        TypeElement serializable =
+                info.getElements().getTypeElement(Serializable.class.getName());
+        if (serializable != null
+                && !info.getTypes().isSubtype(type, serializable.asType()))
+        {
+            List<Integer> positions =
+                    AbstractJavaFix.getElementPosition(info, checkTarget);
+            ErrorDescription description =
+                    ErrorDescriptionFactory.createErrorDescription(
+                            getSeverity(Severity.WARNING),
+                            Bundle.nonSerializableDeclarationType(type),
+                            Collections.<Fix> emptyList(),
+                            info.getFileObject(), positions.get(0),
+                            positions.get(1));
+            getNonSerializables().add(description);
+            getDescriptions().add(description);
+        }
     }
 
     private void checkMethodSingnature( ExecutableElement method ) {
