@@ -164,15 +164,32 @@ class VaadinModelImpl implements VaadinModel {
 
     FileObject findGwtXml() {
         try {
-            Set<FileObject> webWidgetsetFiles = getWebWidgetsetFiles();
-            if (webWidgetsetFiles.isEmpty()) {
-                LOG.log(Level.INFO,
-                        "WEB configuration is not available for the project {0}, "
-                                + "proceed with recursive GWT Modules search",
-                        myProject.getProjectDirectory());//NOI18N
+            if (isWeb) {
+                Set<FileObject> webWidgetsetFiles = getWebWidgetsetFiles();
+                if (webWidgetsetFiles.isEmpty()) {
+                    LOG.log(Level.INFO,
+                            "WEB configuration is not available for the project {0}, "
+                                    + "proceed with recursive GWT Modules search",
+                            myProject.getProjectDirectory());//NOI18N
+                }
+                else {
+                    return webWidgetsetFiles.iterator().next();
+                }
             }
             else {
-                return webWidgetsetFiles.iterator().next();
+                Set<FileObject> widgetsets =
+                        getWidgetsetFiles(VaadinSupportImpl
+                                .getPomWidgetsets(VaadinSupportImpl
+                                        .getPom(myProject)));
+                if (widgetsets.isEmpty()) {
+                    LOG.log(Level.INFO,
+                            "No widgetsets configured via POM are found in the project {0}, "
+                                    + "proceed with recursive GWT Modules search",
+                            myProject.getProjectDirectory());//NOI18N
+                }
+                else {
+                    return widgetsets.iterator().next();
+                }
             }
         }
         catch (IOException e) {
@@ -236,8 +253,13 @@ class VaadinModelImpl implements VaadinModel {
     }
 
     private Set<FileObject> getWebWidgetsetFiles() throws IOException {
-        List<String> webWidgetset = getWebWidgetset();
-        if (webWidgetset.isEmpty()) {
+        return getWidgetsetFiles(getWebWidgetset());
+    }
+
+    private Set<FileObject> getWidgetsetFiles( List<String> widgetsets )
+            throws IOException
+    {
+        if (widgetsets.isEmpty()) {
             return Collections.emptySet();
         }
 
@@ -251,8 +273,8 @@ class VaadinModelImpl implements VaadinModel {
         sourceGroups.addAll(Arrays.asList(javaSourceGroups));
         sourceGroups.addAll(Arrays.asList(resourcesSourceGroups));
 
-        Set<FileObject> result = new LinkedHashSet<>(webWidgetset.size());
-        for (String widgetSet : webWidgetset) {
+        Set<FileObject> result = new LinkedHashSet<>(widgetsets.size());
+        for (String widgetSet : widgetsets) {
             widgetSet = widgetSet.replace('.', '/');
             widgetSet += XmlUtils.GWT_XML;
             for (SourceGroup sourceGroup : sourceGroups) {

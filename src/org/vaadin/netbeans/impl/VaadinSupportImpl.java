@@ -113,38 +113,7 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
             return null;
         }
         else {
-            final String[] widgetset = new String[1];
-            org.netbeans.modules.maven.model.ModelOperation<POMModel> operation =
-                    new org.netbeans.modules.maven.model.ModelOperation<POMModel>()
-                    {
-
-                        @Override
-                        public void performOperation( POMModel model ) {
-                            POMExtensibilityElement widgetsets =
-                                    POMUtils.getWidgetsets(model);
-                            if (widgetsets != null) {
-                                widgetset[0] =
-                                        widgetsets.getElementText().trim();
-                            }
-                        }
-                    };
-            Utilities.performPOMModelOperations(getAddOnConfigFile(),
-                    Collections.singletonList(operation));
-            if (widgetset[0] == null) {
-                return null;
-            }
-            else {
-                StringTokenizer tokenizer =
-                        new StringTokenizer(widgetset[0], ",");
-                List<String> result = new LinkedList<>();
-                while (tokenizer.hasMoreTokens()) {
-                    String nextWidgetset = tokenizer.nextToken().trim();
-                    if (nextWidgetset.length() > 0) {
-                        result.add(nextWidgetset);
-                    }
-                }
-                return result;
-            }
+            return getPomWidgetsets(getAddOnConfigFile());
         }
     }
 
@@ -203,10 +172,7 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
         if (isWeb()) {
             return null;
         }
-        NbMavenProject mvnProject =
-                getProject().getLookup().lookup(NbMavenProject.class);
-        File file = mvnProject.getMavenProject().getFile();
-        return FileUtil.toFileObject(FileUtil.normalizeFile(file));
+        return getPom(getProject());
     }
 
     @Override
@@ -468,6 +434,46 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
         }
         return ClassPathSupport.createProxyClassPath(classPaths
                 .toArray(new ClassPath[classPaths.size()]));
+    }
+
+    static FileObject getPom( Project project ) {
+        NbMavenProject mvnProject =
+                project.getLookup().lookup(NbMavenProject.class);
+        File file = mvnProject.getMavenProject().getFile();
+        return FileUtil.toFileObject(FileUtil.normalizeFile(file));
+    }
+
+    static List<String> getPomWidgetsets( FileObject pom ) {
+        final String[] widgetset = new String[1];
+        org.netbeans.modules.maven.model.ModelOperation<POMModel> operation =
+                new org.netbeans.modules.maven.model.ModelOperation<POMModel>()
+                {
+
+                    @Override
+                    public void performOperation( POMModel model ) {
+                        POMExtensibilityElement widgetsets =
+                                POMUtils.getWidgetsets(model);
+                        if (widgetsets != null) {
+                            widgetset[0] = widgetsets.getElementText().trim();
+                        }
+                    }
+                };
+        Utilities.performPOMModelOperations(pom,
+                Collections.singletonList(operation));
+        if (widgetset[0] == null) {
+            return null;
+        }
+        else {
+            StringTokenizer tokenizer = new StringTokenizer(widgetset[0], ",");
+            List<String> result = new LinkedList<>();
+            while (tokenizer.hasMoreTokens()) {
+                String nextWidgetset = tokenizer.nextToken().trim();
+                if (nextWidgetset.length() > 0) {
+                    result.add(nextWidgetset);
+                }
+            }
+            return result;
+        }
     }
 
     private final class InitTask implements Task<CompilationController> {
