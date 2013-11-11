@@ -20,19 +20,34 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.lang.model.element.Name;
+import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 
+import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.source.ElementHandle;
+import org.netbeans.api.java.source.JavaSource;
+import org.netbeans.api.java.source.TreeMaker;
+import org.netbeans.api.java.source.WorkingCopy;
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
+import org.netbeans.spi.editor.hints.ChangeInfo;
+import org.openide.DialogDescriptor;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.filesystems.FileObject;
+import org.openide.util.Mutex;
+import org.openide.util.NbBundle;
 import org.vaadin.netbeans.VaadinSupport;
+import org.vaadin.netbeans.code.generator.JavaUtils;
+import org.vaadin.netbeans.code.generator.XmlUtils;
+import org.vaadin.netbeans.editor.analyzer.ui.RpcInterfacePanel;
 import org.vaadin.netbeans.model.ModelOperation;
 import org.vaadin.netbeans.model.VaadinModel;
-import org.vaadin.netbeans.utils.XmlUtils;
 
+import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.IdentifierTree;
+import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.util.TreePathScanner;
@@ -42,14 +57,65 @@ import com.sun.source.util.TreePathScanner;
  */
 abstract class AbstractRpcFix extends AbstractJavaFix {
 
-    AbstractRpcFix( FileObject fileObject, ElementHandle<TypeElement> handle ) {
+    AbstractRpcFix( FileObject fileObject, ElementHandle<TypeElement> handle,
+            String varName, String varType )
+    {
         super(fileObject);
         myHandle = handle;
+        myRpcVar = varName;
+        myRpcVarType = varType;
+    }
+
+    @Override
+    public ChangeInfo implement() throws Exception {
+        FileObject pkg = getClientPackage();
+        if (pkg == null) {
+            return null;
+        }
+        String interfaceName = null;
+        String ifaceFqn = getRpcVariableType();
+        if (ifaceFqn == null) {
+            interfaceName = requestInterfaceName(pkg);
+            if (interfaceName == null) {
+                return null;
+            }
+            if (!createFileObject(pkg, interfaceName)) {
+                return null;
+            }
+            ClassPath classPath = ClassPath.getClassPath(pkg, ClassPath.SOURCE);
+            ifaceFqn =
+                    classPath.getResourceName(pkg, '.', false) + '.'
+                            + interfaceName;
+        }
+        else {
+            int index = ifaceFqn.lastIndexOf('.');
+            interfaceName = ifaceFqn.substring(index + 1, ifaceFqn.length());
+        }
+
+        JavaSource javaSource = JavaSource.forFileObject(getFileObject());
+        if (javaSource == null) {
+            Logger.getLogger(AbstractRpcFix.class.getName()).log(Level.WARNING,
+                    "JavaSource is null for file {0}",
+                    getFileObject().getPath());
+            return null;
+        }
+
+        return generateInterfaceUsage(javaSource, ifaceFqn, interfaceName);
     }
 
     protected ElementHandle<TypeElement> getTypeHandle() {
         return myHandle;
     }
+
+    protected abstract String suggestInterfaceName( FileObject targetPkg );
+
+    protected abstract String getRpcInterfaceTemplate();
+
+    protected abstract String getInterfaceCreationDialogTitle();
+
+    protected abstract ChangeInfo generateInterfaceUsage(
+            JavaSource javaSource, final String ifaceFqn, final String ifaceName )
+            throws IOException;
 
     protected FileObject getClientPackage() throws IOException {
         Project project = FileOwnerQuery.getOwner(getFileObject());
@@ -71,8 +137,9 @@ abstract class AbstractRpcFix extends AbstractJavaFix {
                 }
                 try {
                     for (String path : model.getSourcePaths()) {
-                        FileObject clientPkg = XmlUtils.getClientWidgetPackage(
-                                gwtXml, path, false);
+                        FileObject clientPkg =
+                                XmlUtils.getClientWidgetPackage(gwtXml, path,
+                                        false);
                         if (clientPkg != null) {
                             pkg[0] = clientPkg;
                             return;
@@ -86,6 +153,108 @@ abstract class AbstractRpcFix extends AbstractJavaFix {
             }
         });
         return pkg[0];
+    }
+
+    protected String getRpcVariable() {
+        return myRpcVar;
+    }
+
+    protected String getRpcVariableType() {
+        return myRpcVarType;
+    }
+
+    protected String requestInterfaceName( FileObject targetPkg ) {
+        final String name = suggestInterfaceName(targetPkg);
+        String interfaceName =
+                Mutex.EVENT.readAccess(new Mutex.Action<String>() {
+
+                    @Override
+                    public String run() {
+                        RpcInterfacePanel panel = new RpcInterfacePanel(name);
+                        DialogDescriptor descriptor =
+                                new DialogDescriptor(panel,
+                                        getInterfaceCreationDialogTitle());
+                        Object result =
+                                DialogDisplayer.getDefault().notify(descriptor);
+                        if (NotifyDescriptor.OK_OPTION.equals(result)) {
+                            return panel.getIfaceName();
+                        }
+                        else {
+                            return null;
+                        }
+                    }
+
+                });
+        return interfaceName;
+    }
+
+    protected String suggestInterfaceName( FileObject pkg, String prefix,
+            String rpcBaseName )
+    {
+        StringBuilder name = new StringBuilder(prefix);
+        name.append(rpcBaseName);
+        int i = 1;
+        String suggestedName = name.toString();
+        while (pkg.getFileObject(suggestedName, JavaUtils.JAVA) != null) {
+            StringBuilder current = new StringBuilder(name);
+            suggestedName = current.append(i).toString();
+            i++;
+        }
+        return suggestedName;
+    }
+
+    protected void addImport( String ifaceFqn, WorkingCopy copy,
+            TreeMaker treeMaker )
+    {
+        // Don't add import if the interface is in the same package
+        TypeElement sourceElement = getTypeHandle().resolve(copy);
+        PackageElement pkg = copy.getElements().getPackageOf(sourceElement);
+        String pkgName = pkg.getQualifiedName().toString();
+        if (ifaceFqn.startsWith(pkgName)) {
+            String suffix = ifaceFqn.substring(pkgName.length());
+            if (suffix.indexOf('.') == suffix.lastIndexOf('.')) {
+                return;
+            }
+        }
+
+        ImportTree imprt =
+                treeMaker.Import(treeMaker.QualIdent(ifaceFqn), false);
+
+        CompilationUnitTree unitTree = copy.getCompilationUnit();
+        CompilationUnitTree withImport =
+                treeMaker.addCompUnitImport(copy.getCompilationUnit(), imprt);
+
+        copy.rewrite(unitTree, withImport);
+    }
+
+    @NbBundle.Messages({
+            "# {0} - className",
+            "interfaceIsNotCreated=Unable to create an interface with name {0}.",
+            "interfaceAlreadyExists=Interface {0} already exists" })
+    private boolean createFileObject( FileObject pkg, String interfaceName ) {
+        if (pkg.getFileObject(interfaceName, JavaUtils.JAVA_SUFFIX) != null) {
+            NotifyDescriptor descriptor =
+                    new NotifyDescriptor.Message(
+                            Bundle.interfaceAlreadyExists(interfaceName),
+                            NotifyDescriptor.ERROR_MESSAGE);
+            DialogDisplayer.getDefault().notify(descriptor);
+            return false;
+        }
+        try {
+            JavaUtils.createDataObjectFromTemplate(getRpcInterfaceTemplate(),
+                    pkg, interfaceName, null);
+        }
+        catch (IOException e) {
+            Logger.getLogger(CreateServerRpcFix.class.getName()).log(
+                    Level.INFO, null, e);
+            NotifyDescriptor descriptor =
+                    new NotifyDescriptor.Message(
+                            Bundle.interfaceIsNotCreated(interfaceName),
+                            NotifyDescriptor.ERROR_MESSAGE);
+            DialogDisplayer.getDefault().notify(descriptor);
+            return false;
+        }
+        return true;
     }
 
     protected static class CtorScanner extends
@@ -128,4 +297,8 @@ abstract class AbstractRpcFix extends AbstractJavaFix {
     }
 
     private ElementHandle<TypeElement> myHandle;
+
+    private String myRpcVar;
+
+    private String myRpcVarType;
 }

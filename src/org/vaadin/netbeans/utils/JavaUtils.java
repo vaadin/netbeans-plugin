@@ -64,11 +64,15 @@ import org.vaadin.netbeans.ui.wizard.NewWidgetWizardIterator;
  */
 public final class JavaUtils {
 
-    public static final String JAVA_SUFFIX = ".java"; // NOI18N
+    public static final String JAVA = "java"; // NOI18N
 
-    public static final String VAADIN_SERVLET_CONFIGURATION = "com.vaadin.annotations.VaadinServletConfiguration";//NOI18N
+    public static final String JAVA_SUFFIX = "." + JAVA; // NOI18N
 
-    public static final String SERVLET_ANNOTATION = "javax.servlet.annotation.WebServlet"; // NOI18N
+    public static final String VAADIN_SERVLET_CONFIGURATION =
+            "com.vaadin.annotations.VaadinServletConfiguration";//NOI18N
+
+    public static final String SERVLET_ANNOTATION =
+            "javax.servlet.annotation.WebServlet"; // NOI18N
 
     public static final String WIDGETSET = "widgetset"; // NOI18N
 
@@ -80,11 +84,13 @@ public final class JavaUtils {
 
     public static final String UI = "ui"; // NOI18N
 
-    public static final String WEB_INIT_PARAM = "javax.servlet.annotation.WebInitParam"; // NOI18N
+    public static final String WEB_INIT_PARAM =
+            "javax.servlet.annotation.WebInitParam"; // NOI18N
 
     public static final String VAADIN_UI_FQN = "com.vaadin.ui.UI"; // NOI18N
 
-    public static final String VAADIN_SERVLET = "com.vaadin.server.VaadinServlet"; // NOI18N
+    public static final String VAADIN_SERVLET =
+            "com.vaadin.server.VaadinServlet"; // NOI18N
 
     public static final Set<ElementKind> TYPE_KINDS = EnumSet.of(
             ElementKind.CLASS, ElementKind.INTERFACE, ElementKind.ENUM,
@@ -135,8 +141,8 @@ public final class JavaUtils {
                     throws Exception
             {
                 controller.toPhase(Phase.ELEMENTS_RESOLVED);
-                List<? extends TypeElement> topLevelElements = controller
-                        .getTopLevelElements();
+                List<? extends TypeElement> topLevelElements =
+                        controller.getTopLevelElements();
                 if (topLevelElements.size() != 1) {
                     Logger.getLogger(JavaUtils.class.getName()).log(
                             Level.WARNING,
@@ -145,10 +151,11 @@ public final class JavaUtils {
                                     controller.getFileObject().getPath() });
                 }
                 if (topLevelElements.size() > 0) {
-                    String fqn = topLevelElements.get(0).getQualifiedName()
-                            .toString();
-                    String name = topLevelElements.get(0).getSimpleName()
-                            .toString();
+                    String fqn =
+                            topLevelElements.get(0).getQualifiedName()
+                                    .toString();
+                    String name =
+                            topLevelElements.get(0).getSimpleName().toString();
                     element[0] = new JavaModelElement(name, fqn);
                 }
             }
@@ -197,8 +204,8 @@ public final class JavaUtils {
     public static SourceGroup[] getSourceGroups( Project project,
             String sourcesType )
     {
-        SourceGroup[] sourceGroups = ProjectUtils.getSources(project)
-                .getSourceGroups(sourcesType);
+        SourceGroup[] sourceGroups =
+                ProjectUtils.getSources(project).getSourceGroups(sourcesType);
         Set<FileObject> testRoots = getTestRoots(project, sourceGroups);
         List<SourceGroup> list = new ArrayList<>(sourceGroups.length);
         for (SourceGroup sourceGroup : sourceGroups) {
@@ -216,8 +223,8 @@ public final class JavaUtils {
     public static Set<FileObject> getTestRoots( Project project,
             String sourcesType )
     {
-        SourceGroup[] sourceGroups = ProjectUtils.getSources(project)
-                .getSourceGroups(sourcesType);
+        SourceGroup[] sourceGroups =
+                ProjectUtils.getSources(project).getSourceGroups(sourcesType);
         return getTestRoots(project, sourceGroups);
     }
 
@@ -225,22 +232,24 @@ public final class JavaUtils {
             final String searchedTypeName, CompilationInfo controller )
             throws InterruptedException
     {
-        TypeElement searchedType = controller.getElements().getTypeElement(
-                searchedTypeName);
+        TypeElement searchedType =
+                controller.getElements().getTypeElement(searchedTypeName);
         if (searchedType == null) {
             Logger.getLogger(JavaUtils.class.getName()).log(Level.FINE,
                     "Annotation type {0} is not found", searchedTypeName); // NOI18N
             return Collections.emptyList();
         }
-        ElementHandle<TypeElement> searchedTypeHandle = ElementHandle
-                .create(searchedType);
-        final Set<ElementHandle<TypeElement>> elementHandles = controller
-                .getClasspathInfo()
-                .getClassIndex()
-                .getElements(
-                        searchedTypeHandle,
-                        EnumSet.of(SearchKind.TYPE_REFERENCES),
-                        EnumSet.of(SearchScope.SOURCE, SearchScope.DEPENDENCIES));
+        ElementHandle<TypeElement> searchedTypeHandle =
+                ElementHandle.create(searchedType);
+        final Set<ElementHandle<TypeElement>> elementHandles =
+                controller
+                        .getClasspathInfo()
+                        .getClassIndex()
+                        .getElements(
+                                searchedTypeHandle,
+                                EnumSet.of(SearchKind.TYPE_REFERENCES),
+                                EnumSet.of(SearchScope.SOURCE,
+                                        SearchScope.DEPENDENCIES));
         if (elementHandles == null) {
             throw new InterruptedException(
                     "ClassIndex.getElements() was interrupted"); // NOI18N
@@ -268,8 +277,8 @@ public final class JavaUtils {
     public static AnnotationMirror getAnnotation( TypeElement type,
             String annotaiton )
     {
-        List<? extends AnnotationMirror> annotations = type
-                .getAnnotationMirrors();
+        List<? extends AnnotationMirror> annotations =
+                type.getAnnotationMirrors();
         for (AnnotationMirror annotationMirror : annotations) {
             Element element = annotationMirror.getAnnotationType().asElement();
             if (element instanceof TypeElement) {
@@ -284,7 +293,8 @@ public final class JavaUtils {
 
     public static String getValue( AnnotationMirror annotation, String method )
     {
-        AnnotationValue annotationValue = getAnnotationValue(annotation, method);
+        AnnotationValue annotationValue =
+                getAnnotationValue(annotation, method);
         if (annotationValue == null) {
             return null;
         }
@@ -296,8 +306,8 @@ public final class JavaUtils {
     public static AnnotationValue getAnnotationValue(
             AnnotationMirror annotation, String method )
     {
-        Map<? extends ExecutableElement, ? extends AnnotationValue> map = annotation
-                .getElementValues();
+        Map<? extends ExecutableElement, ? extends AnnotationValue> map =
+                annotation.getElementValues();
         for (Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : map
                 .entrySet())
         {
@@ -312,7 +322,8 @@ public final class JavaUtils {
     public static List<?> getArrayValue( AnnotationMirror annotation,
             String method )
     {
-        AnnotationValue annotationValue = getAnnotationValue(annotation, method);
+        AnnotationValue annotationValue =
+                getAnnotationValue(annotation, method);
         if (annotationValue == null) {
             return null;
         }
@@ -329,8 +340,8 @@ public final class JavaUtils {
             String paramName )
     {
         String value = null;
-        List<?> params = JavaUtils.getArrayValue(annotation,
-                JavaUtils.INIT_PARAMS);
+        List<?> params =
+                JavaUtils.getArrayValue(annotation, JavaUtils.INIT_PARAMS);
         if (params == null) {
             return null;
         }
@@ -354,14 +365,15 @@ public final class JavaUtils {
     public static AnnotationMirror getAnnotation( Element element,
             String annotationFqn )
     {
-        List<? extends AnnotationMirror> annotations = element
-                .getAnnotationMirrors();
+        List<? extends AnnotationMirror> annotations =
+                element.getAnnotationMirrors();
         for (AnnotationMirror annotation : annotations) {
-            Element annotationElement = annotation.getAnnotationType()
-                    .asElement();
+            Element annotationElement =
+                    annotation.getAnnotationType().asElement();
             if (annotationElement instanceof TypeElement) {
-                String fqn = ((TypeElement) annotationElement)
-                        .getQualifiedName().toString();
+                String fqn =
+                        ((TypeElement) annotationElement).getQualifiedName()
+                                .toString();
                 if (fqn.equals(annotationFqn)) {
                     return annotation;
                 }
@@ -373,14 +385,15 @@ public final class JavaUtils {
     public static boolean hasAnnotation( Element element,
             String... annotationFqns )
     {
-        List<? extends AnnotationMirror> annotations = element
-                .getAnnotationMirrors();
+        List<? extends AnnotationMirror> annotations =
+                element.getAnnotationMirrors();
         for (AnnotationMirror annotation : annotations) {
-            Element annotationElement = annotation.getAnnotationType()
-                    .asElement();
+            Element annotationElement =
+                    annotation.getAnnotationType().asElement();
             if (annotationElement instanceof TypeElement) {
-                String fqn = ((TypeElement) annotationElement)
-                        .getQualifiedName().toString();
+                String fqn =
+                        ((TypeElement) annotationElement).getQualifiedName()
+                                .toString();
                 for (String annotationFqn : annotationFqns) {
                     if (fqn.equals(annotationFqn)) {
                         return true;
@@ -420,8 +433,8 @@ public final class JavaUtils {
             TypeMirror typeMirror = types.remove(0);
             Element typeElement = info.getTypes().asElement(typeMirror);
 
-            List<? extends TypeMirror> directSupertypes = info.getTypes()
-                    .directSupertypes(typeMirror);
+            List<? extends TypeMirror> directSupertypes =
+                    info.getTypes().directSupertypes(typeMirror);
             for (TypeMirror directSupertype : directSupertypes) {
                 typeElement = info.getTypes().asElement(directSupertype);
                 if (!visited.contains(typeElement)) {
@@ -444,8 +457,8 @@ public final class JavaUtils {
     }
 
     private static Set<FileObject> getTestRoots( SourceGroup group ) {
-        final URL[] rootURLs = UnitTestForSourceQuery.findUnitTests(group
-                .getRootFolder());
+        final URL[] rootURLs =
+                UnitTestForSourceQuery.findUnitTests(group.getRootFolder());
         if (rootURLs.length == 0) {
             return Collections.emptySet();
         }
@@ -486,8 +499,8 @@ public final class JavaUtils {
         while (toProcess.size() > 0) {
             TypeElement element = toProcess.iterator().next();
             toProcess.remove(element);
-            Set<TypeElement> set = doDiscoverHierarchy(element, requiredKinds,
-                    info);
+            Set<TypeElement> set =
+                    doDiscoverHierarchy(element, requiredKinds, info);
             if (set.size() == 0) {
                 continue;
             }
@@ -506,13 +519,14 @@ public final class JavaUtils {
     {
         Set<TypeElement> result = new HashSet<>();
         ElementHandle<TypeElement> handle = ElementHandle.create(typeElement);
-        final Set<ElementHandle<TypeElement>> handles = info
-                .getClasspathInfo()
-                .getClassIndex()
-                .getElements(
-                        handle,
-                        EnumSet.of(SearchKind.IMPLEMENTORS),
-                        EnumSet.of(SearchScope.SOURCE, SearchScope.DEPENDENCIES));
+        final Set<ElementHandle<TypeElement>> handles =
+                info.getClasspathInfo()
+                        .getClassIndex()
+                        .getElements(
+                                handle,
+                                EnumSet.of(SearchKind.IMPLEMENTORS),
+                                EnumSet.of(SearchScope.SOURCE,
+                                        SearchScope.DEPENDENCIES));
         if (handles == null) {
             throw new InterruptedException(
                     "ClassIndex.getElements() was interrupted"); // NOI18N

@@ -41,7 +41,9 @@ import org.vaadin.netbeans.model.ModelOperation;
 import org.vaadin.netbeans.model.VaadinModel;
 import org.vaadin.netbeans.utils.JavaUtils;
 
+import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.MethodInvocationTree;
+import com.sun.source.tree.NewClassTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
 import com.sun.source.util.TreePath;
@@ -52,11 +54,19 @@ import com.sun.source.util.TreePathScanner;
  */
 public class RpcRegistrationAnalyzer implements TypeAnalyzer {
 
-    private static final String CLIENT_CONNECTOR = "com.vaadin.server.AbstractClientConnector"; // NOI18N
+    private static final String CLIENT_CONNECTOR =
+            "com.vaadin.server.AbstractClientConnector"; // NOI18N
 
-    private static final String CONNECTOR = "com.vaadin.client.ui.AbstractConnector"; // NOI18N 
+    private static final String CONNECTOR =
+            "com.vaadin.client.ui.AbstractConnector"; // NOI18N 
 
     static final String REGISTER_RPC = "registerRpc"; // NOI18N 
+
+    private static final String SERVER_RPC =
+            "com.vaadin.shared.communication.ServerRpc"; // NOI18N 
+
+    private static final String CLIENT_RPC =
+            "com.vaadin.shared.communication.ClientRpc"; // NOI18N 
 
     @Override
     public void analyze( TypeElement type, CompilationInfo info,
@@ -87,15 +97,16 @@ public class RpcRegistrationAnalyzer implements TypeAnalyzer {
             return;
         }
 
-        Collection<? extends TypeMirror> supertypes = JavaUtils.getSupertypes(
-                type.asType(), info);
+        Collection<? extends TypeMirror> supertypes =
+                JavaUtils.getSupertypes(type.asType(), info);
         boolean serverComponent = false;
         boolean clientComponent = false;
         for (TypeMirror superType : supertypes) {
             Element superElement = info.getTypes().asElement(superType);
             if (superElement instanceof TypeElement) {
-                String fqn = ((TypeElement) superElement).getQualifiedName()
-                        .toString();
+                String fqn =
+                        ((TypeElement) superElement).getQualifiedName()
+                                .toString();
                 if (fqn.equals(CLIENT_CONNECTOR)) {
                     serverComponent = true;
                     break;
@@ -120,34 +131,56 @@ public class RpcRegistrationAnalyzer implements TypeAnalyzer {
         }
     }
 
-    @NbBundle.Messages("noClientRpc=Use Client RPC interface")
+    @NbBundle.Messages({ "noClientRpc=Client RPC interface is not used",
+            "registerClientRpc=Client RPC interface is not registered" })
     private void findClientRpcUsage( TypeElement type, CompilationInfo info,
             Collection<ErrorDescription> descriptions,
             VaadinTaskFactory factory, AtomicBoolean cancel )
     {
-        RegisterRpcScanner scanner = new RegisterRpcScanner(true);
-        scanner.scan(info.getCompilationUnit(), info);
+        RegisterRpcScanner scanner = new RegisterRpcScanner(type, true);
+        scanner.scan(info.getTrees().getPath(type), info);
         if (!scanner.isFound()) {
-            // TODO : add hint to <code>type</code> to create ClientRpc custom interface and use it in the code 
+            List<Integer> positions =
+                    AbstractJavaFix.getElementPosition(info, type);
+            Fix fix =
+                    new CreateClientRpcFix(info.getFileObject(),
+                            ElementHandle.create(type),
+                            scanner.getRpcVariable(),
+                            scanner.getRpcVariableType());
+            String msg =
+                    scanner.getRpcVariable() == null ? Bundle.noClientRpc()
+                            : Bundle.registerClientRpc();
+            ErrorDescription description =
+                    ErrorDescriptionFactory.createErrorDescription(
+                            Severity.HINT, msg, Collections.singletonList(fix),
+                            info.getFileObject(), positions.get(0),
+                            positions.get(1));
+            descriptions.add(description);
         }
     }
 
-    @NbBundle.Messages("noServerRpc=No Server RPC interface")
+    @NbBundle.Messages({ "noServerRpc=Server RPC interface is not used",
+            "registerServerRpc=Server RPC interface is not registered" })
     private void findServerRpcUsage( TypeElement type, CompilationInfo info,
             Collection<ErrorDescription> descriptions,
             VaadinTaskFactory factory, AtomicBoolean cancel )
     {
-        RegisterRpcScanner scanner = new RegisterRpcScanner(false);
-        scanner.scan(info.getCompilationUnit(), info);
+        RegisterRpcScanner scanner = new RegisterRpcScanner(type, false);
+        scanner.scan(info.getTrees().getPath(type), info);
         if (!scanner.isFound()) {
-            List<Integer> positions = AbstractJavaFix.getElementPosition(info,
-                    type);
-            Fix fix = new CreateServerRpcFix(info.getFileObject(),
-                    ElementHandle.create(type));
-            ErrorDescription description = ErrorDescriptionFactory
-                    .createErrorDescription(Severity.HINT,
-                            Bundle.noServerRpc(),
-                            Collections.singletonList(fix),
+            List<Integer> positions =
+                    AbstractJavaFix.getElementPosition(info, type);
+            Fix fix =
+                    new CreateServerRpcFix(info.getFileObject(),
+                            ElementHandle.create(type),
+                            scanner.getRpcVariable(),
+                            scanner.getRpcVariableType());
+            String msg =
+                    scanner.getRpcVariable() == null ? Bundle.noServerRpc()
+                            : Bundle.registerServerRpc();
+            ErrorDescription description =
+                    ErrorDescriptionFactory.createErrorDescription(
+                            Severity.HINT, msg, Collections.singletonList(fix),
                             info.getFileObject(), positions.get(0),
                             positions.get(1));
             descriptions.add(description);
@@ -158,16 +191,17 @@ public class RpcRegistrationAnalyzer implements TypeAnalyzer {
             TreePathScanner<Tree, CompilationInfo>
     {
 
-        RegisterRpcScanner( boolean client ) {
+        RegisterRpcScanner( TypeElement type, boolean client ) {
             isClient = client;
+            myType = type;
         }
 
         @Override
         public Tree visitMethodInvocation( MethodInvocationTree tree,
                 CompilationInfo info )
         {
-            TreePath path = info.getTrees().getPath(info.getCompilationUnit(),
-                    tree);
+            TreePath path =
+                    info.getTrees().getPath(info.getCompilationUnit(), tree);
             if (path != null) {
                 Element element = info.getTrees().getElement(path);
                 if (element instanceof ExecutableElement) {
@@ -181,13 +215,65 @@ public class RpcRegistrationAnalyzer implements TypeAnalyzer {
         }
 
         @Override
-        public Tree visitVariable( VariableTree node, CompilationInfo p ) {
-            // TODO : check RPC intafaces usage
-            return super.visitVariable(node, p);
-        }
+        public Tree visitVariable( VariableTree tree, CompilationInfo info ) {
+            TreePath variablePath =
+                    info.getTrees().getPath(info.getCompilationUnit(), tree);
+            if (variablePath == null) {
+                return super.visitVariable(tree, info);
+            }
+            Element varElement = info.getTrees().getElement(variablePath);
+            if (varElement == null
+                    || !myType.equals(varElement.getEnclosingElement()))
+            {
+                return super.visitVariable(tree, info);
+            }
 
-        boolean isFound() {
-            return isFound;
+            ExpressionTree initializer = tree.getInitializer();
+            boolean isRpc = false;
+            if (initializer instanceof NewClassTree) {
+                NewClassTree newTree = (NewClassTree) initializer;
+                TreePath path =
+                        info.getTrees().getPath(info.getCompilationUnit(),
+                                newTree);
+                if (path != null) {
+                    Element element = info.getTrees().getElement(path);
+                    if (element instanceof ExecutableElement) {
+                        TypeElement clazz =
+                                info.getElementUtilities()
+                                        .enclosingTypeElement(element);
+                        if (isClient) {
+                            Element clientRpc =
+                                    info.getElements().getTypeElement(
+                                            CLIENT_RPC);
+                            if (clientRpc != null
+                                    && info.getTypes().isSubtype(
+                                            clazz.asType(), clientRpc.asType()))
+                            {
+                                isRpc = true;
+                            }
+                        }
+                        else {
+                            Element serverRpc =
+                                    info.getElements().getTypeElement(
+                                            SERVER_RPC);
+                            if (serverRpc != null
+                                    && info.getTypes().isSubtype(
+                                            clazz.asType(), serverRpc.asType()))
+                            {
+                                isRpc = true;
+                            }
+                        }
+                    }
+                }
+            }
+            if (isRpc) {
+                myRpcVar = tree.getName().toString();
+                myRpcVarType =
+                        ((TypeElement) info.getTypes().asElement(
+                                varElement.asType())).getQualifiedName()
+                                .toString();
+            }
+            return super.visitVariable(tree, info);
         }
 
         protected boolean isRegisterRpc( ExecutableElement method,
@@ -214,9 +300,27 @@ public class RpcRegistrationAnalyzer implements TypeAnalyzer {
             return false;
         }
 
+        boolean isFound() {
+            return isFound;
+        }
+
+        String getRpcVariable() {
+            return myRpcVar;
+        }
+
+        String getRpcVariableType() {
+            return myRpcVarType;
+        }
+
         private boolean isFound;
 
         private boolean isClient;
+
+        private String myRpcVar;
+
+        private String myRpcVarType;
+
+        private TypeElement myType;
     }
 
 }

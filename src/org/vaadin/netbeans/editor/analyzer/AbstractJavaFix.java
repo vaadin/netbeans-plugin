@@ -74,8 +74,8 @@ abstract class AbstractJavaFix implements Fix {
     {
         ChangeInfo changeInfo = new ChangeInfo();
         for (ModificationResult result : results) {
-            List<? extends Difference> differences = result
-                    .getDifferences(getFileObject());
+            List<? extends Difference> differences =
+                    result.getDifferences(getFileObject());
             if (differences != null) {
                 for (Difference difference : differences) {
                     PositionRef start = difference.getStartPosition();
@@ -125,10 +125,12 @@ abstract class AbstractJavaFix implements Fix {
             subjectTree = ((AnnotationTree) subjectTree).getAnnotationType();
         }
 
-        int startOffset = (int) srcPos.getStartPosition(
-                info.getCompilationUnit(), subjectTree);
-        int endOffset = (int) srcPos.getEndPosition(info.getCompilationUnit(),
-                subjectTree);
+        int startOffset =
+                (int) srcPos.getStartPosition(info.getCompilationUnit(),
+                        subjectTree);
+        int endOffset =
+                (int) srcPos.getEndPosition(info.getCompilationUnit(),
+                        subjectTree);
 
         Tree startTree = null;
 
@@ -143,11 +145,12 @@ abstract class AbstractJavaFix implements Fix {
         }
 
         if (startTree != null) {
-            int searchStart = (int) srcPos.getEndPosition(
-                    info.getCompilationUnit(), startTree);
+            int searchStart =
+                    (int) srcPos.getEndPosition(info.getCompilationUnit(),
+                            startTree);
 
-            TokenSequence<?> tokenSequence = info.getTreeUtilities().tokensFor(
-                    subjectTree);
+            TokenSequence<?> tokenSequence =
+                    info.getTreeUtilities().tokensFor(subjectTree);
 
             if (tokenSequence != null) {
                 boolean eob = false;
@@ -195,8 +198,8 @@ abstract class AbstractJavaFix implements Fix {
     static String getAnnotationTreeAttributeValue( AnnotationTree annotation,
             String attributeName )
     {
-        AssignmentTree tree = getAnnotationTreeAttribute(annotation,
-                attributeName);
+        AssignmentTree tree =
+                getAnnotationTreeAttribute(annotation, attributeName);
         if (tree == null) {
             return null;
         }
@@ -214,35 +217,36 @@ abstract class AbstractJavaFix implements Fix {
             CompilationInfo info, String errorText, Severity severity )
     {
         TypeMirror superclass = type.getSuperclass();
-        TypeElement superElement = (TypeElement) info.getTypes().asElement(
-                superclass);
-        List<Integer> positions = AbstractJavaFix
-                .getElementPosition(info, type);
+        TypeElement superElement =
+                (TypeElement) info.getTypes().asElement(superclass);
+        List<Integer> positions =
+                AbstractJavaFix.getElementPosition(info, type);
         List<Fix> fixes = Collections.emptyList();
         Name qName = superElement.getQualifiedName();
         if (qName.contentEquals(Object.class.getName())
                 || qName.contentEquals(AbstractJavaFix.HTTP_SERVLET))
         {
-            Fix fix = new ExtendVaadinServletFix(info.getFileObject(),
-                    ElementHandle.create(type));
+            Fix fix =
+                    new ExtendVaadinServletFix(info.getFileObject(),
+                            ElementHandle.create(type));
             fixes = Collections.singletonList(fix);
         }
-        ErrorDescription description = ErrorDescriptionFactory
-                .createErrorDescription(severity, errorText, fixes,
-                        info.getFileObject(), positions.get(0),
-                        positions.get(1));
+        ErrorDescription description =
+                ErrorDescriptionFactory.createErrorDescription(severity,
+                        errorText, fixes, info.getFileObject(),
+                        positions.get(0), positions.get(1));
         return description;
     }
 
     static ExpressionTree createWebInitParam( TreeMaker treeMaker,
             String paramName, String paramValue )
     {
-        ExpressionTree nameAttrTree = treeMaker.Assignment(
-                treeMaker.Identifier(JavaUtils.NAME),
-                treeMaker.Literal(paramName));
-        ExpressionTree valueAttrTree = treeMaker.Assignment(
-                treeMaker.Identifier(JavaUtils.VALUE),
-                treeMaker.Literal(paramValue));
+        ExpressionTree nameAttrTree =
+                treeMaker.Assignment(treeMaker.Identifier(JavaUtils.NAME),
+                        treeMaker.Literal(paramName));
+        ExpressionTree valueAttrTree =
+                treeMaker.Assignment(treeMaker.Identifier(JavaUtils.VALUE),
+                        treeMaker.Literal(paramValue));
 
         List<ExpressionTree> expressions = new ArrayList<>(2);
         expressions.add(nameAttrTree);
@@ -264,4 +268,5 @@ abstract class AbstractJavaFix implements Fix {
     }
 
     private FileObject myFileObject;
+
 }
