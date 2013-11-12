@@ -21,10 +21,11 @@ import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.spi.editor.hints.ChangeInfo;
 import org.netbeans.spi.editor.hints.Fix;
+import org.openide.cookies.EditorCookie;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
+import org.openide.loaders.DataObject;
 import org.openide.util.NbBundle;
-import org.vaadin.netbeans.editor.VaadinTaskFactory;
 import org.vaadin.netbeans.utils.JavaUtils;
 import org.vaadin.netbeans.utils.XmlUtils;
 
@@ -33,11 +34,8 @@ import org.vaadin.netbeans.utils.XmlUtils;
  */
 public class CreateGwtModuleFix implements Fix {
 
-    public CreateGwtModuleFix( String widgetsetFqn, FileObject fileObject,
-            VaadinTaskFactory factory )
-    {
+    public CreateGwtModuleFix( String widgetsetFqn, FileObject fileObject ) {
         myWidgetsetFqn = widgetsetFqn;
-        myFactory = factory;
         myFileObject = fileObject;
     }
 
@@ -50,8 +48,9 @@ public class CreateGwtModuleFix implements Fix {
 
     @Override
     public ChangeInfo implement() throws Exception {
-        SourceGroup[] sourceGroups = JavaUtils
-                .getJavaSourceGroups(FileOwnerQuery.getOwner(myFileObject));
+        SourceGroup[] sourceGroups =
+                JavaUtils.getJavaSourceGroups(FileOwnerQuery
+                        .getOwner(myFileObject));
         FileObject root = null;
         for (SourceGroup sourceGroup : sourceGroups) {
             root = sourceGroup.getRootFolder();
@@ -70,8 +69,16 @@ public class CreateGwtModuleFix implements Fix {
         file = file.getParentFile();
         FileObject folder = FileUtil.createFolder(file);
         if (folder != null) {
-            XmlUtils.createGwtXml(folder, widgetsetName);
-            myFactory.restart(myFileObject);
+            FileObject gwtXml = XmlUtils.createGwtXml(folder, widgetsetName);
+            DataObject dataObject = DataObject.find(gwtXml);
+            if (dataObject == null) {
+                return null;
+            }
+            EditorCookie cookie =
+                    dataObject.getLookup().lookup(EditorCookie.class);
+            if (cookie != null) {
+                cookie.open();
+            }
         }
 
         return null;
@@ -81,5 +88,4 @@ public class CreateGwtModuleFix implements Fix {
 
     private final FileObject myFileObject;
 
-    private final VaadinTaskFactory myFactory;
 }

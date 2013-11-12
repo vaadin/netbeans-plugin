@@ -24,6 +24,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 
 import org.netbeans.api.java.source.CompilationInfo;
+import org.netbeans.spi.java.hints.HintContext;
 import org.vaadin.netbeans.utils.JavaUtils;
 
 /**
@@ -31,20 +32,36 @@ import org.vaadin.netbeans.utils.JavaUtils;
  */
 public class GwtClassesAnalyzer extends ClientClassAnalyzer {
 
-    private static String GWT_USER_CLIENT_PACKAGE = "com.google.gwt.user.client."; //NOI18N
+    private static String GWT_USER_CLIENT_PACKAGE =
+            "com.google.gwt.user.client."; //NOI18N
+
+    public GwtClassesAnalyzer( HintContext context ) {
+        super(context, true);
+    }
 
     @Override
-    protected boolean isClientClass( TypeElement type, CompilationInfo info ) {
-        Collection<? extends TypeMirror> supertypes = JavaUtils.getSupertypes(
-                type.asType(), info);
+    public void analyze() {
+        TypeElement type = getType();
+        if (type == null) {
+            return;
+        }
+        if (isClientClass(getType(), getInfo())) {
+            checkClientPackage();
+        }
+    }
+
+    private boolean isClientClass( TypeElement type, CompilationInfo info ) {
+        Collection<? extends TypeMirror> supertypes =
+                JavaUtils.getSupertypes(type.asType(), info);
         for (TypeMirror typeMirror : supertypes) {
             Logger.getLogger(GwtClassesAnalyzer.class.getName()).log(
                     Level.INFO, "Found super type for {0} : {1}",
                     new Object[] { type, typeMirror });
             Element typeElement = info.getTypes().asElement(typeMirror);
             if (typeElement instanceof TypeElement) {
-                String fqn = ((TypeElement) typeElement).getQualifiedName()
-                        .toString();
+                String fqn =
+                        ((TypeElement) typeElement).getQualifiedName()
+                                .toString();
                 if (fqn.startsWith(GWT_USER_CLIENT_PACKAGE)) {
                     return true;
                 }

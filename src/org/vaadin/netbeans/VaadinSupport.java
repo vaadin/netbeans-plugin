@@ -43,6 +43,8 @@ public interface VaadinSupport {
 
     boolean isWeb();
 
+    boolean isReady();
+
     void runModelOperation( ModelOperation operation ) throws IOException;
 
     void addAction( Action action, ExecutorTask task );

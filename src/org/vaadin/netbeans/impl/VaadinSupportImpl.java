@@ -108,6 +108,11 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
     }
 
     @Override
+    public boolean isReady() {
+        return isInitialized;
+    }
+
+    @Override
     public List<String> getAddonWidgetsets() {
         if (isWeb()) {
             return null;
@@ -419,7 +424,7 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
     private Future<Void> invoke( final Task<CompilationController> task )
             throws IOException
     {
-        return invoke(task, !isInitialized);
+        return invoke(task, !isReady());
     }
 
     protected static ClassPath getClassPath( Project project, String type ) {
@@ -514,15 +519,13 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
                 });
             }
 
-            if (!isInitialized) {
+            if (!isReady()) {
                 controller.getClasspathInfo().getClassIndex()
                         .addClassIndexListener(new ClassIndexListenerImpl());
             }
-            isInitialized = false;
             myModel.cleanup(true);
 
             initClassModel(controller);
-
             isInitialized = true;
         }
     }

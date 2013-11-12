@@ -22,10 +22,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
@@ -46,12 +46,26 @@ import org.netbeans.spi.editor.hints.ErrorDescription;
 import org.netbeans.spi.editor.hints.ErrorDescriptionFactory;
 import org.netbeans.spi.editor.hints.Fix;
 import org.netbeans.spi.editor.hints.Severity;
-import org.vaadin.netbeans.editor.VaadinTaskFactory;
+import org.netbeans.spi.java.hints.HintContext;
 
 /**
  * @author denis
  */
-abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
+public abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
+
+    public enum Mode {
+        PACKAGE,
+        ACCESSORS,
+        SERIALIZABLE;
+    }
+
+    AbstractJavaBeanAnalyzer( HintContext context, Mode mode ) {
+        super(context, Mode.PACKAGE.equals(mode));
+
+        myMode = mode;
+        myNoAccessors = new LinkedList<>();
+        myNonSerializableHints = new LinkedList<>();
+    }
 
     private static final String GET = "get"; // NOI18N
 
@@ -65,17 +79,22 @@ abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
     private static final AccessorNameExtractor REGULAR_EXTRACTOR =
             new RegularAccessorExtractor();
 
-    protected void checkJavaBean( VariableElement checkTarget,
-            DeclaredType type, CompilationInfo info,
-            Collection<ErrorDescription> descriptions,
-            VaadinTaskFactory factory, AtomicBoolean cancel )
+    public List<ErrorDescription> getNonSerializables() {
+        return myNonSerializableHints;
+    }
+
+    public List<ErrorDescription> getNoAccessors() {
+        return myNoAccessors;
+    }
+
+    protected void checkJavaBean( VariableElement checkTarget, DeclaredType type )
     {
         List<VariableElement> fields =
                 ElementFilter.fieldsIn(type.asElement().getEnclosedElements());
         List<VariableElement> localFields = new ArrayList<>(fields.size());
         for (VariableElement field : fields) {
             Set<Modifier> modifiers = field.getModifiers();
-            if (cancel.get()) {
+            if (isCanceled()) {
                 return;
             }
             if (modifiers.contains(Modifier.STATIC)) {
@@ -83,18 +102,16 @@ abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
             }
             if (modifiers.contains(Modifier.PUBLIC)) {
                 checkPublicField(checkTarget == null ? field : checkTarget,
-                        field, info.getTypes().asMemberOf(type, field), info,
-                        descriptions);
+                        field, getInfo().getTypes().asMemberOf(type, field));
             }
             else {
                 localFields.add(field);
             }
         }
-        if (cancel.get()) {
+        if (isCanceled()) {
             return;
         }
-        checkBeanStructure(checkTarget, type, localFields, info, descriptions,
-                cancel);
+        checkBeanStructure(checkTarget, type, localFields);
     }
 
     protected abstract String getNotSerializableFieldMessage(
@@ -110,13 +127,15 @@ abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
             VariableElement field );
 
     protected void checkBeanStructure( VariableElement checkTarget,
-            DeclaredType type, List<VariableElement> fields,
-            CompilationInfo info, Collection<ErrorDescription> descriptions,
-            AtomicBoolean cancel )
+            DeclaredType type, List<VariableElement> fields )
     {
+        if (!Mode.ACCESSORS.equals(myMode)) {
+            return;
+        }
         if (fields.isEmpty()) {
             return;
         }
+        CompilationInfo info = getInfo();
         Set<ExecutableElement> allMethods =
                 getPossibleAccessorMethods(type.asElement());
         TypeElement booleanElement =
@@ -129,7 +148,7 @@ abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
         for (Iterator<VariableElement> iterator = fields.iterator(); iterator
                 .hasNext();)
         {
-            if (cancel.get()) {
+            if (isCanceled()) {
                 return;
             }
 
@@ -165,27 +184,25 @@ abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
             else {
                 iterator.remove();
                 addNonMatchingAccessorsWarning(checkTarget == null ? field
-                        : checkTarget, field, hasGetter, info, descriptions);
+                        : checkTarget, field, hasGetter);
             }
         }
-        if (cancel.get()) {
+        if (isCanceled()) {
             return;
         }
-        checkBooleanFields(checkTarget, type, booleanFields, allMethods, info,
-                descriptions);
-        if (cancel.get()) {
+        checkBooleanFields(checkTarget, type, booleanFields, allMethods);
+        if (isCanceled()) {
             return;
         }
 
-        checkFields(checkTarget, type, fields, allMethods, info, descriptions);
+        checkFields(checkTarget, type, fields, allMethods);
     }
 
     private void addNonMatchingAccessorsWarning( VariableElement target,
-            VariableElement field, boolean hasGetter, CompilationInfo info,
-            Collection<ErrorDescription> descriptions )
+            VariableElement field, boolean hasGetter )
     {
         List<Integer> positions =
-                AbstractJavaFix.getElementPosition(info, target);
+                AbstractJavaFix.getElementPosition(getInfo(), target);
         String msg;
         if (hasGetter) {
             msg = getNoSetterMessage(target, field);
@@ -195,49 +212,49 @@ abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
         }
         ErrorDescription description =
                 ErrorDescriptionFactory.createErrorDescription(
-                        Severity.WARNING, msg, Collections.<Fix> emptyList(),
-                        info.getFileObject(), positions.get(0),
-                        positions.get(1));
-        descriptions.add(description);
+                        getSeverity(Severity.WARNING), msg, Collections
+                                .<Fix> emptyList(), getInfo().getFileObject(),
+                        positions.get(0), positions.get(1));
+        getNoAccessors().add(description);
+        getDescriptions().add(description);
     }
 
     private void checkBooleanFields( VariableElement checkTarget,
             DeclaredType type, List<VariableElement> booleanFields,
-            Set<ExecutableElement> methods, CompilationInfo info,
-            Collection<ErrorDescription> descriptions )
+            Set<ExecutableElement> methods )
     {
-        VariableElement field = booleanFields.get(0);
-        if (!hasAccessors(field, type, BOOLEAN_EXTRACTOR, methods, info)) {
-            addNoAccessorsWarning(checkTarget == null ? field : checkTarget,
-                    field, info, descriptions);
+        for (VariableElement field : booleanFields) {
+            if (!hasAccessors(field, type, BOOLEAN_EXTRACTOR, methods)) {
+                addNoAccessorsWarning(
+                        checkTarget == null ? field : checkTarget, field);
+            }
         }
     }
 
     private void checkFields( VariableElement checkTarget, DeclaredType type,
-            List<VariableElement> fields, Set<ExecutableElement> methods,
-            CompilationInfo info, Collection<ErrorDescription> descriptions )
+            List<VariableElement> fields, Set<ExecutableElement> methods )
     {
         for (VariableElement field : fields) {
-            if (!hasAccessors(field, type, REGULAR_EXTRACTOR, methods, info)) {
+            if (!hasAccessors(field, type, REGULAR_EXTRACTOR, methods)) {
                 addNoAccessorsWarning(
-                        checkTarget == null ? field : checkTarget, field, info,
-                        descriptions);
+                        checkTarget == null ? field : checkTarget, field);
             }
         }
     }
 
     private void addNoAccessorsWarning( VariableElement target,
-            VariableElement field, CompilationInfo info,
-            Collection<ErrorDescription> descriptions )
+            VariableElement field )
     {
         List<Integer> positions =
-                AbstractJavaFix.getElementPosition(info, target);
+                AbstractJavaFix.getElementPosition(getInfo(), target);
         ErrorDescription description =
                 ErrorDescriptionFactory.createErrorDescription(
-                        Severity.WARNING, getNoAccessorsMessage(target, field),
-                        Collections.<Fix> emptyList(), info.getFileObject(),
+                        getSeverity(Severity.WARNING),
+                        getNoAccessorsMessage(target, field), Collections
+                                .<Fix> emptyList(), getInfo().getFileObject(),
                         positions.get(0), positions.get(1));
-        descriptions.add(description);
+        getDescriptions().add(description);
+        getNoAccessors().add(description);
     }
 
     private Set<ExecutableElement> getPossibleAccessorMethods( Element clazz ) {
@@ -256,9 +273,12 @@ abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
     }
 
     protected void checkPublicField( VariableElement checkTarget,
-            VariableElement field, TypeMirror type, CompilationInfo info,
-            Collection<ErrorDescription> descriptions )
+            VariableElement field, TypeMirror type )
     {
+        if (!Mode.SERIALIZABLE.equals(myMode)) {
+            return;
+        }
+        CompilationInfo info = getInfo();
         TypeElement collectionType =
                 info.getElements().getTypeElement(Collection.class.getName());
         TypeElement mapType =
@@ -277,8 +297,7 @@ abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
                 List<? extends TypeMirror> args =
                         declaredType.getTypeArguments();
                 if (args.size() == 1) {
-                    checkPublicField(checkTarget, field, args.get(0), info,
-                            descriptions);
+                    checkPublicField(checkTarget, field, args.get(0));
                 }
             }
             else if (mapType != null
@@ -288,10 +307,8 @@ abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
                 List<? extends TypeMirror> args =
                         declaredType.getTypeArguments();
                 if (args.size() == 2) {
-                    checkPublicField(checkTarget, field, args.get(0), info,
-                            descriptions);
-                    checkPublicField(checkTarget, field, args.get(1), info,
-                            descriptions);
+                    checkPublicField(checkTarget, field, args.get(0));
+                    checkPublicField(checkTarget, field, args.get(1));
                 }
             }
             else if (!info.getTypes().isSubtype(type, serializable.asType())) {
@@ -309,27 +326,27 @@ abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
                         AbstractJavaFix.getElementPosition(info, checkTarget);
                 ErrorDescription description =
                         ErrorDescriptionFactory.createErrorDescription(
-                                Severity.ERROR,
+                                getSeverity(Severity.ERROR),
                                 getNotSerializableFieldMessage(checkTarget,
                                         field, fqn), Collections
                                         .<Fix> emptyList(), info
                                         .getFileObject(), positions.get(0),
                                 positions.get(1));
-                descriptions.add(description);
+                getDescriptions().add(description);
+                getNonSerializables().add(description);
             }
         }
         else if (type instanceof ArrayType) {
             checkPublicField(checkTarget, field,
-                    ((ArrayType) type).getComponentType(), info, descriptions);
+                    ((ArrayType) type).getComponentType());
         }
         else if (type instanceof WildcardType) {
             TypeMirror extendsBound = ((WildcardType) type).getExtendsBound();
-            checkPublicField(checkTarget, field, extendsBound, info,
-                    descriptions);
+            checkPublicField(checkTarget, field, extendsBound);
         }
         else if (type instanceof TypeVariable) {
             TypeMirror upperBound = ((TypeVariable) type).getUpperBound();
-            checkPublicField(checkTarget, field, upperBound, info, descriptions);
+            checkPublicField(checkTarget, field, upperBound);
         }
     }
 
@@ -369,9 +386,9 @@ abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
     }
 
     private boolean hasAccessors( VariableElement field, DeclaredType clazz,
-            AccessorNameExtractor extractor, Set<ExecutableElement> methods,
-            CompilationInfo info )
+            AccessorNameExtractor extractor, Set<ExecutableElement> methods )
     {
+        CompilationInfo info = getInfo();
         TypeMirror requiredType = info.getTypes().asMemberOf(clazz, field);
         String getter = null;
         Map<String, ExecutableElement> setters = new HashMap<>();
@@ -583,4 +600,9 @@ abstract class AbstractJavaBeanAnalyzer extends ClientClassAnalyzer {
         private final CompilationInfo myInfo;
     }
 
+    private List<ErrorDescription> myNonSerializableHints;
+
+    private List<ErrorDescription> myNoAccessors;
+
+    private Mode myMode;
 }

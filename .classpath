@@ -30,6 +30,7 @@
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-xml-retriever.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-xml-xam.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-spi-editor-hints.jar"/>
+	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-spi-java-hints.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-openide-dialogs.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-openide-actions.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-openide-awt.jar"/>

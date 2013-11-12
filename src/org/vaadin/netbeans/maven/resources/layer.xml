@@ -148,4 +148,15 @@
             
         </folder>
     </folder>
+    
+    <folder name="org-netbeans-modules-java-hints">
+        <folder name="rules">
+        	<folder name="hints">
+        	    <folder name="vaadin">
+        	         <attr name="SystemFileSystem.localizingBundle" stringvalue="org.vaadin.netbeans.maven.Bundle"/>
+        	    </folder>
+        	</folder>
+        </folder>
+     </folder>
+    
 </filesystem>

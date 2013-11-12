@@ -15,17 +15,20 @@
  */
 package org.vaadin.netbeans.editor.analyzer;
 
+import java.io.IOException;
 import java.io.Serializable;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
@@ -48,23 +51,120 @@ import org.netbeans.spi.editor.hints.ErrorDescription;
 import org.netbeans.spi.editor.hints.ErrorDescriptionFactory;
 import org.netbeans.spi.editor.hints.Fix;
 import org.netbeans.spi.editor.hints.Severity;
+import org.netbeans.spi.java.hints.HintContext;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
-import org.vaadin.netbeans.editor.VaadinTaskFactory;
+import org.vaadin.netbeans.VaadinSupport;
+import org.vaadin.netbeans.model.ModelOperation;
+import org.vaadin.netbeans.model.VaadinModel;
 import org.vaadin.netbeans.utils.JavaUtils;
+import org.vaadin.netbeans.utils.XmlUtils;
 
 /**
  * @author denis
  */
 public class RpcInterfacesAnalyzer extends AbstractJavaBeanAnalyzer {
 
-    static final String CLIENT_RPC = "com.vaadin.shared.communication.ClientRpc"; // NOI18N
+    static final String CLIENT_RPC =
+            "com.vaadin.shared.communication.ClientRpc"; // NOI18N
 
-    static final String SERVER_RPC = "com.vaadin.shared.communication.ServerRpc"; // NOI18N
+    static final String SERVER_RPC =
+            "com.vaadin.shared.communication.ServerRpc"; // NOI18N
+
+    public RpcInterfacesAnalyzer( HintContext context, Mode mode ) {
+        super(context, mode);
+        assert !Mode.PACKAGE.equals(mode) : "Analyzer works for subclasses of "
+                + "RPC interfaces that could be extended and implemented on server side"; //NOI18N
+        myTypeVarParameterDeclarations = new LinkedList<>();
+        myWildcardParameterDeclarations = new LinkedList<>();
+        myDuplicateRpcMethods = new LinkedList<>();
+        myNonVoidMethods = new LinkedList<>();
+    }
+
+    public RpcInterfacesAnalyzer( HintContext context ) {
+        this(context, null);
+    }
 
     @Override
-    protected boolean isClientClass( TypeElement type, CompilationInfo info ) {
+    public void analyze() {
+        TypeElement type = getType();
+        if (type == null) {
+            return;
+        }
+        CompilationInfo info = getInfo();
+
+        if (!isRpcClass(type, info)) {
+            return;
+        }
+
+        if (isPackageCheckMode()) {
+            checkClientPackage();
+        }
+        else if (type.getKind().equals(ElementKind.INTERFACE)
+                && isInClientPackage())
+        {
+            checkMethods(type);
+        }
+    }
+
+    private boolean isInClientPackage() {
+        VaadinSupport support = getSupport();
+        if (support == null || !support.isEnabled() || !support.isReady()) {
+            return false;
+        }
+        final boolean[] isInClient = new boolean[1];
+        try {
+            support.runModelOperation(new ModelOperation() {
+
+                @Override
+                public void run( VaadinModel model ) {
+                    FileObject gwtXml = model.getGwtXml();
+                    if (gwtXml == null) {
+                        return;
+                    }
+                    try {
+                        for (String path : model.getSourcePaths()) {
+                            FileObject clientPkg =
+                                    XmlUtils.getClientWidgetPackage(gwtXml,
+                                            path, false);
+                            if (clientPkg != null
+                                    && FileUtil.isParentOf(clientPkg, getInfo()
+                                            .getFileObject()))
+                            {
+                                isInClient[0] = true;
+                            }
+                        }
+                    }
+                    catch (IOException ignore) {
+                    }
+                }
+            });
+        }
+        catch (IOException e) {
+            Logger.getLogger(RpcInterfacesAnalyzer.class.getName()).log(
+                    Level.INFO, null, e);
+        }
+        return isInClient[0];
+    }
+
+    public List<ErrorDescription> getTypeVarParameterDeclarations() {
+        return myTypeVarParameterDeclarations;
+    }
+
+    public List<ErrorDescription> getWildcardParameterDeclarations() {
+        return myWildcardParameterDeclarations;
+    }
+
+    public List<ErrorDescription> getDuplicateRpcMethods() {
+        return myDuplicateRpcMethods;
+    }
+
+    public List<ErrorDescription> getNonVoidMethods() {
+        return myNonVoidMethods;
+    }
+
+    private boolean isRpcClass( TypeElement type, CompilationInfo info ) {
         TypeElement clientRpc = info.getElements().getTypeElement(CLIENT_RPC);
         if (clientRpc != null) {
             if (info.getTypes().isSubtype(type.asType(), clientRpc.asType())) {
@@ -76,46 +176,6 @@ public class RpcInterfacesAnalyzer extends AbstractJavaBeanAnalyzer {
             return false;
         }
         return info.getTypes().isSubtype(type.asType(), serverRpc.asType());
-    }
-
-    @Override
-    protected void checkClientClass( TypeElement type, CompilationInfo info,
-            Collection<ErrorDescription> descriptions,
-            VaadinTaskFactory factory, AtomicBoolean cancel )
-    {
-        List<ExecutableElement> methods = ElementFilter.methodsIn(type
-                .getEnclosedElements());
-        Map<String, ExecutableElement> methodNames = new HashMap<>();
-        Set<String> duplicateNames = new HashSet<>();
-        for (ExecutableElement method : methods) {
-            if (cancel.get()) {
-                return;
-            }
-            if (!method.getModifiers().contains(Modifier.PUBLIC)) {
-                continue;
-            }
-            checkMethodSingnature(method, info, descriptions, factory, cancel);
-            TypeMirror returnType = method.getReturnType();
-            if (!returnType.getKind().equals(TypeKind.VOID)) {
-                addBadReturnTypeWarning(method, info, descriptions);
-            }
-            String name = method.getSimpleName().toString();
-            if (duplicateNames.contains(name)) {
-                addDuplicateMethodName(method, info, descriptions);
-            }
-            else {
-                ExecutableElement existingMethod = methodNames.get(name);
-                if (existingMethod != null) {
-                    addDuplicateMethodName(existingMethod, info, descriptions);
-                    addDuplicateMethodName(method, info, descriptions);
-                    methodNames.remove(name);
-                    duplicateNames.add(name);
-                }
-                else {
-                    methodNames.put(name, method);
-                }
-            }
-        }
     }
 
     @NbBundle.Messages({
@@ -187,44 +247,43 @@ public class RpcInterfacesAnalyzer extends AbstractJavaBeanAnalyzer {
 
     @Override
     protected void checkPublicField( VariableElement checkTarget,
-            VariableElement field, TypeMirror type, CompilationInfo info,
-            Collection<ErrorDescription> descriptions )
+            VariableElement field, TypeMirror type )
     {
         if (type instanceof TypeVariable) {
             return;
         }
-        super.checkPublicField(checkTarget, field, type, info, descriptions);
+        super.checkPublicField(checkTarget, field, type);
     }
 
     @NbBundle.Messages({
             "#{0} - type",
             "nonSerializableDeclarationType=Parameter''s type refers to non-serializable class {0}" })
     @Override
-    protected void checkJavaBean( VariableElement checkTarget,
-            DeclaredType type, CompilationInfo info,
-            Collection<ErrorDescription> descriptions,
-            VaadinTaskFactory factory, AtomicBoolean cancel )
+    protected void checkJavaBean( VariableElement checkTarget, DeclaredType type )
     {
-        TypeElement serializable = info.getElements().getTypeElement(
-                Serializable.class.getName());
+        CompilationInfo info = getInfo();
+        TypeElement serializable =
+                info.getElements().getTypeElement(Serializable.class.getName());
         if (serializable != null
                 && !info.getTypes().isSubtype(type, serializable.asType()))
         {
-            List<Integer> positions = AbstractJavaFix.getElementPosition(info,
-                    checkTarget);
-            ErrorDescription description = ErrorDescriptionFactory
-                    .createErrorDescription(Severity.WARNING,
+            List<Integer> positions =
+                    AbstractJavaFix.getElementPosition(info, checkTarget);
+            ErrorDescription description =
+                    ErrorDescriptionFactory.createErrorDescription(
+                            getSeverity(Severity.WARNING),
                             Bundle.nonSerializableDeclarationType(type),
                             Collections.<Fix> emptyList(),
                             info.getFileObject(), positions.get(0),
                             positions.get(1));
-            descriptions.add(description);
+            getNonSerializables().add(description);
+            getDescriptions().add(description);
         }
-        if (cancel.get()) {
+        if (isCanceled()) {
             return;
         }
-        FileObject fileObject = SourceUtils
-                .getFile(ElementHandle.create(type.asElement()),
+        FileObject fileObject =
+                SourceUtils.getFile(ElementHandle.create(type.asElement()),
                         info.getClasspathInfo());
         if (fileObject == null) {
             return;
@@ -239,110 +298,148 @@ public class RpcInterfacesAnalyzer extends AbstractJavaBeanAnalyzer {
                 break;
             }
         }
-        if (!isInSource || cancel.get()) {
+        if (!isInSource || isCanceled()) {
             return;
         }
         // TODO : check parameter's class location (call refactored checkClientPackage() methods) 
-        super.checkJavaBean(checkTarget, type, info, descriptions, factory,
-                cancel);
+        super.checkJavaBean(checkTarget, type);
     }
 
-    private void checkMethodSingnature( ExecutableElement method,
-            CompilationInfo info, Collection<ErrorDescription> descriptions,
-            VaadinTaskFactory factory, AtomicBoolean cancel )
-    {
+    private void checkMethodSingnature( ExecutableElement method ) {
         List<? extends VariableElement> parameters = method.getParameters();
         ExecutableType methodType = (ExecutableType) method.asType();
-        List<? extends TypeMirror> parameterTypes = methodType
-                .getParameterTypes();
+        List<? extends TypeMirror> parameterTypes =
+                methodType.getParameterTypes();
 
         int i = 0;
         for (VariableElement param : parameters) {
-            checkType(param, parameterTypes.get(i), info, descriptions,
-                    factory, cancel);
+            checkType(param, parameterTypes.get(i));
             i++;
         }
 
     }
 
+    private void checkMethods( TypeElement type ) {
+        List<ExecutableElement> methods =
+                ElementFilter.methodsIn(type.getEnclosedElements());
+        Map<String, ExecutableElement> methodNames = new HashMap<>();
+        Set<String> duplicateNames = new HashSet<>();
+        for (ExecutableElement method : methods) {
+            if (isCanceled()) {
+                return;
+            }
+            if (!method.getModifiers().contains(Modifier.PUBLIC)) {
+                continue;
+            }
+            checkMethodSingnature(method);
+            TypeMirror returnType = method.getReturnType();
+            if (!returnType.getKind().equals(TypeKind.VOID)) {
+                addBadReturnTypeWarning(method);
+            }
+            String name = method.getSimpleName().toString();
+            if (duplicateNames.contains(name)) {
+                addDuplicateMethodName(method);
+            }
+            else {
+                ExecutableElement existingMethod = methodNames.get(name);
+                if (existingMethod != null) {
+                    addDuplicateMethodName(existingMethod);
+                    addDuplicateMethodName(method);
+                    methodNames.remove(name);
+                    duplicateNames.add(name);
+                }
+                else {
+                    methodNames.put(name, method);
+                }
+            }
+        }
+    }
+
     @NbBundle.Messages({
             "typeVarParameterDeclaration=Parameter is declared using type variable",
             "wildcardParameterDeclaration=Parameter is declared using wildcard" })
-    private void checkType( VariableElement checkTarget, TypeMirror type,
-            CompilationInfo info, Collection<ErrorDescription> descriptions,
-            VaadinTaskFactory factory, AtomicBoolean cancel )
-    {
+    private void checkType( VariableElement checkTarget, TypeMirror type ) {
+        CompilationInfo info = getInfo();
         if (type instanceof DeclaredType) {
             DeclaredType declaredType = (DeclaredType) type;
-            checkJavaBean(checkTarget, declaredType, info, descriptions,
-                    factory, cancel);
-            List<? extends TypeMirror> typeArguments = declaredType
-                    .getTypeArguments();
+            checkJavaBean(checkTarget, declaredType);
+            List<? extends TypeMirror> typeArguments =
+                    declaredType.getTypeArguments();
             for (TypeMirror typeArg : typeArguments) {
-                checkType(checkTarget, typeArg, info, descriptions, factory,
-                        cancel);
+                checkType(checkTarget, typeArg);
             }
         }
         else if (type.getKind().equals(TypeKind.TYPEVAR)) {
-            List<Integer> positions = AbstractJavaFix.getElementPosition(info,
-                    checkTarget);
-            ErrorDescription description = ErrorDescriptionFactory
-                    .createErrorDescription(Severity.ERROR,
+            List<Integer> positions =
+                    AbstractJavaFix.getElementPosition(info, checkTarget);
+            ErrorDescription description =
+                    ErrorDescriptionFactory.createErrorDescription(
+                            getSeverity(Severity.ERROR),
                             Bundle.typeVarParameterDeclaration(),
                             Collections.<Fix> emptyList(),
                             info.getFileObject(), positions.get(0),
                             positions.get(1));
-            descriptions.add(description);
+            getTypeVarParameterDeclarations().add(description);
+            getDescriptions().add(description);
         }
         else if (type.getKind().equals(TypeKind.ARRAY)) {
             ArrayType arrayType = (ArrayType) type;
-            checkType(checkTarget, arrayType.getComponentType(), info,
-                    descriptions, factory, cancel);
+            checkType(checkTarget, arrayType.getComponentType());
         }
         else if (type.getKind().equals(TypeKind.WILDCARD)) {
-            List<Integer> positions = AbstractJavaFix.getElementPosition(info,
-                    checkTarget);
-            ErrorDescription description = ErrorDescriptionFactory
-                    .createErrorDescription(Severity.ERROR,
+            List<Integer> positions =
+                    AbstractJavaFix.getElementPosition(info, checkTarget);
+            ErrorDescription description =
+                    ErrorDescriptionFactory.createErrorDescription(
+                            getSeverity(Severity.ERROR),
                             Bundle.wildcardParameterDeclaration(),
                             Collections.<Fix> emptyList(),
                             info.getFileObject(), positions.get(0),
                             positions.get(1));
-            descriptions.add(description);
+            getDescriptions().add(description);
+            getWildcardParameterDeclarations().add(description);
         }
     }
 
     @NbBundle.Messages({ "# {0} - methodName",
             "duplicateRpcMethodName=Several RPC method with the same name ''{0}''" })
-    private void addDuplicateMethodName( ExecutableElement method,
-            CompilationInfo info, Collection<ErrorDescription> descriptions )
-    {
-        List<Integer> positions = AbstractJavaFix.getElementPosition(info,
-                method);
-        ErrorDescription description = ErrorDescriptionFactory
-                .createErrorDescription(Severity.ERROR, Bundle
-                        .duplicateRpcMethodName(method.getSimpleName()
-                                .toString()), Collections.<Fix> emptyList(),
-                        info.getFileObject(), positions.get(0), positions
-                                .get(1));
-        descriptions.add(description);
+    private void addDuplicateMethodName( ExecutableElement method ) {
+        List<Integer> positions =
+                AbstractJavaFix.getElementPosition(getInfo(), method);
+        ErrorDescription description =
+                ErrorDescriptionFactory.createErrorDescription(
+                        getSeverity(Severity.ERROR), Bundle
+                                .duplicateRpcMethodName(method.getSimpleName()
+                                        .toString()), Collections
+                                .<Fix> emptyList(), getInfo().getFileObject(),
+                        positions.get(0), positions.get(1));
+        getDuplicateRpcMethods().add(description);
+        getDescriptions().add(description);
     }
 
     @NbBundle.Messages({ "methodHasReturnType=RPC method shouldn't declare return type" })
-    private void addBadReturnTypeWarning( ExecutableElement method,
-            CompilationInfo info, Collection<ErrorDescription> descriptions )
-    {
-        List<Integer> positions = AbstractJavaFix.getElementPosition(info,
-                method);
-        ErrorDescription description = ErrorDescriptionFactory
-                .createErrorDescription(Severity.WARNING, Bundle
-                        .methodHasReturnType(),
-                        Collections.<Fix> singletonList(new SetVoidMethodFix(
-                                info.getFileObject(), ElementHandle
+    private void addBadReturnTypeWarning( ExecutableElement method ) {
+        CompilationInfo info = getInfo();
+        List<Integer> positions =
+                AbstractJavaFix.getElementPosition(info, method);
+        ErrorDescription description =
+                ErrorDescriptionFactory.createErrorDescription(
+                        getSeverity(Severity.WARNING), Bundle
+                                .methodHasReturnType(), Collections
+                                .<Fix> singletonList(new SetVoidMethodFix(info
+                                        .getFileObject(), ElementHandle
                                         .create(method))),
                         info.getFileObject(), positions.get(0), positions
                                 .get(1));
-        descriptions.add(description);
+        getNonVoidMethods().add(description);
+        getDescriptions().add(description);
     }
 
+    private List<ErrorDescription> myTypeVarParameterDeclarations;
+
+    private List<ErrorDescription> myWildcardParameterDeclarations;
+
+    private List<ErrorDescription> myDuplicateRpcMethods;
+
+    private List<ErrorDescription> myNonVoidMethods;
 }

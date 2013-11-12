@@ -17,12 +17,10 @@ package org.vaadin.netbeans.editor.analyzer;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -32,16 +30,15 @@ import javax.lang.model.element.TypeElement;
 
 import org.netbeans.api.java.source.CompilationInfo;
 import org.netbeans.api.java.source.ElementHandle;
-import org.netbeans.api.project.FileOwnerQuery;
-import org.netbeans.api.project.Project;
 import org.netbeans.spi.editor.hints.ErrorDescription;
 import org.netbeans.spi.editor.hints.ErrorDescriptionFactory;
 import org.netbeans.spi.editor.hints.Fix;
 import org.netbeans.spi.editor.hints.Severity;
+import org.netbeans.spi.java.hints.HintContext;
 import org.openide.filesystems.FileObject;
 import org.openide.util.NbBundle;
 import org.vaadin.netbeans.VaadinSupport;
-import org.vaadin.netbeans.editor.VaadinTaskFactory;
+import org.vaadin.netbeans.editor.hints.Analyzer;
 import org.vaadin.netbeans.model.ModelOperation;
 import org.vaadin.netbeans.model.VaadinModel;
 import org.vaadin.netbeans.utils.JavaUtils;
@@ -53,34 +50,62 @@ import com.sun.source.tree.Tree;
 /**
  * @author denis
  */
-public class WebServletAnalyzer implements TypeAnalyzer {
+public class WebServletAnalyzer extends Analyzer {
+
+    public WebServletAnalyzer( HintContext context ) {
+        super(context);
+    }
+
+    public ErrorDescription getNoUiVaadinServlet() {
+        return myNoUiVaadinServlet;
+    }
+
+    public ErrorDescription getNoWidgetsetVaadinServlet() {
+        return myNoWidgetsetVaadinServlet;
+    }
+
+    public ErrorDescription getNoGwtModule() {
+        return myNoGwtModule;
+    }
+
+    public ErrorDescription getRequireVaadinServlet() {
+        return myRequireVaadinServlet;
+    }
+
+    /**
+     * @param myRequireVaadinServlet
+     *            the myRequireVaadinServlet to set
+     */
+    public void setMyRequireVaadinServlet(
+            ErrorDescription myRequireVaadinServlet )
+    {
+        this.myRequireVaadinServlet = myRequireVaadinServlet;
+    }
 
     @Override
-    public void analyze( TypeElement type, CompilationInfo info,
-            Collection<ErrorDescription> descriptions,
-            VaadinTaskFactory factory, AtomicBoolean cancel )
-    {
-        FileObject fileObject = info.getFileObject();
-        Project project = FileOwnerQuery.getOwner(fileObject);
-        if (project == null) {
+    public void analyze() {
+        if (getType() == null) {
             return;
         }
-        VaadinSupport support = project.getLookup().lookup(VaadinSupport.class);
-        if (support == null || !support.isEnabled()) {
-            return;
-        }
-        AnnotationMirror servlet = JavaUtils.getAnnotation(type,
-                JavaUtils.SERVLET_ANNOTATION);
-        if (servlet == null || cancel.get()) {
+        AnnotationMirror servlet =
+                JavaUtils
+                        .getAnnotation(getType(), JavaUtils.SERVLET_ANNOTATION);
+        if (servlet == null || isCanceled()) {
             return;
         }
 
         String widgetset = JavaUtils.getWidgetsetWebInit(servlet);
         String ui = JavaUtils.getWebInitParamValue(servlet, JavaUtils.UI);
 
-        TypeElement vaadinServlet = info.getElements().getTypeElement(
-                JavaUtils.VAADIN_SERVLET);
-        if (vaadinServlet == null || cancel.get()) {
+        TypeElement vaadinServlet =
+                getInfo().getElements()
+                        .getTypeElement(JavaUtils.VAADIN_SERVLET);
+        if (vaadinServlet == null || isCanceled()) {
+            return;
+        }
+
+        VaadinSupport support = getSupport();
+        if (support == null || !support.isReady()) {
             return;
         }
 
@@ -99,84 +124,91 @@ public class WebServletAnalyzer implements TypeAnalyzer {
                     .log(Level.INFO, null, e);
         }
 
-        if (cancel.get()) {
+        if (isCanceled()) {
             return;
         }
 
-        if (info.getTypes().isSubtype(type.asType(), vaadinServlet.asType())) {
+        if (getInfo().getTypes().isSubtype(getType().asType(),
+                vaadinServlet.asType()))
+        {
             if (ui == null) {
-                if (!JavaUtils.hasAnnotation(type,
+                if (!JavaUtils.hasAnnotation(getType(),
                         JavaUtils.VAADIN_SERVLET_CONFIGURATION))
                 {
-                    noUiVaadinServlet(type, info, servlet, descriptions);
+                    noUiVaadinServlet(servlet);
                 }
             }
             else {
                 if (widgetset == null) {
-                    noWidgetsetVaadinServlet(gwtXml[0], servlet, type, info,
-                            descriptions);
+                    noWidgetsetVaadinServlet(gwtXml[0], servlet);
                 }
                 else {
-                    checkWidgetset(widgetset, gwtXml[0], servlet, type, info,
-                            descriptions, factory);
+                    checkWidgetset(widgetset, gwtXml[0], servlet);
                 }
             }
         }
         else {
             if (ui != null || widgetset != null) {
-                requireVaadinServlet(type, info, descriptions);
+                requireVaadinServlet();
             }
         }
     }
 
     @NbBundle.Messages("badClassHierarchy=Class has Vaadin specific annotation parameter but is not derived from VaadinServlet")
-    private void requireVaadinServlet( TypeElement type, CompilationInfo info,
-            Collection<ErrorDescription> descriptions )
-    {
-        descriptions.add(AbstractJavaFix.createExtendServletFix(type, info,
-                Bundle.badClassHierarchy(), Severity.WARNING));
+    private void requireVaadinServlet() {
+        ErrorDescription myRequireVaadinServlet =
+                AbstractJavaFix.createExtendServletFix(getType(), getInfo(),
+                        Bundle.badClassHierarchy(),
+                        getSeverity(Severity.WARNING));
+        getDescriptions().add(myRequireVaadinServlet);
     }
 
     private void checkWidgetset( String widgetset, FileObject gwtXml,
-            AnnotationMirror servlet, TypeElement type, CompilationInfo info,
-            Collection<ErrorDescription> descriptions, VaadinTaskFactory factory )
+            AnnotationMirror servlet )
     {
+        CompilationInfo info = getInfo();
         String name = AbstractJavaFix.getWidgetsetFqn(gwtXml);
         if (name == null) {
-            List<Integer> positions = AbstractJavaFix.getElementPosition(info,
-                    getInitParamsTree(servlet, type, info));
-            ErrorDescription description = ErrorDescriptionFactory
-                    .createErrorDescription(Severity.ERROR, Bundle
-                            .noGwtModule(widgetset), Collections
-                            .<Fix> singletonList(new CreateGwtModuleFix(
-                                    widgetset, info.getFileObject(), factory)),
-                            info.getFileObject(), positions.get(0), positions
-                                    .get(1));
-            descriptions.add(description);
+            List<Integer> positions =
+                    AbstractJavaFix.getElementPosition(info,
+                            getInitParamsTree(servlet, getType(), info));
+            myNoGwtModule =
+                    ErrorDescriptionFactory
+                            .createErrorDescription(
+                                    getSeverity(Severity.ERROR),
+                                    Bundle.noGwtModule(widgetset),
+                                    Collections
+                                            .<Fix> singletonList(new CreateGwtModuleFix(
+                                                    widgetset, info
+                                                            .getFileObject())),
+                                    info.getFileObject(), positions.get(0),
+                                    positions.get(1));
+            getDescriptions().add(myNoGwtModule);
         }
         else if (!widgetset.equals(name)) {
-            ErrorDescription description = createServletWidgetsetDescription(
-                    name, servlet, type, info, Severity.ERROR,
-                    Bundle.noGwtModule(name));
-            descriptions.add(description);
+            myNoGwtModule =
+                    createServletWidgetsetDescription(name, servlet, getType(),
+                            info, getSeverity(Severity.ERROR),
+                            Bundle.noGwtModule(name));
+            getDescriptions().add(myNoGwtModule);
         }
     }
 
     @NbBundle.Messages({ "# {0} - widgetset",
             "noWidgetset=GWT module {0} exists but is not declared for VaadinServlet" })
     private void noWidgetsetVaadinServlet( FileObject gwtXml,
-            AnnotationMirror servlet, TypeElement type, CompilationInfo info,
-            Collection<ErrorDescription> descriptions )
+            AnnotationMirror servlet )
     {
         if (gwtXml == null) {
             // TODO : add hint to create and set gwt module name (low priority)
         }
         else {
             String name = AbstractJavaFix.getWidgetsetFqn(gwtXml);
-            ErrorDescription description = createServletWidgetsetDescription(
-                    name, servlet, type, info, Severity.HINT,
-                    Bundle.noWidgetset(name));
-            descriptions.add(description);
+            myNoWidgetsetVaadinServlet =
+                    createServletWidgetsetDescription(name, servlet, getType(),
+                            getInfo(), getSeverity(Severity.HINT),
+                            Bundle.noWidgetset(name));
+            getDescriptions().add(myNoWidgetsetVaadinServlet);
         }
     }
 
@@ -186,13 +218,14 @@ public class WebServletAnalyzer implements TypeAnalyzer {
             Fix... moreFixes )
     {
         Tree tree = getInitParamsTree(servlet, type, info);
-        List<Integer> positions = AbstractJavaFix
-                .getElementPosition(info, tree);
+        List<Integer> positions =
+                AbstractJavaFix.getElementPosition(info, tree);
         List<Fix> fixes;
         if (moreFixes.length == 0) {
-            fixes = Collections
-                    .<Fix> singletonList(new SetServletWidgetsetFix(widgetset,
-                            info.getFileObject(), ElementHandle.create(type)));
+            fixes =
+                    Collections.<Fix> singletonList(new SetServletWidgetsetFix(
+                            widgetset, info.getFileObject(), ElementHandle
+                                    .create(type)));
         }
         else {
             fixes = new ArrayList<>(moreFixes.length + 1);
@@ -202,30 +235,30 @@ public class WebServletAnalyzer implements TypeAnalyzer {
                 fixes.add(fix);
             }
         }
-        ErrorDescription description = ErrorDescriptionFactory
-                .createErrorDescription(severity, descriptionText, fixes,
-                        info.getFileObject(), positions.get(0),
-                        positions.get(1));
+        ErrorDescription description =
+                ErrorDescriptionFactory.createErrorDescription(severity,
+                        descriptionText, fixes, info.getFileObject(),
+                        positions.get(0), positions.get(1));
         return description;
     }
 
     private Tree getInitParamsTree( AnnotationMirror servlet, TypeElement type,
             CompilationInfo info )
     {
-        AnnotationTree annotationTree = (AnnotationTree) info.getTrees()
-                .getTree(type, servlet);
-        AssignmentTree assignment = AbstractJavaFix.getAnnotationTreeAttribute(
-                annotationTree, JavaUtils.INIT_PARAMS);
+        AnnotationTree annotationTree =
+                (AnnotationTree) info.getTrees().getTree(type, servlet);
+        AssignmentTree assignment =
+                AbstractJavaFix.getAnnotationTreeAttribute(annotationTree,
+                        JavaUtils.INIT_PARAMS);
         return assignment.getVariable();
     }
 
     @NbBundle.Messages("noUiProvided=Servlet class extends VaadinServlet but there is no UI class specified")
-    private void noUiVaadinServlet( TypeElement type, CompilationInfo info,
-            AnnotationMirror servlet, Collection<ErrorDescription> descriptions )
-    {
+    private void noUiVaadinServlet( AnnotationMirror servlet ) {
+        CompilationInfo info = getInfo();
         try {
-            TypeElement uiClass = info.getElements().getTypeElement(
-                    JavaUtils.VAADIN_UI_FQN);
+            TypeElement uiClass =
+                    info.getElements().getTypeElement(JavaUtils.VAADIN_UI_FQN);
             Set<TypeElement> uis = JavaUtils.getSubclasses(uiClass, info);
             for (Iterator<TypeElement> iterator = uis.iterator(); iterator
                     .hasNext();)
@@ -239,21 +272,31 @@ public class WebServletAnalyzer implements TypeAnalyzer {
                 }
             }
             List<Fix> fixes = new ArrayList<>(uis.size());
-            Tree annotationTree = info.getTrees().getTree(type, servlet);
+            Tree annotationTree = info.getTrees().getTree(getType(), servlet);
             for (TypeElement ui : uis) {
                 fixes.add(new SetUiServletParameterFix(ui.getQualifiedName()
                         .toString(), info.getFileObject(), ElementHandle
-                        .create(type)));
+                        .create(getType())));
             }
-            List<Integer> positions = AbstractJavaFix.getElementPosition(info,
-                    annotationTree);
-            ErrorDescription description = ErrorDescriptionFactory
-                    .createErrorDescription(Severity.WARNING,
+            List<Integer> positions =
+                    AbstractJavaFix.getElementPosition(info, annotationTree);
+            myNoUiVaadinServlet =
+                    ErrorDescriptionFactory.createErrorDescription(
+                            getSeverity(Severity.WARNING),
                             Bundle.noUiProvided(), fixes, info.getFileObject(),
                             positions.get(0), positions.get(1));
-            descriptions.add(description);
+            getDescriptions().add(myNoUiVaadinServlet);
         }
         catch (InterruptedException ignore) {
         }
     }
+
+    private ErrorDescription myNoUiVaadinServlet;
+
+    private ErrorDescription myNoWidgetsetVaadinServlet;
+
+    private ErrorDescription myNoGwtModule;
+
+    private ErrorDescription myRequireVaadinServlet;
+
 }

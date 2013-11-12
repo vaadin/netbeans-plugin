@@ -15,42 +15,38 @@
  */
 package org.vaadin.netbeans.editor.analyzer;
 
-import java.util.Collection;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 
-import org.netbeans.api.java.source.CompilationInfo;
-import org.netbeans.spi.editor.hints.ErrorDescription;
+import org.netbeans.spi.java.hints.HintContext;
 import org.openide.util.NbBundle;
-import org.vaadin.netbeans.editor.VaadinTaskFactory;
 
 /**
  * @author denis
  */
 public class SharedStateAnalyzer extends AbstractJavaBeanAnalyzer {
 
-    private static final String SHARED_STATE = "com.vaadin.shared.communication.SharedState"; // NOI18N
-
-    @Override
-    protected boolean isClientClass( TypeElement type, CompilationInfo info ) {
-        TypeElement sharedState = info.getElements().getTypeElement(
-                SHARED_STATE);
-        if (sharedState == null) {
-            return false;
-        }
-        return info.getTypes().isSubtype(type.asType(), sharedState.asType());
+    public SharedStateAnalyzer( HintContext context, Mode mode ) {
+        super(context, mode);
     }
 
+    private static final String SHARED_STATE =
+            "com.vaadin.shared.communication.SharedState"; // NOI18N
+
     @Override
-    protected void checkClientClass( TypeElement type, CompilationInfo info,
-            Collection<ErrorDescription> descriptions,
-            VaadinTaskFactory factory, AtomicBoolean cancel )
-    {
-        checkJavaBean(null, (DeclaredType) type.asType(), info, descriptions,
-                factory, cancel);
+    public void analyze() {
+        if (getType() == null) {
+            return;
+        }
+        if (isSharedState()) {
+            if (isPackageCheckMode()) {
+                checkClientPackage();
+            }
+            else {
+                checkJavaBean(null, (DeclaredType) getType().asType());
+            }
+        }
     }
 
     @NbBundle.Messages({ "# {0} - classFqn",
@@ -86,4 +82,13 @@ public class SharedStateAnalyzer extends AbstractJavaBeanAnalyzer {
         return Bundle.noAccessors();
     }
 
+    private boolean isSharedState() {
+        TypeElement sharedState =
+                getInfo().getElements().getTypeElement(SHARED_STATE);
+        if (sharedState == null) {
+            return false;
+        }
+        return getInfo().getTypes().isSubtype(getType().asType(),
+                sharedState.asType());
+    }
 }

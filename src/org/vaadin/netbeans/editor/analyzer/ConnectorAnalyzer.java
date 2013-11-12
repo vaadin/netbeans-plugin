@@ -15,10 +15,8 @@
  */
 package org.vaadin.netbeans.editor.analyzer;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
@@ -30,8 +28,8 @@ import org.netbeans.spi.editor.hints.ErrorDescription;
 import org.netbeans.spi.editor.hints.ErrorDescriptionFactory;
 import org.netbeans.spi.editor.hints.Fix;
 import org.netbeans.spi.editor.hints.Severity;
+import org.netbeans.spi.java.hints.HintContext;
 import org.openide.util.NbBundle;
-import org.vaadin.netbeans.editor.VaadinTaskFactory;
 import org.vaadin.netbeans.utils.JavaUtils;
 
 import com.sun.source.tree.AnnotationTree;
@@ -44,92 +42,102 @@ public class ConnectorAnalyzer extends ClientClassAnalyzer {
 
     private static final String CONNECTOR = "com.vaadin.shared.ui.Connect"; // NOI18N
 
-    private static final String CLIENT_CONNECTOR = "com.vaadin.server.ClientConnector"; // NOI18N
+    private static final String CLIENT_CONNECTOR =
+            "com.vaadin.server.ClientConnector"; // NOI18N
 
-    private static final String SERVER_CONNECTOR = "com.vaadin.client.ServerConnector"; // NOI18N
+    private static final String SERVER_CONNECTOR =
+            "com.vaadin.client.ServerConnector"; // NOI18N
 
-    private static final String ABSTRACT_COMPONENT_CONNECTOR = "com.vaadin.client.ui.AbstractComponentConnector"; // NOI18N
+    private static final String ABSTRACT_COMPONENT_CONNECTOR =
+            "com.vaadin.client.ui.AbstractComponentConnector"; // NOI18N
 
-    @Override
-    public void analyze( TypeElement type, CompilationInfo info,
-            Collection<ErrorDescription> descriptions,
-            VaadinTaskFactory factory, AtomicBoolean cancel )
-    {
-        super.analyze(type, info, descriptions, factory, cancel);
-        if (cancel.get()) {
-            return;
-        }
-        AnnotationMirror annotation = JavaUtils.getAnnotation(type, CONNECTOR);
-        if (annotation == null) {
-            return;
-        }
-        if (cancel.get()) {
-            return;
-        }
-        checkConnectorValue(type, info, annotation, descriptions);
-        if (cancel.get()) {
-            return;
-        }
-        checkConnectorClass(type, info, annotation, descriptions);
+    public ConnectorAnalyzer( HintContext context, boolean packageCheckMode ) {
+        super(context, packageCheckMode);
     }
 
     @Override
-    protected boolean isClientClass( TypeElement type, CompilationInfo info ) {
-        TypeElement serverConnector = info.getElements().getTypeElement(
-                SERVER_CONNECTOR);
+    public void analyze() {
+        if (getType() == null) {
+            return;
+        }
+        AnnotationMirror annotation =
+                JavaUtils.getAnnotation(getType(), CONNECTOR);
+        if (annotation == null) {
+            return;
+        }
+        if (isCanceled()) {
+            return;
+        }
+        if (isPackageCheckMode()) {
+            if (isConnector()) {
+                checkClientPackage();
+            }
+        }
+        else {
+            checkConnectorValue(annotation);
+            if (isCanceled()) {
+                return;
+            }
+            checkConnectorClass(annotation);
+            if (isCanceled()) {
+                return;
+            }
+        }
+    }
+
+    public ErrorDescription getBadConnectValue() {
+        return myBadConnectValue;
+    }
+
+    public ErrorDescription getBadConnectorClass() {
+        return myBadConnectorClass;
+    }
+
+    private boolean isConnector() {
+        TypeElement serverConnector =
+                getInfo().getElements().getTypeElement(SERVER_CONNECTOR);
         if (serverConnector == null) {
             return false;
         }
-        return info.getTypes().isSubtype(type.asType(),
+        return getInfo().getTypes().isSubtype(getType().asType(),
                 serverConnector.asType());
     }
 
     @NbBundle.Messages("badConnectorClass=@Connect annotation must attached to ServerConnector subclass")
-    private void checkConnectorClass( TypeElement type, CompilationInfo info,
-            AnnotationMirror annotation,
-            Collection<ErrorDescription> descriptions )
-    {
-        TypeElement serverConnector = info.getElements().getTypeElement(
-                SERVER_CONNECTOR);
+    private void checkConnectorClass( AnnotationMirror annotation ) {
+        CompilationInfo info = getInfo();
+        TypeElement serverConnector =
+                info.getElements().getTypeElement(SERVER_CONNECTOR);
         if (serverConnector == null) {
             return;
         }
-        if (!info.getTypes().isSubtype(type.asType(), serverConnector.asType()))
+        if (!info.getTypes().isSubtype(getType().asType(),
+                serverConnector.asType()))
         {
-            List<Integer> positions = AbstractJavaFix.getElementPosition(info,
-                    type);
+            List<Integer> positions =
+                    AbstractJavaFix.getElementPosition(info, getType());
 
-            /*
-             * TODO: provide fix hints: - analyze @Connect annotation value. If
-             * it's AbstactComponent subclass then add hint to derive class from
-             * AbstractComponentConnector (if it doesn't have superclass ) If
-             * it's AbstractExtension subclass then add hint to derive class
-             * from AbstractExtensionConnector (if it doesn't have superclass )
-             * - if it has already incompatible superclass then add hint to
-             * implement ServerConnector
-             */
-            ErrorDescription description = ErrorDescriptionFactory
-                    .createErrorDescription(Severity.ERROR,
+            myBadConnectorClass =
+                    ErrorDescriptionFactory.createErrorDescription(
+                            getSeverity(Severity.ERROR),
                             Bundle.badConnectorClass(),
                             Collections.<Fix> emptyList(),
                             info.getFileObject(), positions.get(0),
                             positions.get(1));
-            descriptions.add(description);
+            getDescriptions().add(myBadConnectorClass);
         }
     }
 
     @NbBundle.Messages("badConnectValue=@Connect annotation value must be a ClientConnector subclass")
-    private void checkConnectorValue( TypeElement type, CompilationInfo info,
-            AnnotationMirror annotation,
-            Collection<ErrorDescription> descriptions )
-    {
-        TypeElement clientConnector = info.getElements().getTypeElement(
-                CLIENT_CONNECTOR);
+    private void checkConnectorValue( AnnotationMirror annotation ) {
+        CompilationInfo info = getInfo();
+        TypeElement clientConnector =
+                info.getElements().getTypeElement(CLIENT_CONNECTOR);
         if (clientConnector == null) {
             return;
         }
-        AnnotationValue component = JavaUtils.getAnnotationValue(annotation,
-                JavaUtils.VALUE);
+        AnnotationValue component =
+                JavaUtils.getAnnotationValue(annotation, JavaUtils.VALUE);
 
         if (component == null) {
             return;
@@ -139,19 +147,26 @@ public class ConnectorAnalyzer extends ClientClassAnalyzer {
             if (!info.getTypes().isSubtype((TypeMirror) value,
                     clientConnector.asType()))
             {
-                AnnotationTree tree = (AnnotationTree) info.getTrees().getTree(
-                        type, annotation);
+                AnnotationTree tree =
+                        (AnnotationTree) info.getTrees().getTree(getType(),
+                                annotation);
                 ExpressionTree expressionTree = tree.getArguments().get(0);
-                List<Integer> positions = AbstractJavaFix.getElementPosition(
-                        info, expressionTree);
-                ErrorDescription description = ErrorDescriptionFactory
-                        .createErrorDescription(Severity.ERROR,
+                List<Integer> positions =
+                        AbstractJavaFix
+                                .getElementPosition(info, expressionTree);
+                myBadConnectValue =
+                        ErrorDescriptionFactory.createErrorDescription(
+                                getSeverity(Severity.ERROR),
                                 Bundle.badConnectValue(),
                                 Collections.<Fix> emptyList(),
                                 info.getFileObject(), positions.get(0),
                                 positions.get(1));
-                descriptions.add(description);
+                getDescriptions().add(myBadConnectValue);
             }
         }
     }
+
+    private ErrorDescription myBadConnectValue;
+
+    private ErrorDescription myBadConnectorClass;
 }

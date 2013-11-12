@@ -25,15 +25,8 @@ import javax.lang.model.util.ElementFilter;
 
 import org.netbeans.api.java.source.CompilationInfo;
 import org.netbeans.spi.editor.hints.ErrorDescription;
-import org.vaadin.netbeans.editor.analyzer.ConnectorAnalyzer;
-import org.vaadin.netbeans.editor.analyzer.RpcInterfacesAnalyzer;
 import org.vaadin.netbeans.editor.analyzer.RpcRegistrationAnalyzer;
-import org.vaadin.netbeans.editor.analyzer.SharedStateAnalyzer;
-import org.vaadin.netbeans.editor.analyzer.ThemeAnalyzer;
 import org.vaadin.netbeans.editor.analyzer.TypeAnalyzer;
-import org.vaadin.netbeans.editor.analyzer.VaadinServletConfigurationAnalyzer;
-import org.vaadin.netbeans.editor.analyzer.WebServletAnalyzer;
-import org.vaadin.netbeans.editor.analyzer.GwtClassesAnalyzer;
 
 /**
  * @author denis
@@ -68,8 +61,8 @@ class VaadinScanTask {
     }
 
     private void handle( TypeElement clazz ) {
-        List<TypeElement> typess = ElementFilter.typesIn(clazz
-                .getEnclosedElements());
+        List<TypeElement> typess =
+                ElementFilter.typesIn(clazz.getEnclosedElements());
         for (TypeElement typeElement : typess) {
             handle(typeElement);
         }
@@ -94,13 +87,6 @@ class VaadinScanTask {
     private final VaadinTaskFactory myFactory;
 
     static {
-        ANALYZERS.add(new ThemeAnalyzer());
-        ANALYZERS.add(new VaadinServletConfigurationAnalyzer());
-        ANALYZERS.add(new WebServletAnalyzer());
-        ANALYZERS.add(new ConnectorAnalyzer());
-        ANALYZERS.add(new SharedStateAnalyzer());
-        ANALYZERS.add(new RpcInterfacesAnalyzer());
-        ANALYZERS.add(new GwtClassesAnalyzer());
         ANALYZERS.add(new RpcRegistrationAnalyzer());
     }
 }
