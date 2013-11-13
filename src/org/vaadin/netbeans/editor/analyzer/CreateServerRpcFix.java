@@ -55,11 +55,6 @@ import com.sun.source.tree.VariableTree;
  */
 public class CreateServerRpcFix extends AbstractRpcFix {
 
-    private static final String SERVER_RPC = "ServerRpc"; // NOI18N
-
-    private static final String SERVER_RPC_TEMPLATE = "Templates/Vaadin/"
-            + SERVER_RPC + "Stub.java"; // NOI18N
-
     private static final String RPC_FIELD = "rpc"; // NOI18N 
 
     protected CreateServerRpcFix( FileObject fileObject,

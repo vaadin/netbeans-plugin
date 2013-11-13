@@ -16,12 +16,17 @@
 package org.vaadin.netbeans.editor.analyzer;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.util.ElementFilter;
 
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.source.ElementHandle;
@@ -38,11 +43,11 @@ import org.openide.filesystems.FileObject;
 import org.openide.util.Mutex;
 import org.openide.util.NbBundle;
 import org.vaadin.netbeans.VaadinSupport;
-import org.vaadin.netbeans.code.generator.JavaUtils;
-import org.vaadin.netbeans.code.generator.XmlUtils;
 import org.vaadin.netbeans.editor.analyzer.ui.RpcInterfacePanel;
 import org.vaadin.netbeans.model.ModelOperation;
 import org.vaadin.netbeans.model.VaadinModel;
+import org.vaadin.netbeans.utils.JavaUtils;
+import org.vaadin.netbeans.utils.XmlUtils;
 
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.ExpressionTree;
@@ -56,6 +61,16 @@ import com.sun.source.util.TreePathScanner;
  * @author denis
  */
 abstract class AbstractRpcFix extends AbstractJavaFix {
+
+    static final String CLIENT_RPC = "ClientRpc"; // NOI18N
+
+    static final String CLIENT_RPC_TEMPLATE =
+            "Templates/Vaadin/ClientRpcStub.java"; // NOI18N
+
+    static final String SERVER_RPC = "ServerRpc"; // NOI18N
+
+    static final String SERVER_RPC_TEMPLATE = "Templates/Vaadin/" + SERVER_RPC
+            + "Stub.java"; // NOI18N
 
     AbstractRpcFix( FileObject fileObject, ElementHandle<TypeElement> handle,
             String varName, String varType )
@@ -225,6 +240,23 @@ abstract class AbstractRpcFix extends AbstractJavaFix {
                 treeMaker.addCompUnitImport(copy.getCompilationUnit(), imprt);
 
         copy.rewrite(unitTree, withImport);
+    }
+
+    protected String findFreeGetterName( TypeElement clazz, String suffix ) {
+        List<ExecutableElement> methods =
+                ElementFilter.methodsIn(clazz.getEnclosedElements());
+        Set<String> names = new HashSet<>();
+        for (ExecutableElement method : methods) {
+            names.add(method.getSimpleName().toString());
+        }
+        String getterName = "get" + suffix; //NOI18N
+        String name = getterName;
+        int i = 1;
+        while (names.contains(getterName)) {
+            name = getterName + i;
+            i++;
+        }
+        return name;
     }
 
     @NbBundle.Messages({

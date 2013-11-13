@@ -414,6 +414,16 @@ public final class JavaUtils {
                 info);
     }
 
+    public static Set<TypeElement> getSubinterfaces( TypeElement typeElement,
+            CompilationInfo info ) throws InterruptedException
+    {
+        if (typeElement == null) {
+            return Collections.emptySet();
+        }
+        return discoverHierarchy(typeElement,
+                EnumSet.of(ElementKind.INTERFACE), info);
+    }
+
     public static Collection<? extends TypeMirror> getSupertypes(
             TypeMirror type, CompilationInfo info )
     {

@@ -51,11 +51,6 @@ import com.sun.source.tree.TypeParameterTree;
  */
 public class CreateClientRpcFix extends AbstractRpcFix {
 
-    private static final String CLIENT_RPC = "ClientRpc"; // NOI18N
-
-    private static final String CLIENT_RPC_TEMPLATE =
-            "Templates/Vaadin/ClientRpcStub.java"; // NOI18N
-
     protected CreateClientRpcFix( FileObject fileObject,
             ElementHandle<TypeElement> handle, String varName, String varType )
     {
