@@ -54,9 +54,11 @@ import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.IdentifierTree;
 import com.sun.source.tree.LiteralTree;
 import com.sun.source.tree.MethodTree;
+import com.sun.source.tree.NewClassTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
 import com.sun.source.util.SourcePositions;
+import com.sun.source.util.TreePath;
 
 /**
  * @author denis
@@ -134,7 +136,13 @@ abstract class AbstractJavaFix implements Fix {
 
         Tree startTree = null;
 
-        if (TreeUtilities.CLASS_TREE_KINDS.contains(subjectTree.getKind())) {
+        NewClassTree newClassTree = getNewClassTree(info, tree);
+        if (newClassTree != null) {
+            startTree = newClassTree.getIdentifier();
+            subjectTree = newClassTree;
+        }
+        else if (TreeUtilities.CLASS_TREE_KINDS.contains(subjectTree.getKind()))
+        {
             startTree = ((ClassTree) subjectTree).getModifiers();
         }
         else if (subjectTree.getKind() == Tree.Kind.METHOD) {
@@ -145,9 +153,17 @@ abstract class AbstractJavaFix implements Fix {
         }
 
         if (startTree != null) {
-            int searchStart =
-                    (int) srcPos.getEndPosition(info.getCompilationUnit(),
-                            startTree);
+            int searchStart;
+            if (newClassTree == null) {
+                searchStart =
+                        (int) srcPos.getEndPosition(info.getCompilationUnit(),
+                                startTree);
+            }
+            else {
+                searchStart =
+                        (int) srcPos.getStartPosition(
+                                info.getCompilationUnit(), startTree);
+            }
 
             TokenSequence<?> tokenSequence =
                     info.getTreeUtilities().tokensFor(subjectTree);
@@ -265,6 +281,21 @@ abstract class AbstractJavaFix implements Fix {
             fqn = fqn.substring(0, fqn.length() - XmlUtils.GWT_XML.length());
         }
         return fqn;
+    }
+
+    static NewClassTree getNewClassTree( CompilationInfo info, Tree tree ) {
+        if (TreeUtilities.CLASS_TREE_KINDS.contains(tree.getKind())) {
+            TreePath path =
+                    info.getTrees().getPath(info.getCompilationUnit(), tree);
+            if (path == null || path.getParentPath() == null) {
+                return null;
+            }
+            Tree parent = path.getParentPath().getLeaf();
+            if (parent instanceof NewClassTree) {
+                return (NewClassTree) parent;
+            }
+        }
+        return null;
     }
 
     private FileObject myFileObject;
