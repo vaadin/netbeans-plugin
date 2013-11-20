@@ -30,6 +30,7 @@ import javax.lang.model.util.ElementFilter;
 
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.source.ElementHandle;
+import org.netbeans.api.java.source.GeneratorUtilities;
 import org.netbeans.api.java.source.JavaSource;
 import org.netbeans.api.java.source.TreeMaker;
 import org.netbeans.api.java.source.WorkingCopy;
@@ -49,6 +50,7 @@ import org.vaadin.netbeans.model.VaadinModel;
 import org.vaadin.netbeans.utils.JavaUtils;
 import org.vaadin.netbeans.utils.XmlUtils;
 
+import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.IdentifierTree;
@@ -257,6 +259,31 @@ abstract class AbstractRpcFix extends AbstractJavaFix {
             i++;
         }
         return name;
+    }
+
+    protected ClassTree implement( String ifaceFqn, TreeMaker treeMaker,
+            WorkingCopy copy, ClassTree body )
+    {
+        TypeElement iface = copy.getElements().getTypeElement(ifaceFqn);
+        TypeElement object =
+                copy.getElements().getTypeElement(Object.class.getName());
+        if (iface == null || object == null) {
+            return body;
+        }
+        GeneratorUtilities genUtilities = GeneratorUtilities.get(copy);
+
+        Set<ExecutableElement> methods =
+                new HashSet<>(ElementFilter.methodsIn(copy.getElements()
+                        .getAllMembers(iface)));
+        methods.removeAll(object.getEnclosedElements());
+
+        List<? extends MethodTree> methodsTree =
+                genUtilities.createAbstractMethodImplementations(object,
+                        methods);
+        for (MethodTree methodTree : methodsTree) {
+            body = treeMaker.addClassMember(body, methodTree);
+        }
+        return body;
     }
 
     @NbBundle.Messages({

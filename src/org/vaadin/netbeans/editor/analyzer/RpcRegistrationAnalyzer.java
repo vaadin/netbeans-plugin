@@ -17,7 +17,6 @@ package org.vaadin.netbeans.editor.analyzer;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -138,14 +137,32 @@ public class RpcRegistrationAnalyzer implements TypeAnalyzer {
         RegisterRpcScanner scanner = new RegisterRpcScanner(type, true);
         scanner.scan(info.getTrees().getPath(type), info);
         if (!scanner.isFound()) {
+            List<Fix> fixes = new LinkedList<>();
+            fixes.add(new CreateClientRpcFix(info.getFileObject(),
+                    ElementHandle.create(type), scanner.getRpcVariable(),
+                    scanner.getRpcVariableType()));
+            TypeElement clientRpc =
+                    info.getElements().getTypeElement(CLIENT_RPC);
+            if (clientRpc != null) {
+                try {
+                    Set<TypeElement> subInterfaces =
+                            JavaUtils.getSubinterfaces(clientRpc, info);
+                    for (TypeElement iface : subInterfaces) {
+                        if (isInSource(iface, info)) {
+                            fixes.add(new CreateClientRpcFix(info
+                                    .getFileObject(), ElementHandle
+                                    .create(type), iface.getQualifiedName()
+                                    .toString()));
+                        }
+                    }
+                }
+                catch (InterruptedException ignore) {
+                }
+            }
             String msg =
                     scanner.getRpcVariable() == null ? Bundle.noClientRpc()
                             : Bundle.registerClientRpc();
-            descriptions.add(createHint(
-                    msg,
-                    new CreateClientRpcFix(info.getFileObject(), ElementHandle
-                            .create(type), scanner.getRpcVariable(), scanner
-                            .getRpcVariableType()), type, info));
+            descriptions.add(createHint(msg, fixes, type, info));
         }
     }
 
@@ -158,14 +175,32 @@ public class RpcRegistrationAnalyzer implements TypeAnalyzer {
         RegisterRpcScanner scanner = new RegisterRpcScanner(type, false);
         scanner.scan(info.getTrees().getPath(type), info);
         if (!scanner.isFound()) {
+            List<Fix> fixes = new LinkedList<>();
+            fixes.add(new CreateServerRpcFix(info.getFileObject(),
+                    ElementHandle.create(type), scanner.getRpcVariable(),
+                    scanner.getRpcVariableType()));
+            TypeElement serverRpc =
+                    info.getElements().getTypeElement(SERVER_RPC);
+            if (serverRpc != null) {
+                try {
+                    Set<TypeElement> subInterfaces =
+                            JavaUtils.getSubinterfaces(serverRpc, info);
+                    for (TypeElement iface : subInterfaces) {
+                        if (isInSource(iface, info)) {
+                            fixes.add(new CreateServerRpcFix(info
+                                    .getFileObject(), ElementHandle
+                                    .create(type), iface.getQualifiedName()
+                                    .toString()));
+                        }
+                    }
+                }
+                catch (InterruptedException ignore) {
+                }
+            }
             String msg =
                     scanner.getRpcVariable() == null ? Bundle.noServerRpc()
                             : Bundle.registerServerRpc();
-            descriptions.add(createHint(
-                    msg,
-                    new CreateServerRpcFix(info.getFileObject(), ElementHandle
-                            .create(type), scanner.getRpcVariable(), scanner
-                            .getRpcVariableType()), type, info));
+            descriptions.add(createHint(msg, fixes, type, info));
         }
     }
 
@@ -240,12 +275,6 @@ public class RpcRegistrationAnalyzer implements TypeAnalyzer {
                     info));
 
         }
-    }
-
-    private ErrorDescription createHint( String msg, Fix fix, TypeElement type,
-            CompilationInfo info )
-    {
-        return createHint(msg, Collections.singletonList(fix), type, info);
     }
 
     private ErrorDescription createHint( String msg, List<Fix> fixes,

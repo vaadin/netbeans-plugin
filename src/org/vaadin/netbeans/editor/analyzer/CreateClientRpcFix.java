@@ -57,17 +57,29 @@ public class CreateClientRpcFix extends AbstractRpcFix {
         super(fileObject, handle, varName, varType);
     }
 
+    protected CreateClientRpcFix( FileObject fileObject,
+            ElementHandle<TypeElement> handle, String varType )
+    {
+        super(fileObject, handle, null, varType);
+    }
+
     @NbBundle.Messages({
             "createClientRpc=Create Client RPC interface and use it",
             "# {0} - server rpc",
-            "registerExistingClientRpc=Register Client RPC interface declared by ''{0}''" })
+            "registerExistingClientRpc=Register Client RPC interface {0}",
+            "registerDeclaredClientRpc=Register Client RPC interface declared by ''{0}''" })
     @Override
     public String getText() {
         if (getRpcVariable() == null) {
-            return Bundle.createClientRpc();
+            if (getRpcVariableType() == null) {
+                return Bundle.createClientRpc();
+            }
+            else {
+                return Bundle.registerExistingClientRpc(getRpcVariableType());
+            }
         }
         else {
-            return Bundle.registerExistingClientRpc(getRpcVariable());
+            return Bundle.registerDeclaredClientRpc(getRpcVariable());
         }
     }
 
@@ -119,7 +131,8 @@ public class CreateClientRpcFix extends AbstractRpcFix {
                             addImport(ifaceFqn, copy, treeMaker);
                         }
 
-                        callRegisterRpc(clazz, copy, treeMaker, ifaceName);
+                        callRegisterRpc(clazz, copy, treeMaker, ifaceName,
+                                ifaceFqn);
                     }
 
                 });
@@ -129,7 +142,7 @@ public class CreateClientRpcFix extends AbstractRpcFix {
     }
 
     private void callRegisterRpc( TypeElement clazz, WorkingCopy copy,
-            TreeMaker treeMaker, String ifaceName )
+            TreeMaker treeMaker, String ifaceName, String ifaceFqn )
     {
         List<ExecutableElement> ctors =
                 ElementFilter.constructorsIn(clazz.getEnclosedElements());
@@ -149,13 +162,15 @@ public class CreateClientRpcFix extends AbstractRpcFix {
             if (getRpcVariable() == null) {
                 List<ExpressionTree> args = new ArrayList<>(2);
                 args.add(treeMaker.MemberSelect(
-                        treeMaker.Identifier(ifaceName), "class"));
+                        treeMaker.Identifier(ifaceName), "class")); // NOI18N
                 ClassTree newClassBody =
                         treeMaker.Class(treeMaker.Modifiers(Collections
                                 .<Modifier> emptySet()), "", Collections
                                 .<TypeParameterTree> emptyList(), null,
                                 Collections.<Tree> emptyList(), Collections
                                         .<ExpressionTree> emptyList());
+                newClassBody =
+                        implement(ifaceFqn, treeMaker, copy, newClassBody);
                 args.add(treeMaker.NewClass(null,
                         Collections.<ExpressionTree> emptyList(),
                         treeMaker.Identifier(ifaceName),

@@ -63,17 +63,29 @@ public class CreateServerRpcFix extends AbstractRpcFix {
         super(fileObject, handle, varName, varType);
     }
 
+    public CreateServerRpcFix( FileObject fileObject,
+            ElementHandle<TypeElement> handle, String varType )
+    {
+        super(fileObject, handle, null, varType);
+    }
+
     @NbBundle.Messages({
             "createServerRpc=Create Server RPC interface and use it",
             "# {0} - server rpc",
-            "registerExistingServerRpc=Register Server RPC interface declared by ''{0}''" })
+            "registerDeclaredServerRpc=Register Server RPC interface declared by ''{0}''",
+            "registerExistingServerRpc=Register Server RPC interface {0}" })
     @Override
     public String getText() {
         if (getRpcVariable() == null) {
-            return Bundle.createServerRpc();
+            if (getRpcVariableType() == null) {
+                return Bundle.createServerRpc();
+            }
+            else {
+                return Bundle.registerExistingServerRpc(getRpcVariableType());
+            }
         }
         else {
-            return Bundle.registerExistingServerRpc(getRpcVariable());
+            return Bundle.registerDeclaredServerRpc(getRpcVariable());
         }
     }
 
@@ -125,11 +137,14 @@ public class CreateServerRpcFix extends AbstractRpcFix {
                         callRegisterRpc(rpcField, clazz, copy, treeMaker);
 
                         if (getRpcVariable() == null) {
-                            ClassTree newTree =
-                                    addField(rpcField, ifaceName, oldTree,
-                                            treeMaker);
+                            VariableTree varTree =
+                                    createField(rpcField, ifaceName, ifaceFqn,
+                                            treeMaker, copy);
 
+                            ClassTree newTree =
+                                    treeMaker.addClassMember(oldTree, varTree);
                             copy.rewrite(oldTree, newTree);
+
                         }
                     }
 
@@ -170,8 +185,8 @@ public class CreateServerRpcFix extends AbstractRpcFix {
         }
     }
 
-    private ClassTree addField( String fieldName, String ifaceName,
-            ClassTree tree, TreeMaker treeMaker )
+    private VariableTree createField( String fieldName, String ifaceName,
+            String ifaceFqn, TreeMaker treeMaker, WorkingCopy copy )
     {
         ClassTree body =
                 treeMaker.Class(
@@ -180,21 +195,18 @@ public class CreateServerRpcFix extends AbstractRpcFix {
                         Collections.<Tree> emptyList(),
                         Collections.<ExpressionTree> emptyList());
 
+        body = implement(ifaceFqn, treeMaker, copy, body);
+
         NewClassTree initializer =
                 treeMaker.NewClass(null,
                         Collections.<ExpressionTree> emptyList(),
                         treeMaker.Identifier(ifaceName),
                         Collections.<ExpressionTree> emptyList(), body);
 
-        VariableTree newField =
-                treeMaker
-                        .Variable(treeMaker.Modifiers(EnumSet
-                                .of(Modifier.PRIVATE)), fieldName, treeMaker
-                                .Identifier(ifaceName), initializer);
+        return treeMaker.Variable(
+                treeMaker.Modifiers(EnumSet.of(Modifier.PRIVATE)), fieldName,
+                treeMaker.Identifier(ifaceName), initializer);
 
-        ClassTree newTree = treeMaker.addClassMember(tree, newField);
-
-        return newTree;
     }
 
     private String getRpcField( TypeElement type ) {
