@@ -42,7 +42,8 @@ public class WebServlet {
 
     @Hint(displayName = "#DN_WebServletHasNoWidgetset",
             description = "#DESC_WebServletHasNoWidgetset",
-            category = "vaadin", options = Options.QUERY)
+            category = "vaadin", options = Options.QUERY,
+            severity = Severity.HINT)
     @TriggerTreeKind(Kind.CLASS)
     public static ErrorDescription noWidgetsetVaadinServlet( HintContext context )
     {

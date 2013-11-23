@@ -58,7 +58,8 @@ public class VaadinServlet {
 
     @Hint(displayName = "#DN_VaadinServletConfigurationNoWidgetset",
             description = "#DESC_VaadinServletConfigurationNoWidgetset",
-            category = "vaadin", options = Options.QUERY)
+            category = "vaadin", options = Options.QUERY,
+            severity = Severity.HINT)
     @TriggerTreeKind(Kind.CLASS)
     public static ErrorDescription noWidgetsetVaadinServlet( HintContext context )
     {

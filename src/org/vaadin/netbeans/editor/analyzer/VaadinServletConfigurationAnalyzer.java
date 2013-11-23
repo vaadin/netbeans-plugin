@@ -17,10 +17,8 @@ package org.vaadin.netbeans.editor.analyzer;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -39,7 +37,6 @@ import org.netbeans.spi.java.hints.HintContext;
 import org.openide.filesystems.FileObject;
 import org.openide.util.NbBundle;
 import org.vaadin.netbeans.VaadinSupport;
-import org.vaadin.netbeans.editor.VaadinTaskFactory;
 import org.vaadin.netbeans.editor.hints.Analyzer;
 import org.vaadin.netbeans.model.ModelOperation;
 import org.vaadin.netbeans.model.VaadinModel;
@@ -51,9 +48,7 @@ import com.sun.source.tree.AssignmentTree;
 /**
  * @author denis
  */
-public class VaadinServletConfigurationAnalyzer extends Analyzer implements
-        TypeAnalyzer
-{
+public class VaadinServletConfigurationAnalyzer extends Analyzer {
 
     public VaadinServletConfigurationAnalyzer( HintContext context ) {
         super(context);
@@ -196,13 +191,6 @@ public class VaadinServletConfigurationAnalyzer extends Analyzer implements
                             positions.get(1));
             getDescriptions().add(myNoGwtModule);
         }
-    }
-
-    @Override
-    public void analyze( TypeElement type, CompilationInfo info,
-            Collection<ErrorDescription> descriptions,
-            VaadinTaskFactory factory, AtomicBoolean cancel )
-    {
     }
 
     private ErrorDescription myNoGwtModule;

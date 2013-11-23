@@ -20,7 +20,6 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
@@ -36,11 +35,12 @@ import org.netbeans.spi.editor.hints.ErrorDescription;
 import org.netbeans.spi.editor.hints.ErrorDescriptionFactory;
 import org.netbeans.spi.editor.hints.Fix;
 import org.netbeans.spi.editor.hints.Severity;
+import org.netbeans.spi.java.hints.HintContext;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
 import org.vaadin.netbeans.VaadinSupport;
-import org.vaadin.netbeans.editor.VaadinTaskFactory;
+import org.vaadin.netbeans.editor.hints.Analyzer;
 import org.vaadin.netbeans.model.ModelOperation;
 import org.vaadin.netbeans.model.VaadinModel;
 import org.vaadin.netbeans.utils.JavaUtils;
@@ -48,7 +48,7 @@ import org.vaadin.netbeans.utils.JavaUtils;
 /**
  * @author denis
  */
-public class RpcRegistrationAnalyzer implements TypeAnalyzer {
+public class RpcRegistrationAnalyzer extends Analyzer {
 
     static final String CLIENT_CONNECTOR =
             "com.vaadin.server.AbstractClientConnector"; // NOI18N
@@ -61,19 +61,20 @@ public class RpcRegistrationAnalyzer implements TypeAnalyzer {
             "com.vaadin.shared.communication.ServerRpc"; // NOI18N 
 
     static final String CLIENT_RPC =
-            "com.vaadin.shared.communication.ClientRpc"; // NOI18N 
+            "com.vaadin.shared.communication.ClientRpc"; // NOI18N
+
+    public RpcRegistrationAnalyzer( HintContext context ) {
+        super(context);
+    }
 
     @Override
-    public void analyze( TypeElement type, CompilationInfo info,
-            Collection<ErrorDescription> descriptions,
-            VaadinTaskFactory factory, AtomicBoolean cancel )
-    {
-        Project project = FileOwnerQuery.getOwner(info.getFileObject());
+    public void analyze() {
+        Project project = FileOwnerQuery.getOwner(getInfo().getFileObject());
         if (project == null) {
             return;
         }
         VaadinSupport support = project.getLookup().lookup(VaadinSupport.class);
-        if (support == null || !support.isEnabled()) {
+        if (support == null || !support.isEnabled() || !support.isReady()) {
             return;
         }
         final boolean[] hasGwtXml = new boolean[1];
@@ -93,11 +94,11 @@ public class RpcRegistrationAnalyzer implements TypeAnalyzer {
         }
 
         Collection<? extends TypeMirror> supertypes =
-                JavaUtils.getSupertypes(type.asType(), info);
+                JavaUtils.getSupertypes(getType().asType(), getInfo());
         boolean serverComponent = false;
         boolean clientComponent = false;
         for (TypeMirror superType : supertypes) {
-            Element superElement = info.getTypes().asElement(superType);
+            Element superElement = getInfo().getTypes().asElement(superType);
             if (superElement instanceof TypeElement) {
                 String fqn =
                         ((TypeElement) superElement).getQualifiedName()
@@ -112,28 +113,43 @@ public class RpcRegistrationAnalyzer implements TypeAnalyzer {
                 }
             }
         }
-        if (cancel.get()) {
+        if (isCanceled()) {
             return;
         }
         if (serverComponent) {
-            findServerRpcUsage(type, info, descriptions, factory, cancel);
-            findClientProxyRpcUsage(type, info, descriptions, factory, cancel);
+            findServerRpcUsage();
+            findClientProxyRpcUsage();
         }
-        if (cancel.get()) {
+        if (isCanceled()) {
             return;
         }
         if (clientComponent) {
-            findClientRpcUsage(type, info, descriptions, factory, cancel);
-            findServerProxyRpcUsage(type, info, descriptions, factory, cancel);
+            findClientRpcUsage();
+            findServerProxyRpcUsage();
         }
+    }
+
+    public ErrorDescription getNoServerRpc() {
+        return myNoServerRpc;
+    }
+
+    public ErrorDescription getNoClientRpcProxy() {
+        return myNoClientRpcProxy;
+    }
+
+    public ErrorDescription getNoClientRpc() {
+        return myNoClientRpc;
+    }
+
+    public ErrorDescription getNoServerRpcProxy() {
+        return myNoServerRpcProxy;
     }
 
     @NbBundle.Messages({ "noClientRpc=Client RPC interface is not used",
             "registerClientRpc=Client RPC interface is not registered" })
-    private void findClientRpcUsage( TypeElement type, CompilationInfo info,
-            Collection<ErrorDescription> descriptions,
-            VaadinTaskFactory factory, AtomicBoolean cancel )
-    {
+    private void findClientRpcUsage() {
+        CompilationInfo info = getInfo();
+        TypeElement type = getType();
         RegisterRpcScanner scanner = new RegisterRpcScanner(type, true);
         scanner.scan(info.getTrees().getPath(type), info);
         if (!scanner.isFound()) {
@@ -162,16 +178,16 @@ public class RpcRegistrationAnalyzer implements TypeAnalyzer {
             String msg =
                     scanner.getRpcVariable() == null ? Bundle.noClientRpc()
                             : Bundle.registerClientRpc();
-            descriptions.add(createHint(msg, fixes, type, info));
+            myNoClientRpc = createHint(msg, fixes, type, info);
+            getDescriptions().add(myNoClientRpc);
         }
     }
 
     @NbBundle.Messages({ "noServerRpc=Server RPC interface is not used",
             "registerServerRpc=Server RPC interface is not registered" })
-    private void findServerRpcUsage( TypeElement type, CompilationInfo info,
-            Collection<ErrorDescription> descriptions,
-            VaadinTaskFactory factory, AtomicBoolean cancel )
-    {
+    private void findServerRpcUsage() {
+        CompilationInfo info = getInfo();
+        TypeElement type = getType();
         RegisterRpcScanner scanner = new RegisterRpcScanner(type, false);
         scanner.scan(info.getTrees().getPath(type), info);
         if (!scanner.isFound()) {
@@ -200,18 +216,18 @@ public class RpcRegistrationAnalyzer implements TypeAnalyzer {
             String msg =
                     scanner.getRpcVariable() == null ? Bundle.noServerRpc()
                             : Bundle.registerServerRpc();
-            descriptions.add(createHint(msg, fixes, type, info));
+            myNoServerRpc = createHint(msg, fixes, type, info);
+            getDescriptions().add(myNoServerRpc);
         }
     }
 
     @NbBundle.Messages("noClientRpcProxy=Client RPC interface proxy is not used")
-    private void findClientProxyRpcUsage( TypeElement type,
-            CompilationInfo info, Collection<ErrorDescription> descriptions,
-            VaadinTaskFactory factory, AtomicBoolean cancel )
-    {
-        if (cancel.get()) {
+    private void findClientProxyRpcUsage() {
+        if (isCanceled()) {
             return;
         }
+        CompilationInfo info = getInfo();
+        TypeElement type = getType();
         ClientRpcProxyScanner scanner = new ClientRpcProxyScanner();
         scanner.scan(info.getTrees().getPath(type), info);
         if (!scanner.hasRpcProxyAccess()) {
@@ -235,19 +251,19 @@ public class RpcRegistrationAnalyzer implements TypeAnalyzer {
                 catch (InterruptedException ignore) {
                 }
             }
-            descriptions.add(createHint(Bundle.noClientRpcProxy(), fixes, type,
-                    info));
+            myNoClientRpcProxy =
+                    createHint(Bundle.noClientRpcProxy(), fixes, type, info);
+            getDescriptions().add(myNoClientRpcProxy);
         }
     }
 
     @NbBundle.Messages("noServerRpcProxy=Server RPC interface proxy is not used")
-    private void findServerProxyRpcUsage( TypeElement type,
-            CompilationInfo info, Collection<ErrorDescription> descriptions,
-            VaadinTaskFactory factory, AtomicBoolean cancel )
-    {
-        if (cancel.get()) {
+    private void findServerProxyRpcUsage() {
+        if (isCanceled()) {
             return;
         }
+        CompilationInfo info = getInfo();
+        TypeElement type = getType();
         ServerRpcProxyScanner scanner = new ServerRpcProxyScanner();
         scanner.scan(info.getTrees().getPath(type), info);
         if (!scanner.hasRpcProxyAccess()) {
@@ -271,8 +287,9 @@ public class RpcRegistrationAnalyzer implements TypeAnalyzer {
                 catch (InterruptedException ignore) {
                 }
             }
-            descriptions.add(createHint(Bundle.noServerRpcProxy(), fixes, type,
-                    info));
+            myNoServerRpcProxy =
+                    createHint(Bundle.noServerRpcProxy(), fixes, type, info);
+            getDescriptions().add(myNoServerRpcProxy);
 
         }
     }
@@ -282,9 +299,9 @@ public class RpcRegistrationAnalyzer implements TypeAnalyzer {
     {
         List<Integer> positions =
                 AbstractJavaFix.getElementPosition(info, type);
-        return ErrorDescriptionFactory.createErrorDescription(Severity.HINT,
-                msg, fixes, info.getFileObject(), positions.get(0),
-                positions.get(1));
+        return ErrorDescriptionFactory.createErrorDescription(
+                getSeverity(Severity.HINT), msg, fixes, info.getFileObject(),
+                positions.get(0), positions.get(1));
     }
 
     private boolean isInSource( TypeElement type, CompilationInfo info ) {
@@ -304,4 +321,12 @@ public class RpcRegistrationAnalyzer implements TypeAnalyzer {
         }
         return false;
     }
+
+    private ErrorDescription myNoServerRpc;
+
+    private ErrorDescription myNoClientRpcProxy;
+
+    private ErrorDescription myNoClientRpc;
+
+    private ErrorDescription myNoServerRpcProxy;
 }
