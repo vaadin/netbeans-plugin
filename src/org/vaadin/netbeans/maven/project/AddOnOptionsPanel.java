@@ -87,10 +87,9 @@ public class AddOnOptionsPanel extends VersionPanel {
 
             @Override
             public void itemStateChanged( ItemEvent e ) {
-                final StringWrapper version =
-                        (StringWrapper) myVaadinVersion.getModel()
-                                .getSelectedItem();
-                if (version == null || version.equals(StringWrapper.WAIT)) {
+                final String version =
+                        (String) myVaadinVersion.getModel().getSelectedItem();
+                if (version == null) {
                     return;
                 }
                 addModification(handle, modification);
@@ -191,7 +190,7 @@ public class AddOnOptionsPanel extends VersionPanel {
     private void initComponents() {
 
         versionLbl = new javax.swing.JLabel();
-        myVaadinVersion = new javax.swing.JComboBox<StringWrapper>();
+        myVaadinVersion = new javax.swing.JComboBox<String>();
         implVersionLbl = new javax.swing.JLabel();
         myImplVersion = new javax.swing.JTextField();
         implTitle = new javax.swing.JLabel();
@@ -503,10 +502,9 @@ public class AddOnOptionsPanel extends VersionPanel {
             for (POMExtensibilityElement param : props) {
                 values.put(param.getQName().getLocalPart(), param);
             }
-            StringWrapper version =
-                    (StringWrapper) myVaadinVersion.getModel()
-                            .getSelectedItem();
-            if (version != null && !version.equals(StringWrapper.WAIT)) {
+            String version =
+                    (String) myVaadinVersion.getModel().getSelectedItem();
+            if (version != null) {
                 POMExtensibilityElement versionElement =
                         values.get(VAADIN_PLUGIN_VERSION);
                 if (versionElement == null) {
@@ -560,7 +558,7 @@ public class AddOnOptionsPanel extends VersionPanel {
 
     private javax.swing.JTextField myImplVersion;
 
-    private javax.swing.JComboBox<StringWrapper> myVaadinVersion;
+    private javax.swing.JComboBox<String> myVaadinVersion;
 
     private javax.swing.JTextField myWidgetset;
 

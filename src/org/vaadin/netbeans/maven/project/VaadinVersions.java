@@ -21,11 +21,16 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.openide.util.RequestProcessor;
+import org.vaadin.netbeans.customizer.RemoteDataAccessStrategy;
+import org.vaadin.netbeans.customizer.VaadinConfiguration;
 import org.vaadin.netbeans.retriever.AbstractRetriever;
 
 /**
@@ -34,6 +39,8 @@ import org.vaadin.netbeans.retriever.AbstractRetriever;
 public final class VaadinVersions extends AbstractRetriever {
 
     private static final String VERSIONS = "versions"; // NOI18N
+
+    private static final String LOCAL_VERSION = VERSIONS + ".txt"; // NOI18N
 
     private static final VaadinVersions INSTANCE = new VaadinVersions();
 
@@ -44,7 +51,23 @@ public final class VaadinVersions extends AbstractRetriever {
             .getName()); // NOI18N  
 
     private VaadinVersions() {
-        requestVersions();
+        myVersions = new AtomicReference<>();
+
+        initCache(VaadinVersions.class.getResourceAsStream(LOCAL_VERSION));
+
+        try {
+            readVersions(getCachedFile());
+        }
+        catch (IOException e) {
+            LOG.log(Level.INFO, null, e);
+        }
+
+        VaadinConfiguration config = VaadinConfiguration.getInstance();
+        if (RemoteDataAccessStrategy.PER_IDE_RUN.equals(config
+                .getVersionRequestStrategy()))
+        {
+            requestVersions(true, 0);
+        }
     }
 
     public static VaadinVersions getInstance() {
@@ -52,7 +75,8 @@ public final class VaadinVersions extends AbstractRetriever {
     }
 
     List<String> getVersions() {
-        return versions;
+        requestVersions(false, 5000);
+        return myVersions.get();
     }
 
     @Override
@@ -70,7 +94,43 @@ public final class VaadinVersions extends AbstractRetriever {
         return this;
     }
 
-    private void requestVersions() {
+    private void requestVersions( boolean force, int delay ) {
+        boolean postRequest = force;
+        if (!postRequest) {
+            Date lastUpdate =
+                    VaadinConfiguration.getInstance().getLastVersionsUpdate();
+            RemoteDataAccessStrategy strategy =
+                    VaadinConfiguration.getInstance()
+                            .getVersionRequestStrategy();
+            boolean requestUpdate = false;
+            if (lastUpdate != null) {
+                requestUpdate =
+                        VaadinConfiguration
+                                .requiresUpdate(strategy, lastUpdate);
+            }
+            else if (RemoteDataAccessStrategy.PER_IDE_RUN.equals(strategy)) {
+                lastUpdate = new Date();
+            }
+            postRequest = lastUpdate == null || requestUpdate;
+        }
+
+        if (postRequest) {
+            RequestProcessor processor =
+                    new RequestProcessor(VaadinVersions.class);
+            processor.post(new Runnable() {
+
+                @Override
+                public void run() {
+                    updateCache();
+                    VaadinConfiguration.getInstance().setLastVersionUpdate(
+                            new Date());
+                }
+            }, delay);
+
+        }
+    }
+
+    private void updateCache() {
         requestData();
 
         File cached = getCachedFile();
@@ -113,9 +173,9 @@ public final class VaadinVersions extends AbstractRetriever {
                 result.add(versions[0]);
             }
         }
-        versions = result;
+        myVersions.set(result);
     }
 
-    private volatile List<String> versions;
+    private volatile AtomicReference<List<String>> myVersions;
 
 }

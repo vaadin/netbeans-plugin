@@ -41,6 +41,7 @@ import org.netbeans.modules.maven.model.pom.Plugin;
 import org.openide.execution.ExecutorTask;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
+import org.vaadin.netbeans.customizer.VaadinConfiguration;
 import org.vaadin.netbeans.utils.POMUtils;
 
 /**
@@ -84,14 +85,15 @@ public final class DebugUtils {
     }
 
     public static int getAttachDebuggerTimout( Project project ) {
-        Preferences prefs = ProjectUtils.getPreferences(project,
-                DebugUtils.class, true);
-        return prefs.getInt(ATTACH_TIMEOUT, 20);
+        Preferences prefs =
+                ProjectUtils.getPreferences(project, DebugUtils.class, true);
+        return prefs.getInt(ATTACH_TIMEOUT, VaadinConfiguration.getInstance()
+                .getTimeout());
     }
 
     public static void setAttachDebuggerTimout( Project project, int timeout ) {
-        Preferences prefs = ProjectUtils.getPreferences(project,
-                DebugUtils.class, true);
+        Preferences prefs =
+                ProjectUtils.getPreferences(project, DebugUtils.class, true);
         prefs.putInt(ATTACH_TIMEOUT, timeout);
     }
 
@@ -105,8 +107,8 @@ public final class DebugUtils {
         if (configuration == null) {
             return getDefaultBindAddress();
         }
-        List<POMExtensibilityElement> params = configuration
-                .getExtensibilityElements();
+        List<POMExtensibilityElement> params =
+                configuration.getExtensibilityElements();
         String host = null;
         String port = null;
         for (POMExtensibilityElement param : params) {
@@ -153,8 +155,8 @@ public final class DebugUtils {
     }
 
     public static InetSocketAddress getBindAddress( Project project ) {
-        NbMavenProject mvnProject = project.getLookup().lookup(
-                NbMavenProject.class);
+        NbMavenProject mvnProject =
+                project.getLookup().lookup(NbMavenProject.class);
         MavenProject mavenProject = mvnProject.getMavenProject();
         File file = mavenProject.getFile();
         FileObject pom = FileUtil.toFileObject(FileUtil.normalizeFile(file));

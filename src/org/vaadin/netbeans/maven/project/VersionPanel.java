@@ -17,7 +17,6 @@ package org.vaadin.netbeans.maven.project;
 
 import java.io.File;
 import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -37,7 +36,6 @@ import org.netbeans.modules.maven.model.pom.Properties;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.Lookup;
-import org.openide.util.NbBundle;
 
 /**
  * @author denis
@@ -49,22 +47,19 @@ abstract class VersionPanel extends JPanel {
 
     protected static final String VAADIN_PLUGIN_VERSION = "vaadin.version"; // NOI18N
 
-    protected void initVersions( Lookup context,
-            JComboBox<StringWrapper> comboBox )
-    {
-        DefaultComboBoxModel<StringWrapper> model = new DefaultComboBoxModel<>();
-        model.addElement(StringWrapper.WAIT);
+    protected void initVersions( Lookup context, JComboBox<String> comboBox ) {
+        DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
         comboBox.setModel(model);
 
-        setCurrentVersion(context, comboBox);
-
         retrieveVersions(comboBox);
+
+        setCurrentVersion(context, comboBox);
     }
 
     protected String getCurrentVersion( Lookup context ) {
         Project project = context.lookup(Project.class);
-        NbMavenProject mvnProject = project.getLookup().lookup(
-                NbMavenProject.class);
+        NbMavenProject mvnProject =
+                project.getLookup().lookup(NbMavenProject.class);
         MavenProject mavenProject = mvnProject.getMavenProject();
         File file = mavenProject.getFile();
         FileObject pom = FileUtil.toFileObject(FileUtil.normalizeFile(file));
@@ -87,7 +82,7 @@ abstract class VersionPanel extends JPanel {
     }
 
     private void setCurrentVersion( final Lookup context,
-            final JComboBox<StringWrapper> comboBox )
+            final JComboBox<String> comboBox )
     {
         SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
 
@@ -103,29 +98,20 @@ abstract class VersionPanel extends JPanel {
                     if (version == null) {
                         return;
                     }
-                    DefaultComboBoxModel<StringWrapper> model = (DefaultComboBoxModel<StringWrapper>) comboBox
-                            .getModel();
-                    StringWrapper selectedVersion = null;
-                    if (model.getSize() == 1
-                            && model.getElementAt(0).equals(StringWrapper.WAIT))
-                    {
-                        selectedVersion = new StringWrapper(version);
-                        model.insertElementAt(selectedVersion, 0);
-                    }
-                    else {
-                        for (int i = 0; i < model.getSize(); i++) {
-                            StringWrapper element = model.getElementAt(i);
-                            if (element.toString().equals(version)) {
-                                selectedVersion = element;
-                                break;
-                            }
-                        }
-                        if (selectedVersion == null) {
-                            selectedVersion = new StringWrapper(version);
-                            model.insertElementAt(selectedVersion, 0);
+                    DefaultComboBoxModel<String> model =
+                            (DefaultComboBoxModel<String>) comboBox.getModel();
+                    boolean modelHasCurrent = false;
+                    for (int i = 0; i < model.getSize(); i++) {
+                        String element = model.getElementAt(i);
+                        if (version.equals(element)) {
+                            modelHasCurrent = true;
+                            break;
                         }
                     }
-                    model.setSelectedItem(selectedVersion);
+                    if (!modelHasCurrent) {
+                        model.insertElementAt(version, 0);
+                    }
+                    model.setSelectedItem(version);
                 }
                 catch (InterruptedException | ExecutionException e) {
                     LOG.log(Level.INFO, null, e);
@@ -135,54 +121,12 @@ abstract class VersionPanel extends JPanel {
         worker.execute();
     }
 
-    private void retrieveVersions( final JComboBox<StringWrapper> comboBox ) {
-        SwingWorker<List<String>, Void> worker = new SwingWorker<List<String>, Void>()
-        {
-
-            @Override
-            protected List<String> doInBackground() throws Exception {
-                return VaadinVersions.getInstance().getVersions();
-            }
-
-            @Override
-            protected void done() {
-                try {
-                    List<String> versions = get();
-                    DefaultComboBoxModel<StringWrapper> model = (DefaultComboBoxModel<StringWrapper>) comboBox
-                            .getModel();
-                    model.removeElement(StringWrapper.WAIT);
-                    if (model.getSize() == 1) {
-                        versions.remove(model.getElementAt(0).toString());
-                    }
-                    for (String version : versions) {
-                        model.addElement(new StringWrapper(version));
-                    }
-                }
-                catch (InterruptedException | ExecutionException e) {
-                    LOG.log(Level.INFO, null, e);
-                }
-            }
-
-        };
-
-        worker.execute();
+    private void retrieveVersions( final JComboBox<String> comboBox ) {
+        DefaultComboBoxModel<String> model =
+                (DefaultComboBoxModel<String>) comboBox.getModel();
+        for (String version : VaadinVersions.getInstance().getVersions()) {
+            model.addElement(version);
+        }
     }
 
-    protected static class StringWrapper {
-
-        @NbBundle.Messages("waitVersion=Loading Available Versions...")
-        static final StringWrapper WAIT = new StringWrapper(
-                Bundle.waitVersion());
-
-        public StringWrapper( String orignal ) {
-            myOriginal = orignal;
-        }
-
-        @Override
-        public String toString() {
-            return myOriginal;
-        }
-
-        private final String myOriginal;
-    }
 }

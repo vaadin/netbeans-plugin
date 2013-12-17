@@ -64,6 +64,8 @@ import org.vaadin.netbeans.ui.wizard.NewWidgetWizardIterator;
  */
 public final class JavaUtils {
 
+    public static final String CLASS_SUFFIX = ".class"; // NOI18N
+
     public static final String JAVA = "java"; // NOI18N
 
     public static final String JAVA_SUFFIX = "." + JAVA; // NOI18N

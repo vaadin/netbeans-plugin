@@ -15,11 +15,13 @@
  */
 package org.vaadin.netbeans.retriever;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.logging.Level;
@@ -33,7 +35,7 @@ import org.openide.modules.Places;
  */
 public abstract class AbstractRetriever {
 
-    private static final String VAADIN = "vaadin"; // NOI18N
+    public static final String VAADIN = "vaadin"; // NOI18N
 
     protected static final String UTF_8 = "UTF-8"; // NOI18N
 
@@ -98,6 +100,31 @@ public abstract class AbstractRetriever {
         }
     }
 
+    protected void initCache( InputStream stream ) {
+        File cached = getCachedFile();
+        try {
+            synchronized (getFileLock(cached)) {
+                if (!cached.exists()) {
+                    cached.createNewFile();
+                    save(stream, cached);
+                }
+            }
+        }
+        catch (IOException e) {
+            LOG.log(Level.INFO, null, e);
+        }
+        finally {
+            if (stream != null) {
+                try {
+                    stream.close();
+                }
+                catch (IOException e) {
+                    LOG.log(Level.INFO, null, e);
+                }
+            }
+        }
+    }
+
     protected void save( InputStream inputStream, File file )
             throws IOException
     {
@@ -119,6 +146,29 @@ public abstract class AbstractRetriever {
         FileInputStream inputStream = new FileInputStream(source);
         try {
             save(inputStream, dest, true);
+        }
+        finally {
+            try {
+                inputStream.close();
+            }
+            catch (IOException e) {
+                LOG.log(Level.INFO, null, e);
+            }
+        }
+    }
+
+    protected String readFile( File file ) throws IOException {
+        FileInputStream inputStream = new FileInputStream(file);
+        try {
+            BufferedReader reader =
+                    new BufferedReader(
+                            new InputStreamReader(inputStream, UTF_8));
+            String line;
+            StringBuilder builder = new StringBuilder();
+            while ((line = reader.readLine()) != null) {
+                builder.append(line);
+            }
+            return builder.toString();
         }
         finally {
             try {

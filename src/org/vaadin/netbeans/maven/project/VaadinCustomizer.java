@@ -27,6 +27,7 @@ import org.netbeans.spi.project.ui.support.ProjectCustomizer.Category;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.vaadin.netbeans.VaadinSupport;
+import org.vaadin.netbeans.customizer.VaadinConfiguration;
 import org.vaadin.netbeans.maven.ui.wizard.VaadinProjectWizardIterator;
 
 /**
@@ -78,13 +79,19 @@ public class VaadinCustomizer implements
             Category devMode =
                     Category.create(DEV_MODE_CATEGORY,
                             Bundle.devModeCategoryName(), null);
-            Category jetty =
-                    Category.create(JETTY_CATEGORY, Bundle.jettyCategoryName(),
-                            null);
-
-            return ProjectCustomizer.Category.create(VAADIN_CATEGORY,
-                    Bundle.vaadinCategoryName(), image, gwt, advanced, devMode,
-                    jetty);
+            if (VaadinConfiguration.getInstance().isJettyEnabled()) {
+                Category jetty =
+                        Category.create(JETTY_CATEGORY,
+                                Bundle.jettyCategoryName(), null);
+                return ProjectCustomizer.Category.create(VAADIN_CATEGORY,
+                        Bundle.vaadinCategoryName(), image, gwt, advanced,
+                        devMode, jetty);
+            }
+            else {
+                return ProjectCustomizer.Category.create(VAADIN_CATEGORY,
+                        Bundle.vaadinCategoryName(), image, gwt, advanced,
+                        devMode);
+            }
         }
         else {
             return ProjectCustomizer.Category.create(VAADIN_CATEGORY,

@@ -44,15 +44,15 @@ public class VaadinOptionsPanel extends VersionPanel {
 
             @Override
             public void itemStateChanged( ItemEvent e ) {
-                final StringWrapper version = (StringWrapper) myVaadinVersion
-                        .getModel().getSelectedItem();
-                if (version == null || version.equals(StringWrapper.WAIT)) {
+                final String version =
+                        (String) myVaadinVersion.getModel().getSelectedItem();
+                if (version == null) {
                     return;
                 }
-                ModelOperation<POMModel> operation = new VersionModificationOperation(
-                        version);
-                List<ModelOperation<POMModel>> pomOperations = handle
-                        .getPOMOperations();
+                ModelOperation<POMModel> operation =
+                        new VersionModificationOperation(version);
+                List<ModelOperation<POMModel>> pomOperations =
+                        handle.getPOMOperations();
                 for (ModelOperation<POMModel> modelOperation : pomOperations) {
                     if (modelOperation instanceof VersionModificationOperation)
                     {
@@ -76,7 +76,7 @@ public class VaadinOptionsPanel extends VersionPanel {
     private void initComponents() {
 
         versionLbl = new javax.swing.JLabel();
-        myVaadinVersion = new javax.swing.JComboBox<StringWrapper>();
+        myVaadinVersion = new javax.swing.JComboBox<String>();
 
         versionLbl.setLabelFor(myVaadinVersion);
         org.openide.awt.Mnemonics.setLocalizedText(versionLbl,
@@ -126,7 +126,7 @@ public class VaadinOptionsPanel extends VersionPanel {
     }// </editor-fold>//GEN-END:initComponents
      // Variables declaration - do not modify//GEN-BEGIN:variables
 
-    private javax.swing.JComboBox<StringWrapper> myVaadinVersion;
+    private javax.swing.JComboBox<String> myVaadinVersion;
 
     private javax.swing.JLabel versionLbl;
 
@@ -136,7 +136,7 @@ public class VaadinOptionsPanel extends VersionPanel {
             ModelOperation<POMModel>
     {
 
-        private VersionModificationOperation( StringWrapper version ) {
+        private VersionModificationOperation( String version ) {
             this.myVersion = version;
         }
 
@@ -145,17 +145,17 @@ public class VaadinOptionsPanel extends VersionPanel {
             Properties properties = model.getProject().getProperties();
             if (properties == null) {
                 model.getProject().setProperties(
-                        createProperties(model, myVersion.toString()));
+                        createProperties(model, myVersion));
             }
             else {
-                List<POMExtensibilityElement> props = properties
-                        .getExtensibilityElements();
+                List<POMExtensibilityElement> props =
+                        properties.getExtensibilityElements();
                 boolean versionSet = false;
                 for (POMExtensibilityElement prop : props) {
                     if (prop.getQName().getLocalPart()
                             .equals(VAADIN_PLUGIN_VERSION))
                     {
-                        String newVersion = myVersion.toString();
+                        String newVersion = myVersion;
                         if (newVersion.equals(prop.getElementText())) {
                             return;
                         }
@@ -166,7 +166,7 @@ public class VaadinOptionsPanel extends VersionPanel {
                 }
                 if (!versionSet) {
                     properties.addExtensibilityElement(createVersion(model,
-                            myVersion.toString()));
+                            myVersion));
                 }
             }
         }
@@ -180,15 +180,16 @@ public class VaadinOptionsPanel extends VersionPanel {
         private POMExtensibilityElement createVersion( POMModel model,
                 String value )
         {
-            QName qname = POMQName.createQName(VAADIN_PLUGIN_VERSION, model
-                    .getPOMQNames().isNSAware());
-            POMExtensibilityElement version = model.getFactory()
-                    .createPOMExtensibilityElement(qname);
+            QName qname =
+                    POMQName.createQName(VAADIN_PLUGIN_VERSION, model
+                            .getPOMQNames().isNSAware());
+            POMExtensibilityElement version =
+                    model.getFactory().createPOMExtensibilityElement(qname);
             version.setElementText(value);
             return version;
         }
 
-        private final StringWrapper myVersion;
+        private final String myVersion;
     }
 
 }

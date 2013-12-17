@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
+	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-libs-lucene.jar"/>
 	<classpathentry kind="src" path="build/classes-generated"/>
 	<classpathentry kind="src" path="test/unit/src"/>
 	<classpathentry kind="src" path="src"/>
@@ -9,8 +10,13 @@
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-api-progress.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-api-web-webmodule.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-libs-javacapi.jar"/>
+	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-libs-json_simple.jar"/>
+	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-editor.jar"/>
+	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-editor-completion.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-editor-indent.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-editor-lib.jar"/>
+	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-editor-lib2.jar"/>
+	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-editor-mimelookup.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-j2ee-dd.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-java-lexer.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-java-platform.jar"/>
@@ -21,6 +27,7 @@
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-maven.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-maven-model.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-maven-embedder.jar"/>
+	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-options-api.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-parsing-api.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-projectapi.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-projectuiapi.jar"/>
@@ -43,7 +50,7 @@
 	<classpathentry kind="lib" path="build/public-package-jars/org-openide-text.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-openide-util.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-openide-util-lookup.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jre7"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.vaadin.netbeans.maven.project;
+package org.vaadin.netbeans.customizer;
 
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
@@ -36,18 +36,22 @@ public class NumericDocument extends PlainDocument {
     {
         if (myLength >= 0 && getLength() + str.length() > myLength) {
             str = str.substring(0, myLength - getLength());
-            myTextComponent.getToolkit().beep();
+            getComponent().getToolkit().beep();
         }
 
         try {
             Integer.parseInt(str);
         }
         catch (NumberFormatException e) {
-            myTextComponent.getToolkit().beep();
+            getComponent().getToolkit().beep();
             return;
         }
 
         super.insertString(offs, str, a);
+    }
+
+    protected JTextComponent getComponent() {
+        return myTextComponent;
     }
 
     private JTextComponent myTextComponent;

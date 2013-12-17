@@ -43,6 +43,7 @@ import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
+import org.vaadin.netbeans.customizer.NumericDocument;
 import org.vaadin.netbeans.utils.POMUtils;
 
 /**

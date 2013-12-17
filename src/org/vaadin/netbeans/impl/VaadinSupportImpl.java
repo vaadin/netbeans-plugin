@@ -67,6 +67,8 @@ import org.openide.filesystems.FileUtil;
 import org.openide.util.RequestProcessor;
 import org.openide.util.TaskListener;
 import org.vaadin.netbeans.VaadinSupport;
+import org.vaadin.netbeans.maven.editor.completion.AddOnProvider;
+import org.vaadin.netbeans.maven.project.VaadinVersions;
 import org.vaadin.netbeans.model.ModelOperation;
 import org.vaadin.netbeans.utils.JavaUtils;
 import org.vaadin.netbeans.utils.POMUtils;
@@ -297,6 +299,10 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
         mvnProject.addPropertyChangeListener(myDownloadListener);
 
         initializeClassIndex(true);
+
+        // init versions and add-ons related data
+        AddOnProvider.getInstance();
+        VaadinVersions.getInstance();
     }
 
     protected void updateModel( CompilationController controller,

@@ -39,6 +39,7 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter.Popup;
 import org.vaadin.netbeans.VaadinSupport;
+import org.vaadin.netbeans.customizer.VaadinConfiguration;
 
 /**
  * @author denis
@@ -59,12 +60,14 @@ public class JettyAction extends AbstractAction implements Popup,
 
     public JettyAction( Lookup lookup ) {
         myProject = VaadinAction.getProject(lookup);
-        if (myProject == null) {
+        if (myProject == null
+                || !VaadinConfiguration.getInstance().isJettyEnabled())
+        {
             setEnabled(false);
         }
         else {
-            VaadinSupport support = myProject.getLookup().lookup(
-                    VaadinSupport.class);
+            VaadinSupport support =
+                    myProject.getLookup().lookup(VaadinSupport.class);
             setEnabled(support == null ? false : support.isEnabled()
                     && support.isWeb());
         }
@@ -104,11 +107,11 @@ public class JettyAction extends AbstractAction implements Popup,
 
             @Override
             public void run() {
-                VaadinSupport support = myProject.getLookup().lookup(
-                        VaadinSupport.class);
+                VaadinSupport support =
+                        myProject.getLookup().lookup(VaadinSupport.class);
                 if (support != null) {
-                    Collection<ExecutorTask> tasks = support
-                            .getTasks(VaadinSupport.Action.RUN_JETTY);
+                    Collection<ExecutorTask> tasks =
+                            support.getTasks(VaadinSupport.Action.RUN_JETTY);
                     for (ExecutorTask task : tasks) {
                         task.stop();
                     }
@@ -121,11 +124,12 @@ public class JettyAction extends AbstractAction implements Popup,
                 List<String> goals = new ArrayList<>(2);
                 goals.add(PACKAGE_GOAL);
                 goals.add(JETTY_GOAL);
-                String name = ProjectUtils.getInformation(myProject)
-                        .getDisplayName();
-                RunConfig config = RunUtils.createRunConfig(
-                        FileUtil.toFile(myProject.getProjectDirectory()),
-                        myProject, Bundle.runAppInJetty(name), goals);
+                String name =
+                        ProjectUtils.getInformation(myProject).getDisplayName();
+                RunConfig config =
+                        RunUtils.createRunConfig(FileUtil.toFile(myProject
+                                .getProjectDirectory()), myProject, Bundle
+                                .runAppInJetty(name), goals);
 
                 ExecutorTask task = RunUtils.executeMaven(config);
                 if (support != null) {
@@ -143,11 +147,11 @@ public class JettyAction extends AbstractAction implements Popup,
 
             @Override
             public void run() {
-                VaadinSupport support = myProject.getLookup().lookup(
-                        VaadinSupport.class);
+                VaadinSupport support =
+                        myProject.getLookup().lookup(VaadinSupport.class);
                 if (support != null) {
-                    Collection<ExecutorTask> tasks = support
-                            .getTasks(VaadinSupport.Action.RUN_JETTY);
+                    Collection<ExecutorTask> tasks =
+                            support.getTasks(VaadinSupport.Action.RUN_JETTY);
                     for (ExecutorTask task : tasks) {
                         task.stop();
                     }
@@ -155,11 +159,12 @@ public class JettyAction extends AbstractAction implements Popup,
                 List<String> goals = new ArrayList<>(2);
                 goals.add(PACKAGE_GOAL);
                 goals.add(JETTY_GOAL);
-                String name = ProjectUtils.getInformation(myProject)
-                        .getDisplayName();
-                RunConfig config = RunUtils.createRunConfig(
-                        FileUtil.toFile(myProject.getProjectDirectory()),
-                        myProject, Bundle.runAppInJetty(name), goals);
+                String name =
+                        ProjectUtils.getInformation(myProject).getDisplayName();
+                RunConfig config =
+                        RunUtils.createRunConfig(FileUtil.toFile(myProject
+                                .getProjectDirectory()), myProject, Bundle
+                                .runAppInJetty(name), goals);
 
                 config.setProperty(GWT_COMPILER_SKIP, Boolean.TRUE.toString());
 
@@ -167,8 +172,9 @@ public class JettyAction extends AbstractAction implements Popup,
                 boolean runDevMode = true;
                 if (support != null) {
                     support.addAction(VaadinSupport.Action.RUN_JETTY, task);
-                    runDevMode = support
-                            .getTasks(VaadinSupport.Action.DEV_MODE).isEmpty();
+                    runDevMode =
+                            support.getTasks(VaadinSupport.Action.DEV_MODE)
+                                    .isEmpty();
                     for (ExecutorTask debugTask : support
                             .getTasks(VaadinSupport.Action.DEBUG_DEV_MODE))
                     {
@@ -177,11 +183,16 @@ public class JettyAction extends AbstractAction implements Popup,
                 }
 
                 if (runDevMode) {
-                    config = RunUtils.createRunConfig(FileUtil.toFile(myProject
-                            .getProjectDirectory()), myProject, Bundle
-                            .runAppInDevMode(ProjectUtils.getInformation(
-                                    myProject).getDisplayName()), Collections
-                            .singletonList(VaadinAction.VAADIN_DEV_MODE_GOAL));
+                    config =
+                            RunUtils.createRunConfig(
+                                    FileUtil.toFile(myProject
+                                            .getProjectDirectory()),
+                                    myProject,
+                                    Bundle.runAppInDevMode(ProjectUtils
+                                            .getInformation(myProject)
+                                            .getDisplayName()),
+                                    Collections
+                                            .singletonList(VaadinAction.VAADIN_DEV_MODE_GOAL));
                     task = RunUtils.executeMaven(config);
                     if (support != null) {
                         support.addAction(VaadinSupport.Action.DEV_MODE, task);
@@ -202,11 +213,11 @@ public class JettyAction extends AbstractAction implements Popup,
 
             @Override
             public void run() {
-                VaadinSupport support = myProject.getLookup().lookup(
-                        VaadinSupport.class);
+                VaadinSupport support =
+                        myProject.getLookup().lookup(VaadinSupport.class);
                 if (support != null) {
-                    Collection<ExecutorTask> tasks = support
-                            .getTasks(VaadinSupport.Action.RUN_JETTY);
+                    Collection<ExecutorTask> tasks =
+                            support.getTasks(VaadinSupport.Action.RUN_JETTY);
                     for (ExecutorTask task : tasks) {
                         task.stop();
                     }
@@ -216,16 +227,17 @@ public class JettyAction extends AbstractAction implements Popup,
                     }
                 }
 
-                String name = ProjectUtils.getInformation(myProject)
-                        .getDisplayName();
+                String name =
+                        ProjectUtils.getInformation(myProject).getDisplayName();
 
                 List<String> goals = new ArrayList<>();
                 goals.add(PACKAGE_GOAL);
                 goals.add(JETTY_GOAL);
 
-                RunConfig config = RunUtils.createRunConfig(
-                        FileUtil.toFile(myProject.getProjectDirectory()),
-                        myProject, Bundle.debugAppInJetty(name), goals);
+                RunConfig config =
+                        RunUtils.createRunConfig(FileUtil.toFile(myProject
+                                .getProjectDirectory()), myProject, Bundle
+                                .debugAppInJetty(name), goals);
                 config.setProperty(Constants.ACTION_PROPERTY_JPDALISTEN,
                         "maven");// NOI18N
                 ExecutorTask task = RunUtils.executeMaven(config);
