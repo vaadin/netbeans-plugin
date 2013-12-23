@@ -16,14 +16,26 @@
 package org.vaadin.netbeans.utils;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+import javax.lang.model.element.TypeElement;
 import javax.swing.JCheckBox;
 import javax.swing.JTextField;
 import javax.xml.namespace.QName;
 
+import org.netbeans.api.java.source.CompilationController;
+import org.netbeans.api.java.source.ElementHandle;
+import org.netbeans.api.java.source.JavaSource;
+import org.netbeans.api.java.source.JavaSource.Phase;
+import org.netbeans.api.java.source.SourceUtils;
+import org.netbeans.api.java.source.Task;
 import org.netbeans.api.project.Project;
+import org.netbeans.api.project.SourceGroup;
 import org.netbeans.modules.maven.api.ModelUtils;
 import org.netbeans.modules.maven.api.NbMavenProject;
 import org.netbeans.modules.maven.model.pom.Build;
@@ -35,6 +47,9 @@ import org.netbeans.modules.maven.model.pom.POMQName;
 import org.netbeans.modules.maven.model.pom.Plugin;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
+import org.vaadin.netbeans.VaadinSupport;
+import org.vaadin.netbeans.model.ModelOperation;
+import org.vaadin.netbeans.model.VaadinModel;
 
 /**
  * @author denis
@@ -321,6 +336,28 @@ public final class POMUtils {
     public static void addDependency( Project project, String groupId,
             String artifactId, String version, String scope )
     {
+        VaadinSupport support = project.getLookup().lookup(VaadinSupport.class);
+        if (support != null && support.isWeb()) {
+            final boolean[] hasGwtXml = new boolean[1];
+            try {
+                support.runModelOperation(new ModelOperation() {
+
+                    @Override
+                    public void run( VaadinModel model ) {
+                        FileObject gwtXml = model.getGwtXml();
+                        hasGwtXml[0] = gwtXml != null;
+                    }
+                });
+
+                if (!hasGwtXml[0]) {
+                    createGwtXml(support, project);
+                }
+            }
+            catch (IOException e) {
+                Logger.getLogger(POMUtils.class.getName()).log(Level.INFO,
+                        null, e);
+            }
+        }
         NbMavenProject mavenProject =
                 project.getLookup().lookup(NbMavenProject.class);
         File file = mavenProject.getMavenProject().getFile();
@@ -328,5 +365,61 @@ public final class POMUtils {
         ModelUtils.addDependency(pom, groupId, artifactId, version, null,
                 scope, null, false);
         mavenProject.downloadDependencyAndJavadocSource(false);
+    }
+
+    private static void createGwtXml( VaadinSupport support,
+            final Project project ) throws IOException
+    {
+        JavaSource javaSource = JavaSource.create(support.getClassPathInfo());
+        if (javaSource == null) {
+            return;
+        }
+        final FileObject[] uiFolder = new FileObject[1];
+        javaSource.runUserActionTask(new Task<CompilationController>() {
+
+            @Override
+            public void run( CompilationController controller )
+                    throws Exception
+            {
+                controller.toPhase(Phase.ELEMENTS_RESOLVED);
+
+                TypeElement ui =
+                        controller.getElements().getTypeElement(
+                                JavaUtils.VAADIN_UI_FQN);
+                if (ui == null) {
+                    return;
+                }
+                Set<TypeElement> uis = JavaUtils.getSubclasses(ui, controller);
+                for (TypeElement element : uis) {
+                    FileObject fileObject =
+                            SourceUtils.getFile(ElementHandle.create(element),
+                                    controller.getClasspathInfo());
+                    if (!ui.equals(element) && isInSource(fileObject, project))
+                    {
+                        uiFolder[0] = fileObject.getParent();
+                        return;
+                    }
+                }
+            }
+        }, true);
+        if (uiFolder[0] != null) {
+            XmlUtils.createGwtXml(uiFolder[0]);
+        }
+    }
+
+    // TODO : use IsInSourceQuery implemented in the other changeset instead of this method
+    private static boolean isInSource( FileObject fileObject, Project project )
+    {
+        if (fileObject == null) {
+            return false;
+        }
+        SourceGroup[] groups = JavaUtils.getJavaSourceGroups(project);
+        for (SourceGroup sourceGroup : groups) {
+            FileObject rootFolder = sourceGroup.getRootFolder();
+            if (FileUtil.isParentOf(rootFolder, fileObject)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

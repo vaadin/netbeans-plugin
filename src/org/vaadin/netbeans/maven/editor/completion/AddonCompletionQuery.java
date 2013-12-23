@@ -195,6 +195,9 @@ class AddonCompletionQuery extends AsyncCompletionQuery implements
                 @Override
                 public void run( VaadinModel model ) {
                     FileObject gwtXml = model.getGwtXml();
+                    if (gwtXml == null) {
+                        return;
+                    }
                     List<String> sourcePaths = model.getSourcePaths();
                     for (String srcPath : sourcePaths) {
                         try {
