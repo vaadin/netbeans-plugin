@@ -15,6 +15,7 @@
  */
 package org.vaadin.netbeans.editor.analyzer;
 
+import java.io.IOException;
 import java.util.logging.Level;
 
 import javax.lang.model.element.AnnotationMirror;
@@ -39,9 +40,9 @@ import com.sun.source.tree.Tree;
 /**
  * @author denis
  */
-class SetServletWidgetsetFix extends AbstractSetWebInitParamFix {
+public class SetServletWidgetsetFix extends AbstractSetWebInitParamFix {
 
-    SetServletWidgetsetFix( String widgetset, FileObject fileObject,
+    public SetServletWidgetsetFix( String widgetset, FileObject fileObject,
             ElementHandle<TypeElement> handle )
     {
         super(fileObject, handle);
@@ -54,15 +55,15 @@ class SetServletWidgetsetFix extends AbstractSetWebInitParamFix {
     }
 
     @Override
-    public ChangeInfo implement() throws Exception {
+    public ChangeInfo implement() throws IOException {
         JavaSource javaSource = JavaSource.forFileObject(getFileObject());
         if (javaSource == null) {
             getLogger().log(Level.WARNING, "JavaSource is null for file {0}",
                     getFileObject().getPath());
             return null;
         }
-        ModificationResult task = javaSource
-                .runModificationTask(new Task<WorkingCopy>() {
+        ModificationResult task =
+                javaSource.runModificationTask(new Task<WorkingCopy>() {
 
                     @Override
                     public void run( WorkingCopy copy ) throws Exception {
@@ -73,8 +74,9 @@ class SetServletWidgetsetFix extends AbstractSetWebInitParamFix {
                             return;
                         }
 
-                        AnnotationMirror servlet = JavaUtils.getAnnotation(
-                                clazz, JavaUtils.SERVLET_ANNOTATION);
+                        AnnotationMirror servlet =
+                                JavaUtils.getAnnotation(clazz,
+                                        JavaUtils.SERVLET_ANNOTATION);
                         if (servlet == null) {
                             return;
                         }
@@ -84,13 +86,16 @@ class SetServletWidgetsetFix extends AbstractSetWebInitParamFix {
                         Tree oldTree = null;
                         Tree newTree = null;
                         if (tree instanceof AnnotationTree) {
-                            AnnotationTree annotationTree = (AnnotationTree) tree;
-                            ExpressionTree expressionTree = getAnnotationTreeAttribute(
-                                    annotationTree, JavaUtils.INIT_PARAMS);
+                            AnnotationTree annotationTree =
+                                    (AnnotationTree) tree;
+                            ExpressionTree expressionTree =
+                                    getAnnotationTreeAttribute(annotationTree,
+                                            JavaUtils.INIT_PARAMS);
                             if (expressionTree instanceof AssignmentTree) {
-                                Tree[] trees = getWebInitChangedTree(
-                                        expressionTree, treeMaker,
-                                        JavaUtils.WIDGETSET, myWidgetset);
+                                Tree[] trees =
+                                        getWebInitChangedTree(expressionTree,
+                                                treeMaker, JavaUtils.WIDGETSET,
+                                                myWidgetset);
                                 oldTree = trees[0];
                                 newTree = trees[1];
                             }

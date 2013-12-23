@@ -23,9 +23,11 @@ import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.SourceGroup;
@@ -106,7 +108,44 @@ public final class XmlUtils {
         DataObject dataObject =
                 JavaUtils.createDataObjectFromTemplate(MODULE_TEMPLATE, folder,
                         name, null);
-        return dataObject.getPrimaryFile();
+        Project project = FileOwnerQuery.getOwner(folder);
+        FileObject gwtXml = dataObject.getPrimaryFile();
+        checkServletConfiguration(project, gwtXml);
+        return gwtXml;
+    }
+
+    static void checkServletConfiguration( Project project, FileObject gwtXml )
+            throws IOException
+    {
+        ClassPath classPath = ClassPath.getClassPath(gwtXml, ClassPath.SOURCE);
+        String widgetset = classPath.getResourceName(gwtXml, '.', true);
+        if (widgetset.endsWith(GWT_XML)) {
+            widgetset =
+                    widgetset.substring(0,
+                            widgetset.length() - GWT_XML.length());
+        }
+        if (project != null) {
+            VaadinSupport support =
+                    project.getLookup().lookup(VaadinSupport.class);
+            if (support != null) {
+                if (support.isWeb()) {
+                    if (!JavaUtils
+                            .checkServletConfiguration(project, widgetset))
+                    {
+                        updateWidgetset(project, widgetset);
+                    }
+                }
+                else {
+                    List<String> widgetsets = support.getAddonWidgetsets();
+                    if (widgetsets == null || widgetsets.isEmpty()
+                            || widgetsets.size() == 1)
+                    {
+                        support.setAddonWidgetsets(Collections
+                                .singletonList(widgetset));
+                    }
+                }
+            }
+        }
     }
 
     public static WebApp getWebApp( Project project ) throws IOException {
@@ -347,6 +386,45 @@ public final class XmlUtils {
             }
         }
         return null;
+    }
+
+    private static void updateWidgetset( Project project, String widgetset )
+            throws IOException
+    {
+        WebApp webApp = getWebApp(project);
+        if (webApp == null) {
+            return;
+        }
+        Servlet[] servlets = webApp.getServlet();
+        for (Servlet servlet : servlets) {
+            InitParam[] initParams = servlet.getInitParam();
+            boolean found = false;
+            for (InitParam initParam : initParams) {
+                if (JavaUtils.WIDGETSET.equals(initParam.getParamName())) {
+                    found = true;
+                    String widgetRef = initParam.getParamValue();
+                    Set<FileObject> widgetsetFiles =
+                            JavaUtils.getWidgetsetFiles(
+                                    Collections.singletonList(widgetRef),
+                                    project);
+                    if (widgetsetFiles.isEmpty()) {
+                        initParam.setParamValue(widgetset);
+                    }
+                }
+            }
+            if (!found) {
+                try {
+                    InitParam initParam =
+                            (InitParam) servlet.createBean("InitParam");
+                    initParam.setParamName(JavaUtils.WIDGETSET);
+                    initParam.setParamValue(widgetset);
+                    servlet.addInitParam(initParam);
+                }
+                catch (ClassNotFoundException e) {
+                    LOG.log(Level.INFO, null, e);
+                }
+            }
+        }
     }
 
     private static List<String> getInitParam( WebApp webApp, String paramName )

@@ -17,11 +17,9 @@ package org.vaadin.netbeans.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,7 +30,6 @@ import javax.lang.model.element.TypeElement;
 
 import org.netbeans.api.java.source.ElementHandle;
 import org.netbeans.api.project.Project;
-import org.netbeans.api.project.SourceGroup;
 import org.netbeans.modules.j2ee.dd.api.common.InitParam;
 import org.netbeans.modules.j2ee.dd.api.web.Servlet;
 import org.netbeans.modules.j2ee.dd.api.web.WebApp;
@@ -178,9 +175,9 @@ class VaadinModelImpl implements VaadinModel {
             }
             else {
                 Set<FileObject> widgetsets =
-                        getWidgetsetFiles(VaadinSupportImpl
+                        JavaUtils.getWidgetsetFiles(VaadinSupportImpl
                                 .getPomWidgetsets(VaadinSupportImpl
-                                        .getPom(myProject)));
+                                        .getPom(myProject)), myProject);
                 if (widgetsets.isEmpty()) {
                     LOG.log(Level.INFO,
                             "No widgetsets configured via POM are found in the project {0}, "
@@ -253,39 +250,7 @@ class VaadinModelImpl implements VaadinModel {
     }
 
     private Set<FileObject> getWebWidgetsetFiles() throws IOException {
-        return getWidgetsetFiles(getWebWidgetset());
-    }
-
-    private Set<FileObject> getWidgetsetFiles( List<String> widgetsets )
-            throws IOException
-    {
-        if (widgetsets.isEmpty()) {
-            return Collections.emptySet();
-        }
-
-        SourceGroup[] javaSourceGroups =
-                JavaUtils.getJavaSourceGroups(myProject);
-        SourceGroup[] resourcesSourceGroups =
-                JavaUtils.getResourcesSourceGroups(myProject);
-        List<SourceGroup> sourceGroups =
-                new ArrayList<>(javaSourceGroups.length
-                        + resourcesSourceGroups.length);
-        sourceGroups.addAll(Arrays.asList(javaSourceGroups));
-        sourceGroups.addAll(Arrays.asList(resourcesSourceGroups));
-
-        Set<FileObject> result = new LinkedHashSet<>(widgetsets.size());
-        for (String widgetSet : widgetsets) {
-            widgetSet = widgetSet.replace('.', '/');
-            widgetSet += XmlUtils.GWT_XML;
-            for (SourceGroup sourceGroup : sourceGroups) {
-                FileObject rootFolder = sourceGroup.getRootFolder();
-                FileObject fileObject = rootFolder.getFileObject(widgetSet);
-                if (fileObject != null) {
-                    result.add(fileObject);
-                }
-            }
-        }
-        return result;
+        return JavaUtils.getWidgetsetFiles(getWebWidgetset(), myProject);
     }
 
     private List<String> getWebWidgetset() throws IOException {

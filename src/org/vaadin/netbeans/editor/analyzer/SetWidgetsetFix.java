@@ -15,6 +15,7 @@
  */
 package org.vaadin.netbeans.editor.analyzer;
 
+import java.io.IOException;
 import java.util.logging.Level;
 
 import javax.lang.model.element.AnnotationMirror;
@@ -38,9 +39,9 @@ import com.sun.source.tree.ExpressionTree;
 /**
  * @author denis
  */
-class SetWidgetsetFix extends AbstractJavaFix {
+public class SetWidgetsetFix extends AbstractJavaFix {
 
-    SetWidgetsetFix( String widgetset, FileObject fileObject,
+    public SetWidgetsetFix( String widgetset, FileObject fileObject,
             ElementHandle<TypeElement> handle )
     {
         super(fileObject);
@@ -56,15 +57,15 @@ class SetWidgetsetFix extends AbstractJavaFix {
     }
 
     @Override
-    public ChangeInfo implement() throws Exception {
+    public ChangeInfo implement() throws IOException {
         JavaSource javaSource = JavaSource.forFileObject(getFileObject());
         if (javaSource == null) {
             getLogger().log(Level.WARNING, "JavaSource is null for file {0}",
                     getFileObject().getPath());
             return null;
         }
-        ModificationResult task = javaSource
-                .runModificationTask(new Task<WorkingCopy>() {
+        ModificationResult task =
+                javaSource.runModificationTask(new Task<WorkingCopy>() {
 
                     @Override
                     public void run( WorkingCopy copy ) throws Exception {
@@ -75,30 +76,34 @@ class SetWidgetsetFix extends AbstractJavaFix {
                             return;
                         }
 
-                        AnnotationMirror config = JavaUtils.getAnnotation(
-                                clazz, JavaUtils.VAADIN_SERVLET_CONFIGURATION);
+                        AnnotationMirror config =
+                                JavaUtils.getAnnotation(clazz,
+                                        JavaUtils.VAADIN_SERVLET_CONFIGURATION);
                         if (config == null) {
                             return;
                         }
 
-                        AnnotationTree oldTree = (AnnotationTree) copy
-                                .getTrees().getTree(clazz, config);
+                        AnnotationTree oldTree =
+                                (AnnotationTree) copy.getTrees().getTree(clazz,
+                                        config);
 
                         TreeMaker treeMaker = copy.getTreeMaker();
-                        ExpressionTree widgetsetTree = AbstractJavaFix
-                                .getAnnotationTreeAttribute(oldTree,
-                                        JavaUtils.WIDGETSET);
+                        ExpressionTree widgetsetTree =
+                                AbstractJavaFix.getAnnotationTreeAttribute(
+                                        oldTree, JavaUtils.WIDGETSET);
 
-                        AnnotationTree newTree = treeMaker
-                                .removeAnnotationAttrValue(oldTree,
+                        AnnotationTree newTree =
+                                treeMaker.removeAnnotationAttrValue(oldTree,
                                         widgetsetTree);
 
-                        ExpressionTree newWidgetsetTree = treeMaker.Assignment(
-                                treeMaker.Identifier(JavaUtils.WIDGETSET),
-                                treeMaker.Literal(myWidgetsetFqn));
+                        ExpressionTree newWidgetsetTree =
+                                treeMaker.Assignment(treeMaker
+                                        .Identifier(JavaUtils.WIDGETSET),
+                                        treeMaker.Literal(myWidgetsetFqn));
 
-                        newTree = treeMaker.addAnnotationAttrValue(newTree,
-                                newWidgetsetTree);
+                        newTree =
+                                treeMaker.addAnnotationAttrValue(newTree,
+                                        newWidgetsetTree);
                         copy.rewrite(oldTree, newTree);
                     }
                 });

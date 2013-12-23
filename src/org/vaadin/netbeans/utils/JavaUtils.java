@@ -18,10 +18,13 @@ package org.vaadin.netbeans.utils;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -43,11 +46,13 @@ import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.java.queries.UnitTestForSourceQuery;
 import org.netbeans.api.java.source.ClassIndex.SearchKind;
 import org.netbeans.api.java.source.ClassIndex.SearchScope;
+import org.netbeans.api.java.source.ClasspathInfo;
 import org.netbeans.api.java.source.CompilationController;
 import org.netbeans.api.java.source.CompilationInfo;
 import org.netbeans.api.java.source.ElementHandle;
 import org.netbeans.api.java.source.JavaSource;
 import org.netbeans.api.java.source.JavaSource.Phase;
+import org.netbeans.api.java.source.SourceUtils;
 import org.netbeans.api.java.source.Task;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectUtils;
@@ -57,6 +62,9 @@ import org.openide.filesystems.FileUtil;
 import org.openide.filesystems.URLMapper;
 import org.openide.loaders.DataFolder;
 import org.openide.loaders.DataObject;
+import org.vaadin.netbeans.VaadinSupport;
+import org.vaadin.netbeans.editor.analyzer.SetServletWidgetsetFix;
+import org.vaadin.netbeans.editor.analyzer.SetWidgetsetFix;
 import org.vaadin.netbeans.ui.wizard.NewWidgetWizardIterator;
 
 /**
@@ -99,6 +107,146 @@ public final class JavaUtils {
             ElementKind.ANNOTATION_TYPE);
 
     private JavaUtils() {
+    }
+
+    public static boolean checkServletConfiguration( final Project project,
+            String widgetset ) throws IOException
+    {
+        VaadinSupport support = project.getLookup().lookup(VaadinSupport.class);
+        if (support == null) {
+            return false;
+        }
+        ClasspathInfo info = support.getClassPathInfo();
+        JavaSource javaSource = JavaSource.create(info);
+
+        final boolean[] annotationBased = new boolean[1];
+        final Map<Object, FileObject> files = new HashMap<>();
+        final Map<Object, ElementHandle<TypeElement>> handles = new HashMap<>();
+        final Set<Object> vaadinAnnotations = new HashSet<>();
+
+        javaSource.runUserActionTask(new Task<CompilationController>() {
+
+            @Override
+            public void run( CompilationController controller )
+                    throws Exception
+            {
+                controller.toPhase(Phase.ELEMENTS_RESOLVED);
+
+                List<TypeElement> vaadinServletConfigs =
+                        findAnnotatedElements(VAADIN_SERVLET_CONFIGURATION,
+                                controller);
+                annotationBased[0] = !vaadinServletConfigs.isEmpty();
+                Set<TypeElement> foundServlets = new HashSet<>();
+                for (TypeElement servlet : vaadinServletConfigs) {
+                    AnnotationMirror annotation =
+                            getAnnotation(servlet, VAADIN_SERVLET_CONFIGURATION);
+                    Object id = null;
+
+                    AnnotationValue widgetsetValue =
+                            getAnnotationValue(annotation, WIDGETSET);
+                    if (widgetsetValue != null) {
+                        Object value = widgetsetValue.getValue();
+                        if (value != null) {
+                            id = value.toString();
+                        }
+                    }
+                    if (id == null) {
+                        id = new Object();
+                    }
+                    foundServlets.add(servlet);
+
+                    vaadinAnnotations.add(id);
+                    files.put(id, SourceUtils.getFile(
+                            ElementHandle.create(servlet),
+                            controller.getClasspathInfo()));
+                    handles.put(id, ElementHandle.create(servlet));
+                }
+                List<TypeElement> servletConfigs =
+                        findAnnotatedElements(SERVLET_ANNOTATION, controller);
+                annotationBased[0] =
+                        annotationBased[0] || !servletConfigs.isEmpty();
+                for (TypeElement servlet : servletConfigs) {
+                    AnnotationMirror annotation =
+                            getAnnotation(servlet, SERVLET_ANNOTATION);
+                    String widgetset = getWidgetsetWebInit(annotation);
+                    Object id = null;
+                    if (widgetset != null) {
+                        id = widgetset;
+                    }
+                    else if (!foundServlets.contains(servlet)) {
+                        id = new Object();
+                    }
+                    if (id != null) {
+                        files.put(id, SourceUtils.getFile(
+                                ElementHandle.create(servlet),
+                                controller.getClasspathInfo()));
+                        handles.put(id, ElementHandle.create(servlet));
+                    }
+                }
+            }
+        }, true);
+
+        for (Entry<Object, FileObject> entry : files.entrySet()) {
+            Object key = entry.getKey();
+            boolean requireUpdate = false;
+            if (key instanceof String) {
+                String widgetXml = key.toString();
+                if (getWidgetsetFiles(Collections.singletonList(widgetXml),
+                        project).isEmpty())
+                {
+                    requireUpdate = true;
+                }
+            }
+            else {
+                requireUpdate = true;
+            }
+            if (!requireUpdate) {
+                continue;
+            }
+            if (vaadinAnnotations.contains(key)) {
+                SetWidgetsetFix fix =
+                        new SetWidgetsetFix(widgetset, entry.getValue(),
+                                handles.get(key));
+                fix.implement();
+            }
+            else {
+                SetServletWidgetsetFix fix =
+                        new SetServletWidgetsetFix(widgetset, entry.getValue(),
+                                handles.get(key));
+                fix.implement();
+            }
+        }
+        return annotationBased[0];
+    }
+
+    public static Set<FileObject> getWidgetsetFiles( List<String> widgetsets,
+            Project project )
+    {
+        if (widgetsets.isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        SourceGroup[] javaSourceGroups = getJavaSourceGroups(project);
+        SourceGroup[] resourcesSourceGroups = getResourcesSourceGroups(project);
+        List<SourceGroup> sourceGroups =
+                new ArrayList<>(javaSourceGroups.length
+                        + resourcesSourceGroups.length);
+        sourceGroups.addAll(Arrays.asList(javaSourceGroups));
+        sourceGroups.addAll(Arrays.asList(resourcesSourceGroups));
+
+        Set<FileObject> result = new LinkedHashSet<>(widgetsets.size());
+        for (String widgetSet : widgetsets) {
+            widgetSet = widgetSet.replace('.', '/');
+            widgetSet += XmlUtils.GWT_XML;
+            for (SourceGroup sourceGroup : sourceGroups) {
+                FileObject rootFolder = sourceGroup.getRootFolder();
+                FileObject fileObject = rootFolder.getFileObject(widgetSet);
+                if (fileObject != null) {
+                    result.add(fileObject);
+                }
+            }
+        }
+        return result;
     }
 
     public static String getFreeName( FileObject folder, String namePrefix,
