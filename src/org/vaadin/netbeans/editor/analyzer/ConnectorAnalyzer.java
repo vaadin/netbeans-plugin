@@ -60,11 +60,6 @@ public class ConnectorAnalyzer extends ClientClassAnalyzer {
         if (getType() == null) {
             return;
         }
-        AnnotationMirror annotation =
-                JavaUtils.getAnnotation(getType(), CONNECTOR);
-        if (annotation == null) {
-            return;
-        }
         if (isCanceled()) {
             return;
         }
@@ -74,6 +69,12 @@ public class ConnectorAnalyzer extends ClientClassAnalyzer {
             }
         }
         else {
+            AnnotationMirror annotation =
+                    JavaUtils.getAnnotation(getType(), CONNECTOR);
+
+            if (annotation == null) {
+                return;
+            }
             checkConnectorValue(annotation);
             if (isCanceled()) {
                 return;
