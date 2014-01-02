@@ -96,6 +96,8 @@ class LuceneSearchStrategy implements SearchStrategy {
 
     private static final String ID = "id"; // NOI18N
 
+    private static final String LAST_UPDATE = "lastUpdate"; // NOI18N 
+
     private enum DocType {
         CLASS,
         LICENSE,
@@ -473,6 +475,7 @@ class LuceneSearchStrategy implements SearchStrategy {
         String version = addon.getMavenVersion();
         String rating = addon.getRating();
         String url = addon.getUrl();
+        String lastUpdate = addon.getLastUpdate();
 
         add(doc, new IndexedField(NAME, addon.getName()));
         add(doc, new IndexedField(ID, String.valueOf(id)));
@@ -485,6 +488,7 @@ class LuceneSearchStrategy implements SearchStrategy {
         add(doc, new StoredField(VERSION, version));
         add(doc, new StoredField(RATING, rating));
         add(doc, new StoredField(URL, url));
+        add(doc, new StoredField(LAST_UPDATE, lastUpdate));
         add(doc, new IndexedField(DOC_TYPE, DocType.INFO.toString()));
 
         return doc;
@@ -619,6 +623,22 @@ class LuceneSearchStrategy implements SearchStrategy {
 
         private final Object myId;
 
+    }
+
+    private static class LuceneSearchResult extends SearchResult {
+
+        LuceneSearchResult( Object id, String name, String rating,
+                String updateDate )
+        {
+            super(name, rating, updateDate);
+            myId = id;
+        }
+
+        private Object getId() {
+            return myId;
+        }
+
+        private Object myId;
     }
 
 }

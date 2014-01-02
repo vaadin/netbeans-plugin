@@ -50,6 +50,8 @@ public final class VaadinConfiguration {
 
     private static final String LAST_REST_UPDATE = "last-rest"; // NOI18N
 
+    private static final String PREFIX_LENGTH = "prefix"; // NOI18N
+
     private static final VaadinConfiguration INSTANCE =
             new VaadinConfiguration();
 
@@ -59,6 +61,23 @@ public final class VaadinConfiguration {
 
     public static VaadinConfiguration getInstance() {
         return INSTANCE;
+    }
+
+    public int getCCPrefixLength() {
+        int prefix;
+        synchronized (getPreferences()) {
+            prefix = getPreferences().getInt(PREFIX_LENGTH, 3);
+        }
+        return prefix >= 2 ? prefix : 2;
+    }
+
+    public void setCCPrefixLength( int minLength ) {
+        int length;
+        synchronized (getPreferences()) {
+            length = getCCPrefixLength();
+            getPreferences().putInt(PREFIX_LENGTH, minLength);
+        }
+        fireEvent(PREFIX_LENGTH, length, minLength);
     }
 
     public void enableJetty( boolean enable ) {

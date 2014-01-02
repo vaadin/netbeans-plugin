@@ -36,6 +36,7 @@ import org.netbeans.modules.maven.api.execute.RunConfig;
 import org.netbeans.modules.maven.api.execute.RunUtils;
 import org.netbeans.modules.maven.spi.debug.MavenDebugger;
 import org.netbeans.spi.project.ui.CustomizerProvider2;
+import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.awt.DynamicMenuContent;
@@ -48,6 +49,7 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter.Popup;
 import org.vaadin.netbeans.VaadinSupport;
+import org.vaadin.netbeans.maven.directory.SearchPanel;
 import org.vaadin.netbeans.utils.XmlUtils;
 
 /**
@@ -118,6 +120,9 @@ public class VaadinAction extends AbstractAction implements Popup,
              * Uncomment this code when it will be available.
              * menu.addSeparator(); menu.add(createVaadinPropertiesItem());
              */
+            // temporary disabled to separate functionality for the commit.
+            // menu.addSeparator();
+            // menu.add(createAddonsBrowserItem());
 
             menu.setEnabled(isEnabled());
             return menu;
@@ -141,6 +146,42 @@ public class VaadinAction extends AbstractAction implements Popup,
         }
         FileObject fObj = dataObjects.iterator().next().getPrimaryFile();
         return FileOwnerQuery.getOwner(fObj);
+    }
+
+    @NbBundle.Messages({ "browseAddonsAction=Open Add-Ons Browser",
+            "browseAddons=Browse Add-Ons", "add=Add", "search=Search",
+            "close=Close" })
+    private JMenuItem createAddonsBrowserItem() {
+        JMenuItem item = new JMenuItem(Bundle.browseAddonsAction());
+        item.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed( ActionEvent e ) {
+                final SearchPanel panel = new SearchPanel();
+                JButton search = new JButton(Bundle.search());
+                search.addActionListener(new ActionListener() {
+
+                    @Override
+                    public void actionPerformed( ActionEvent e ) {
+                        panel.updateTable();
+                    }
+                });
+                JButton add = new JButton(Bundle.add());
+                JButton close = new JButton(Bundle.close());
+
+                DialogDescriptor descriptor =
+                        new DialogDescriptor(panel, Bundle.browseAddons(),
+                                true, new Object[] { search, add, close },
+                                search, DialogDescriptor.DEFAULT_ALIGN, null,
+                                null);
+                descriptor.setClosingOptions(new Object[] { add, close });
+                Object option = DialogDisplayer.getDefault().notify(descriptor);
+                if (option == add) {
+                    // TODO : add
+                }
+            }
+        });
+        return item;
     }
 
     @NbBundle.Messages({ "compileTheme=Compile Theme", "# {0} - project name",

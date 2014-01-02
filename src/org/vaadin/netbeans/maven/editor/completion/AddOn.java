@@ -32,6 +32,34 @@ public class AddOn extends AbstractAddOn {
         return Collections.unmodifiableList(myClasses);
     }
 
+    public String getLastUpdate() {
+        return myLastUpdate;
+    }
+
+    private void setLastUpdated( String lastUpdate ) {
+        myLastUpdate = lastUpdate;
+    }
+
+    public static class Builder extends AbstractAddOn.Builder<AddOn> {
+
+        public Builder() {
+            super(AddOn.class);
+        }
+
+        public AddOn build( AddOn original, String groupId, String artifactId,
+                String version, String description, String rating, String url,
+                String maturity, String lastUpdated, List<License> licenses )
+        {
+            AddOn addOn =
+                    super.build(original, groupId, artifactId, version,
+                            description, rating, url, maturity, licenses);
+            addOn.setLastUpdated(lastUpdated);
+            return addOn;
+        }
+    }
+
+    private String myLastUpdate;
+
     private List<SourceClass> myClasses;
 
 }

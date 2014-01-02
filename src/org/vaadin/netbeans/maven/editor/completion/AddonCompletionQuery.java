@@ -44,6 +44,7 @@ import org.netbeans.spi.editor.completion.support.AsyncCompletionQuery;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.vaadin.netbeans.VaadinSupport;
+import org.vaadin.netbeans.customizer.VaadinConfiguration;
 import org.vaadin.netbeans.maven.editor.completion.SourceClass.SourceType;
 import org.vaadin.netbeans.model.ModelOperation;
 import org.vaadin.netbeans.model.VaadinModel;
@@ -85,7 +86,8 @@ class AddonCompletionQuery extends AsyncCompletionQuery implements
             tokenSequence.movePrevious();
         }
         int length = myOffset - tokenSequence.offset();
-        if (length >= 3 && tokenSequence.token().length() >= length
+        if (length >= VaadinConfiguration.getInstance().getCCPrefixLength()
+                && tokenSequence.token().length() >= length
                 && tokenSequence.token().id() == JavaTokenId.IDENTIFIER)
         {
             TreePath path = controller.getTreeUtilities().pathFor(myOffset);

@@ -18,9 +18,13 @@ package org.vaadin.netbeans.customizer;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.ParseException;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JPanel;
+import javax.swing.JSpinner.DefaultEditor;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
@@ -34,7 +38,7 @@ import org.openide.util.NbBundle;
 @OptionsPanelController.Keywords(keywords = { "vaadin" }, location = "Java",
         tabTitle = "#Vaadin")
 public class VaadinCustomizer extends JPanel implements ActionListener,
-        DocumentListener
+        DocumentListener, ChangeListener
 {
 
     enum ConfirmationStrategy {
@@ -64,6 +68,10 @@ public class VaadinCustomizer extends JPanel implements ActionListener,
         myJetty.addActionListener(this);
         myCodeCompletion.addActionListener(this);
         myStatistics.addActionListener(this);
+        myMinPrefixLength.addChangeListener(this);
+
+        ((DefaultEditor) myMinPrefixLength.getEditor()).getTextField()
+                .getDocument().addDocumentListener(this);
 
         DefaultComboBoxModel<ConfirmationStrategy> model =
                 new DefaultComboBoxModel<>(ConfirmationStrategy.values());
@@ -87,6 +95,14 @@ public class VaadinCustomizer extends JPanel implements ActionListener,
     @Override
     public void removeUpdate( DocumentEvent e ) {
         updateTimeout();
+    }
+
+    @Override
+    public void stateChanged( ChangeEvent e ) {
+        if (!isInitialized) {
+            return;
+        }
+        isChanged = true;
     }
 
     @Override
@@ -134,6 +150,14 @@ public class VaadinCustomizer extends JPanel implements ActionListener,
         VaadinConfiguration.getInstance().setDirectoryRequestStrategy(
                 (RemoteDataAccessStrategy) myRest.getSelectedItem());
 
+        try {
+            myMinPrefixLength.commitEdit();
+        }
+        catch (ParseException ignore) {
+        }
+        Integer prefix = (Integer) myMinPrefixLength.getValue();
+        VaadinConfiguration.getInstance().setCCPrefixLength(prefix);
+
         isChanged = false;
     }
 
@@ -158,6 +182,9 @@ public class VaadinCustomizer extends JPanel implements ActionListener,
                     .getIndexRequestStrategy());
             myRest.setSelectedItem(VaadinConfiguration.getInstance()
                     .getDirectoryRequestStrategy());
+
+            myMinPrefixLength.setValue(VaadinConfiguration.getInstance()
+                    .getCCPrefixLength());
         }
         finally {
             isInitialized = true;
@@ -209,6 +236,9 @@ public class VaadinCustomizer extends JPanel implements ActionListener,
         confirmation = new javax.swing.JLabel();
         myConfirm = new javax.swing.JComboBox();
         myStatistics = new javax.swing.JCheckBox();
+        myMinPrefixLength = new NumericSpinner(2);
+        ;
+        minPrefixLength = new javax.swing.JLabel();
 
         projectPanel.setBorder(javax.swing.BorderFactory
                 .createTitledBorder(org.openide.util.NbBundle.getMessage(
@@ -371,6 +401,11 @@ public class VaadinCustomizer extends JPanel implements ActionListener,
                 org.openide.util.NbBundle.getMessage(VaadinCustomizer.class,
                         "LBL_Statistics")); // NOI18N
 
+        minPrefixLength.setLabelFor(myMinPrefixLength);
+        org.openide.awt.Mnemonics.setLocalizedText(minPrefixLength,
+                org.openide.util.NbBundle.getMessage(VaadinCustomizer.class,
+                        "LBL_MinPrefixLength")); // NOI18N
+
         javax.swing.GroupLayout addonPanelLayout =
                 new javax.swing.GroupLayout(addonPanel);
         addonPanel.setLayout(addonPanelLayout);
@@ -394,27 +429,12 @@ public class VaadinCustomizer extends JPanel implements ActionListener,
                                                                                         .createParallelGroup(
                                                                                                 javax.swing.GroupLayout.Alignment.LEADING)
                                                                                         .addComponent(
-                                                                                                myCodeCompletion)
-                                                                                        .addComponent(
-                                                                                                myStatistics))
-                                                                        .addGap(0,
-                                                                                215,
-                                                                                Short.MAX_VALUE))
-                                                        .addGroup(
-                                                                addonPanelLayout
-                                                                        .createSequentialGroup()
-                                                                        .addGroup(
-                                                                                addonPanelLayout
-                                                                                        .createParallelGroup(
-                                                                                                javax.swing.GroupLayout.Alignment.LEADING)
-                                                                                        .addComponent(
-                                                                                                confirmation)
-                                                                                        .addComponent(
                                                                                                 rest)
                                                                                         .addComponent(
                                                                                                 index))
-                                                                        .addPreferredGap(
-                                                                                javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                                        .addGap(37,
+                                                                                37,
+                                                                                37)
                                                                         .addGroup(
                                                                                 addonPanelLayout
                                                                                         .createParallelGroup(
@@ -428,12 +448,45 @@ public class VaadinCustomizer extends JPanel implements ActionListener,
                                                                                                 myRest,
                                                                                                 0,
                                                                                                 javax.swing.GroupLayout.DEFAULT_SIZE,
-                                                                                                Short.MAX_VALUE)
-                                                                                        .addComponent(
-                                                                                                myConfirm,
-                                                                                                0,
-                                                                                                javax.swing.GroupLayout.DEFAULT_SIZE,
-                                                                                                Short.MAX_VALUE))))
+                                                                                                Short.MAX_VALUE)))
+                                                        .addGroup(
+                                                                addonPanelLayout
+                                                                        .createSequentialGroup()
+                                                                        .addComponent(
+                                                                                myCodeCompletion)
+                                                                        .addPreferredGap(
+                                                                                javax.swing.LayoutStyle.ComponentPlacement.RELATED,
+                                                                                19,
+                                                                                Short.MAX_VALUE)
+                                                                        .addComponent(
+                                                                                minPrefixLength)
+                                                                        .addPreferredGap(
+                                                                                javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                                        .addComponent(
+                                                                                myMinPrefixLength,
+                                                                                javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                                                49,
+                                                                                javax.swing.GroupLayout.PREFERRED_SIZE))
+                                                        .addGroup(
+                                                                addonPanelLayout
+                                                                        .createSequentialGroup()
+                                                                        .addComponent(
+                                                                                myStatistics)
+                                                                        .addGap(0,
+                                                                                0,
+                                                                                Short.MAX_VALUE))
+                                                        .addGroup(
+                                                                addonPanelLayout
+                                                                        .createSequentialGroup()
+                                                                        .addComponent(
+                                                                                confirmation)
+                                                                        .addPreferredGap(
+                                                                                javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                                        .addComponent(
+                                                                                myConfirm,
+                                                                                0,
+                                                                                javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                                                Short.MAX_VALUE)))
                                         .addContainerGap()));
         addonPanelLayout
                 .setVerticalGroup(addonPanelLayout
@@ -443,9 +496,24 @@ public class VaadinCustomizer extends JPanel implements ActionListener,
                                 addonPanelLayout
                                         .createSequentialGroup()
                                         .addContainerGap()
-                                        .addComponent(myCodeCompletion)
-                                        .addPreferredGap(
-                                                javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addGroup(
+                                                addonPanelLayout
+                                                        .createParallelGroup(
+                                                                javax.swing.GroupLayout.Alignment.LEADING)
+                                                        .addComponent(
+                                                                myCodeCompletion)
+                                                        .addGroup(
+                                                                addonPanelLayout
+                                                                        .createParallelGroup(
+                                                                                javax.swing.GroupLayout.Alignment.BASELINE)
+                                                                        .addComponent(
+                                                                                myMinPrefixLength,
+                                                                                javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                                                javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                                                javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                                        .addComponent(
+                                                                                minPrefixLength)))
+                                        .addGap(4, 4, 4)
                                         .addComponent(myStatistics)
                                         .addGap(6, 6, 6)
                                         .addGroup(
@@ -459,29 +527,30 @@ public class VaadinCustomizer extends JPanel implements ActionListener,
                                                                 javax.swing.GroupLayout.DEFAULT_SIZE,
                                                                 javax.swing.GroupLayout.PREFERRED_SIZE))
                                         .addPreferredGap(
-                                                javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addGroup(
                                                 addonPanelLayout
                                                         .createParallelGroup(
                                                                 javax.swing.GroupLayout.Alignment.BASELINE)
-                                                        .addComponent(rest)
                                                         .addComponent(
                                                                 myRest,
                                                                 javax.swing.GroupLayout.PREFERRED_SIZE,
                                                                 javax.swing.GroupLayout.DEFAULT_SIZE,
-                                                                javax.swing.GroupLayout.PREFERRED_SIZE))
-                                        .addGap(13, 13, 13)
+                                                                javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                        .addComponent(rest))
+                                        .addPreferredGap(
+                                                javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addGroup(
                                                 addonPanelLayout
                                                         .createParallelGroup(
-                                                                javax.swing.GroupLayout.Alignment.LEADING)
+                                                                javax.swing.GroupLayout.Alignment.BASELINE)
+                                                        .addComponent(
+                                                                confirmation)
                                                         .addComponent(
                                                                 myConfirm,
                                                                 javax.swing.GroupLayout.PREFERRED_SIZE,
                                                                 javax.swing.GroupLayout.DEFAULT_SIZE,
-                                                                javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                        .addComponent(
-                                                                confirmation))
+                                                                javax.swing.GroupLayout.PREFERRED_SIZE))
                                         .addContainerGap(
                                                 javax.swing.GroupLayout.DEFAULT_SIZE,
                                                 Short.MAX_VALUE)));
@@ -492,6 +561,17 @@ public class VaadinCustomizer extends JPanel implements ActionListener,
         myCodeCompletion.getAccessibleContext().setAccessibleDescription(
                 org.openide.util.NbBundle.getMessage(VaadinCustomizer.class,
                         "ACSD_EnableAddOnCC")); // NOI18N
+        myMinPrefixLength.getAccessibleContext().setAccessibleName(
+                minPrefixLength.getAccessibleContext().getAccessibleName());
+        myMinPrefixLength.getAccessibleContext().setAccessibleDescription(
+                minPrefixLength.getAccessibleContext()
+                        .getAccessibleDescription());
+        minPrefixLength.getAccessibleContext().setAccessibleName(
+                org.openide.util.NbBundle.getMessage(VaadinCustomizer.class,
+                        "ACSN_MinPrefixLength")); // NOI18N
+        minPrefixLength.getAccessibleContext().setAccessibleDescription(
+                org.openide.util.NbBundle.getMessage(VaadinCustomizer.class,
+                        "ACSD_MinPrefixLength")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -542,6 +622,8 @@ public class VaadinCustomizer extends JPanel implements ActionListener,
 
     private javax.swing.JLabel index;
 
+    private javax.swing.JLabel minPrefixLength;
+
     private javax.swing.JCheckBox myCodeCompletion;
 
     private javax.swing.JComboBox myConfirm;
@@ -549,6 +631,8 @@ public class VaadinCustomizer extends JPanel implements ActionListener,
     private javax.swing.JComboBox myIndex;
 
     private javax.swing.JCheckBox myJetty;
+
+    private javax.swing.JSpinner myMinPrefixLength;
 
     private javax.swing.JComboBox myRest;
 

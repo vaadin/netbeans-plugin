@@ -38,6 +38,7 @@ import org.xml.sax.SAXException;
 /**
  * @author denis
  */
+//@CachedResource(url = ?, resourcePath = AddOnParser.NETBEANS_ADDON)
 class AddOnParser extends AbstractRetriever {
 
     private static final String CLASSES = "classes"; // NOI18N
@@ -54,8 +55,7 @@ class AddOnParser extends AbstractRetriever {
 
     private static final String ADDON_CLASS_INDEX = "netbeans-addon.xml";// NOI18N
 
-    private static final String NETBEANS_ADDON = "resources/"
-            + ADDON_CLASS_INDEX; // NOI18N
+    static final String NETBEANS_ADDON = "resources/" + ADDON_CLASS_INDEX; // NOI18N
 
     AddOnParser() {
         myAddons = new LinkedList<>();

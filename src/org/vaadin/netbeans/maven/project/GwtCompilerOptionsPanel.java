@@ -49,6 +49,7 @@ import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
+import org.vaadin.netbeans.customizer.NumericSpinner;
 import org.vaadin.netbeans.utils.POMUtils;
 
 /**
@@ -172,249 +173,120 @@ public class GwtCompilerOptionsPanel extends JPanel {
         styleLbl = new javax.swing.JLabel();
         myStyle = new javax.swing.JComboBox();
         threadsLbl = new javax.swing.JLabel();
-        myThreads = new ThreadsSpinner();
+        myThreads = new NumericSpinner(1);
         logLbl = new javax.swing.JLabel();
         myLogLevel = new javax.swing.JComboBox();
         separator = new javax.swing.JSeparator();
         myDraft = new javax.swing.JCheckBox();
 
-        org.openide.awt.Mnemonics.setLocalizedText(jvmArgs,
-                org.openide.util.NbBundle.getMessage(
-                        GwtCompilerOptionsPanel.class, "LBL_JvmArgs")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jvmArgs, org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "LBL_JvmArgs")); // NOI18N
 
-        myJvmArgs.setToolTipText(org.openide.util.NbBundle.getMessage(
-                GwtCompilerOptionsPanel.class, "TLTP_JvmArgs")); // NOI18N
+        myJvmArgs.setToolTipText(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "TLTP_JvmArgs")); // NOI18N
 
         styleLbl.setLabelFor(myStyle);
-        org.openide.awt.Mnemonics.setLocalizedText(styleLbl,
-                org.openide.util.NbBundle.getMessage(
-                        GwtCompilerOptionsPanel.class, "LBL_Style")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(styleLbl, org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "LBL_Style")); // NOI18N
 
-        myStyle.setToolTipText(org.openide.util.NbBundle.getMessage(
-                GwtCompilerOptionsPanel.class, "TLTP_Style")); // NOI18N
+        myStyle.setToolTipText(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "TLTP_Style")); // NOI18N
 
         threadsLbl.setLabelFor(myThreads);
-        org.openide.awt.Mnemonics.setLocalizedText(threadsLbl,
-                org.openide.util.NbBundle.getMessage(
-                        GwtCompilerOptionsPanel.class, "LBL_Threads")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(threadsLbl, org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "LBL_Threads")); // NOI18N
 
-        myThreads.setToolTipText(org.openide.util.NbBundle.getMessage(
-                GwtCompilerOptionsPanel.class, "TLTP_Threads")); // NOI18N
+        myThreads.setToolTipText(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "TLTP_Threads")); // NOI18N
 
         logLbl.setLabelFor(myLogLevel);
-        org.openide.awt.Mnemonics.setLocalizedText(logLbl,
-                org.openide.util.NbBundle.getMessage(
-                        GwtCompilerOptionsPanel.class, "LBL_Logging")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(logLbl, org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "LBL_Logging")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(myDraft,
-                org.openide.util.NbBundle.getMessage(
-                        GwtCompilerOptionsPanel.class, "LBL_Draft")); // NOI18N
-        myDraft.setToolTipText(org.openide.util.NbBundle.getMessage(
-                GwtCompilerOptionsPanel.class, "TLTP_Draft")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(myDraft, org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "LBL_Draft")); // NOI18N
+        myDraft.setToolTipText(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "TLTP_Draft")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
-        layout.setHorizontalGroup(layout
-                .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(
-                        layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(
-                                        layout.createParallelGroup(
-                                                javax.swing.GroupLayout.Alignment.LEADING)
-                                                .addComponent(separator)
-                                                .addGroup(
-                                                        layout.createSequentialGroup()
-                                                                .addGroup(
-                                                                        layout.createParallelGroup(
-                                                                                javax.swing.GroupLayout.Alignment.LEADING)
-                                                                                .addComponent(
-                                                                                        jvmArgs)
-                                                                                .addComponent(
-                                                                                        styleLbl))
-                                                                .addPreferredGap(
-                                                                        javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                                .addGroup(
-                                                                        layout.createParallelGroup(
-                                                                                javax.swing.GroupLayout.Alignment.LEADING)
-                                                                                .addComponent(
-                                                                                        myStyle,
-                                                                                        0,
-                                                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
-                                                                                        Short.MAX_VALUE)
-                                                                                .addGroup(
-                                                                                        layout.createSequentialGroup()
-                                                                                                .addComponent(
-                                                                                                        myJvmArgs,
-                                                                                                        javax.swing.GroupLayout.PREFERRED_SIZE,
-                                                                                                        399,
-                                                                                                        javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                                                                .addGap(0,
-                                                                                                        0,
-                                                                                                        Short.MAX_VALUE))))
-                                                .addGroup(
-                                                        layout.createSequentialGroup()
-                                                                .addComponent(
-                                                                        logLbl)
-                                                                .addGap(50, 50,
-                                                                        50)
-                                                                .addComponent(
-                                                                        myLogLevel,
-                                                                        0,
-                                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
-                                                                        Short.MAX_VALUE))
-                                                .addGroup(
-                                                        layout.createSequentialGroup()
-                                                                .addGroup(
-                                                                        layout.createParallelGroup(
-                                                                                javax.swing.GroupLayout.Alignment.LEADING)
-                                                                                .addComponent(
-                                                                                        myDraft)
-                                                                                .addGroup(
-                                                                                        layout.createSequentialGroup()
-                                                                                                .addComponent(
-                                                                                                        threadsLbl)
-                                                                                                .addGap(25,
-                                                                                                        25,
-                                                                                                        25)
-                                                                                                .addComponent(
-                                                                                                        myThreads,
-                                                                                                        javax.swing.GroupLayout.PREFERRED_SIZE,
-                                                                                                        41,
-                                                                                                        javax.swing.GroupLayout.PREFERRED_SIZE)))
-                                                                .addGap(0,
-                                                                        0,
-                                                                        Short.MAX_VALUE)))
-                                .addContainerGap()));
-        layout.setVerticalGroup(layout
-                .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(
-                        layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(
-                                        layout.createParallelGroup(
-                                                javax.swing.GroupLayout.Alignment.BASELINE)
-                                                .addComponent(
-                                                        myJvmArgs,
-                                                        javax.swing.GroupLayout.PREFERRED_SIZE,
-                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
-                                                        javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addComponent(jvmArgs))
-                                .addPreferredGap(
-                                        javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(
-                                        layout.createParallelGroup(
-                                                javax.swing.GroupLayout.Alignment.BASELINE)
-                                                .addComponent(
-                                                        myStyle,
-                                                        javax.swing.GroupLayout.PREFERRED_SIZE,
-                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
-                                                        javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addComponent(styleLbl))
-                                .addPreferredGap(
-                                        javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(
-                                        layout.createParallelGroup(
-                                                javax.swing.GroupLayout.Alignment.BASELINE)
-                                                .addComponent(threadsLbl)
-                                                .addComponent(
-                                                        myThreads,
-                                                        javax.swing.GroupLayout.PREFERRED_SIZE,
-                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
-                                                        javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(
-                                        javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(
-                                        layout.createParallelGroup(
-                                                javax.swing.GroupLayout.Alignment.BASELINE)
-                                                .addComponent(
-                                                        myLogLevel,
-                                                        javax.swing.GroupLayout.PREFERRED_SIZE,
-                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
-                                                        javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addComponent(logLbl))
-                                .addPreferredGap(
-                                        javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(separator,
-                                        javax.swing.GroupLayout.PREFERRED_SIZE,
-                                        javax.swing.GroupLayout.DEFAULT_SIZE,
-                                        javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(
-                                        javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(myDraft)
-                                .addContainerGap(
-                                        javax.swing.GroupLayout.DEFAULT_SIZE,
-                                        Short.MAX_VALUE)));
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(separator)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jvmArgs)
+                            .addComponent(styleLbl))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(myStyle, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(myJvmArgs, javax.swing.GroupLayout.PREFERRED_SIZE, 399, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(0, 0, Short.MAX_VALUE))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(logLbl)
+                        .addGap(50, 50, 50)
+                        .addComponent(myLogLevel, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(myDraft)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(threadsLbl)
+                                .addGap(25, 25, 25)
+                                .addComponent(myThreads, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(myJvmArgs, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jvmArgs))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(myStyle, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(styleLbl))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(threadsLbl)
+                    .addComponent(myThreads, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(myLogLevel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(logLbl))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(separator, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(myDraft)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
 
-        jvmArgs.getAccessibleContext().setAccessibleName(
-                org.openide.util.NbBundle.getMessage(
-                        GwtCompilerOptionsPanel.class, "ACSN_JvmArgs")); // NOI18N
-        jvmArgs.getAccessibleContext().setAccessibleDescription(
-                org.openide.util.NbBundle.getMessage(
-                        GwtCompilerOptionsPanel.class, "ACSD_JvmArgs")); // NOI18N
-        myJvmArgs.getAccessibleContext().setAccessibleName(
-                jvmArgs.getAccessibleContext().getAccessibleName());
-        myJvmArgs.getAccessibleContext().setAccessibleDescription(
-                jvmArgs.getAccessibleContext().getAccessibleDescription());
-        styleLbl.getAccessibleContext().setAccessibleName(
-                org.openide.util.NbBundle.getMessage(
-                        GwtCompilerOptionsPanel.class, "ACSN_Style")); // NOI18N
-        styleLbl.getAccessibleContext().setAccessibleDescription(
-                org.openide.util.NbBundle.getMessage(
-                        GwtCompilerOptionsPanel.class, "ACSD_Style")); // NOI18N
-        myStyle.getAccessibleContext().setAccessibleName(
-                styleLbl.getAccessibleContext().getAccessibleName());
-        myStyle.getAccessibleContext().setAccessibleDescription(
-                styleLbl.getAccessibleContext().getAccessibleDescription());
-        threadsLbl.getAccessibleContext().setAccessibleName(
-                org.openide.util.NbBundle.getMessage(
-                        GwtCompilerOptionsPanel.class, "ACSN_CompilerThreads")); // NOI18N
-        threadsLbl.getAccessibleContext().setAccessibleDescription(
-                org.openide.util.NbBundle.getMessage(
-                        GwtCompilerOptionsPanel.class, "ACSD_CompilerThreads")); // NOI18N
-        myThreads.getAccessibleContext().setAccessibleName(
-                threadsLbl.getAccessibleContext().getAccessibleName());
-        myThreads.getAccessibleContext().setAccessibleDescription(
-                threadsLbl.getAccessibleContext().getAccessibleDescription());
-        logLbl.getAccessibleContext().setAccessibleName(
-                org.openide.util.NbBundle.getMessage(
-                        GwtCompilerOptionsPanel.class, "ACSN_LogLevel")); // NOI18N
-        logLbl.getAccessibleContext().setAccessibleDescription(
-                org.openide.util.NbBundle.getMessage(
-                        GwtCompilerOptionsPanel.class, "ACSD_LogLevel")); // NOI18N
-        myLogLevel.getAccessibleContext().setAccessibleName(
-                logLbl.getAccessibleContext().getAccessibleName());
-        myLogLevel.getAccessibleContext().setAccessibleDescription(
-                logLbl.getAccessibleContext().getAccessibleDescription());
-        myDraft.getAccessibleContext().setAccessibleName(
-                org.openide.util.NbBundle.getMessage(
-                        GwtCompilerOptionsPanel.class, "ACSN_Draft")); // NOI18N
-        myDraft.getAccessibleContext().setAccessibleDescription(
-                org.openide.util.NbBundle.getMessage(
-                        GwtCompilerOptionsPanel.class, "ACSD_Draft")); // NOI18N
+        jvmArgs.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSN_JvmArgs")); // NOI18N
+        jvmArgs.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSD_JvmArgs")); // NOI18N
+        myJvmArgs.getAccessibleContext().setAccessibleName(jvmArgs.getAccessibleContext().getAccessibleName());
+        myJvmArgs.getAccessibleContext().setAccessibleDescription(jvmArgs.getAccessibleContext().getAccessibleDescription());
+        styleLbl.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSN_Style")); // NOI18N
+        styleLbl.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSD_Style")); // NOI18N
+        myStyle.getAccessibleContext().setAccessibleName(styleLbl.getAccessibleContext().getAccessibleName());
+        myStyle.getAccessibleContext().setAccessibleDescription(styleLbl.getAccessibleContext().getAccessibleDescription());
+        threadsLbl.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSN_CompilerThreads")); // NOI18N
+        threadsLbl.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSD_CompilerThreads")); // NOI18N
+        myThreads.getAccessibleContext().setAccessibleName(threadsLbl.getAccessibleContext().getAccessibleName());
+        myThreads.getAccessibleContext().setAccessibleDescription(threadsLbl.getAccessibleContext().getAccessibleDescription());
+        logLbl.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSN_LogLevel")); // NOI18N
+        logLbl.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSD_LogLevel")); // NOI18N
+        myLogLevel.getAccessibleContext().setAccessibleName(logLbl.getAccessibleContext().getAccessibleName());
+        myLogLevel.getAccessibleContext().setAccessibleDescription(logLbl.getAccessibleContext().getAccessibleDescription());
+        myDraft.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSN_Draft")); // NOI18N
+        myDraft.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(GwtCompilerOptionsPanel.class, "ACSD_Draft")); // NOI18N
     }// </editor-fold>//GEN-END:initComponents
-     // Variables declaration - do not modify//GEN-BEGIN:variables
-
+    // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel jvmArgs;
-
     private javax.swing.JLabel logLbl;
-
     private javax.swing.JCheckBox myDraft;
-
     private javax.swing.JTextField myJvmArgs;
-
     private javax.swing.JComboBox myLogLevel;
-
     private javax.swing.JComboBox myStyle;
-
     private javax.swing.JSpinner myThreads;
-
     private javax.swing.JSeparator separator;
-
     private javax.swing.JLabel styleLbl;
-
     private javax.swing.JLabel threadsLbl;
-
     // End of variables declaration//GEN-END:variables
 
     private final class GwtOptionsModification implements

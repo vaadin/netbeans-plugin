@@ -129,6 +129,10 @@ class AddonCompletionItem implements CompletionItem {
 
     @Override
     public int getSortPriority() {
+        /*
+         *  700 corresponds to common case of Java Class completion items 
+         *  (LazyTypeCompletionItem) which are used in plain Java CC.
+         */
         return 700;
     }
 

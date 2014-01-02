@@ -45,7 +45,6 @@ public class AddOnCompletionProvider implements CompletionProvider {
                 return null;
             }
 
-            // TODO :  use COMPLETION_QUERY_TYPE for exact matching and COMPLETION_ALL_QUERY_TYPE for guessing 
             if (queryType == CompletionProvider.COMPLETION_ALL_QUERY_TYPE) {
                 return new AsyncCompletionTask(new AddonCompletionQuery(
                         component.getSelectionStart()), component);

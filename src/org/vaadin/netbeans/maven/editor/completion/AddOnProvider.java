@@ -65,6 +65,14 @@ public final class AddOnProvider {
         return INSTANCE;
     }
 
+    public Collection<SearchResult> searchAddons( SearchQuery query ) {
+        return null;
+    }
+
+    public AddOn getAddOn( SearchResult result ) {
+        return null;
+    }
+
     Collection<? extends AddOnClass> searchClasses( String prefix,
             SourceType type )
     {
