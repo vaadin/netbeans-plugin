@@ -28,10 +28,12 @@ import com.sun.source.tree.Tree.Kind;
 /**
  * @author denis
  */
-@Hint(displayName = "#DN_Connector", description = "#DESC_Connector",
-        category = "vaadin", options = Options.QUERY, severity = Severity.ERROR)
+
 public class Connector {
 
+    @Hint(displayName = "#DN_Connector", description = "#DESC_Connector",
+            category = "vaadin", options = Options.QUERY,
+            severity = Severity.ERROR)
     @TriggerTreeKind(Kind.CLASS)
     public static ErrorDescription checkConnectorClass( HintContext context ) {
         ConnectorAnalyzer analyzer = new ConnectorAnalyzer(context, false);
@@ -39,10 +41,23 @@ public class Connector {
         return analyzer.getBadConnectorClass();
     }
 
+    @Hint(displayName = "#DN_Connector", description = "#DESC_Connector",
+            category = "vaadin", options = Options.QUERY,
+            severity = Severity.ERROR)
     @TriggerTreeKind(Kind.CLASS)
     public static ErrorDescription checkConnectorValue( HintContext context ) {
         ConnectorAnalyzer analyzer = new ConnectorAnalyzer(context, false);
         analyzer.analyze();
         return analyzer.getBadConnectValue();
+    }
+
+    @Hint(displayName = "#DN_Connection", description = "#DESC_Connection",
+            category = "vaadin", options = Options.QUERY,
+            severity = Severity.WARNING)
+    @TriggerTreeKind(Kind.CLASS)
+    public static ErrorDescription checkConnection( HintContext context ) {
+        ConnectorAnalyzer analyzer = new ConnectorAnalyzer(context, false);
+        analyzer.analyze();
+        return analyzer.getNoConnectAnnotation();
     }
 }

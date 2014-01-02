@@ -15,21 +15,35 @@
  */
 package org.vaadin.netbeans.editor.analyzer;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 
 import org.netbeans.api.java.source.CompilationInfo;
+import org.netbeans.api.java.source.ElementHandle;
+import org.netbeans.api.java.source.SourceUtils;
+import org.netbeans.api.project.FileOwnerQuery;
+import org.netbeans.api.project.Project;
+import org.netbeans.api.project.SourceGroup;
 import org.netbeans.spi.editor.hints.ErrorDescription;
 import org.netbeans.spi.editor.hints.ErrorDescriptionFactory;
 import org.netbeans.spi.editor.hints.Fix;
 import org.netbeans.spi.editor.hints.Severity;
 import org.netbeans.spi.java.hints.HintContext;
+import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
+import org.vaadin.netbeans.code.generator.WidgetGenerator;
 import org.vaadin.netbeans.utils.JavaUtils;
 
 import com.sun.source.tree.AnnotationTree;
@@ -40,16 +54,18 @@ import com.sun.source.tree.ExpressionTree;
  */
 public class ConnectorAnalyzer extends ClientClassAnalyzer {
 
-    private static final String CONNECTOR = "com.vaadin.shared.ui.Connect"; // NOI18N
+    private static final String VAADIN_PKG = "com.vaadin."; // NOI18N
 
-    private static final String CLIENT_CONNECTOR =
-            "com.vaadin.server.ClientConnector"; // NOI18N
+    static final String CONNECTOR = VAADIN_PKG + "shared.ui.Connect"; // NOI18N
 
-    private static final String SERVER_CONNECTOR =
-            "com.vaadin.client.ServerConnector"; // NOI18N
+    private static final String CLIENT_CONNECTOR = VAADIN_PKG
+            + "server.ClientConnector"; // NOI18N
 
-    private static final String ABSTRACT_COMPONENT_CONNECTOR =
-            "com.vaadin.client.ui.AbstractComponentConnector"; // NOI18N
+    private static final String SERVER_CONNECTOR = VAADIN_PKG
+            + "client.ServerConnector"; // NOI18N
+
+    private static final String ABSTRACT_COMPONENT_CONNECTOR = VAADIN_PKG
+            + "client.ui.AbstractComponentConnector"; // NOI18N
 
     public ConnectorAnalyzer( HintContext context, boolean packageCheckMode ) {
         super(context, packageCheckMode);
@@ -73,6 +89,7 @@ public class ConnectorAnalyzer extends ClientClassAnalyzer {
                     JavaUtils.getAnnotation(getType(), CONNECTOR);
 
             if (annotation == null) {
+                checkConnectAnnotation();
                 return;
             }
             checkConnectorValue(annotation);
@@ -94,6 +111,10 @@ public class ConnectorAnalyzer extends ClientClassAnalyzer {
         return myBadConnectorClass;
     }
 
+    public ErrorDescription getNoConnectAnnotation() {
+        return myNoConnectAnnotation;
+    }
+
     private boolean isConnector() {
         TypeElement serverConnector =
                 getInfo().getElements().getTypeElement(SERVER_CONNECTOR);
@@ -102,6 +123,89 @@ public class ConnectorAnalyzer extends ClientClassAnalyzer {
         }
         return getInfo().getTypes().isSubtype(getType().asType(),
                 serverConnector.asType());
+    }
+
+    @NbBundle.Messages("notConnected=No @Connect annotation found")
+    private void checkConnectAnnotation() {
+        if (isConnector()) {
+            Set<Modifier> modifiers = getType().getModifiers();
+            if (modifiers.contains(Modifier.ABSTRACT)) {
+                return;
+            }
+            List<Integer> positions =
+                    AbstractJavaFix.getElementPosition(getInfo(), getType());
+
+            List<Fix> fixes = new ArrayList<Fix>(2);
+
+            TypeElement clientConnector =
+                    getInfo().getElements().getTypeElement(CLIENT_CONNECTOR);
+            if (clientConnector != null) {
+                Project project =
+                        FileOwnerQuery.getOwner(getInfo().getFileObject());
+                SourceGroup[] groups = JavaUtils.getJavaSourceGroups(project);
+                List<String> allSourceComponents = new LinkedList<>();
+                String probableComponentFqn = null;
+                try {
+                    probableComponentFqn =
+                            collectExistingComponents(clientConnector, groups,
+                                    allSourceComponents);
+                }
+                catch (InterruptedException e) {
+                    Logger.getLogger(ConnectorAnalyzer.class.getName()).log(
+                            Level.INFO, null, e);
+                }
+                ElementHandle<TypeElement> handle =
+                        ElementHandle.create(getType());
+                if (probableComponentFqn != null) {
+                    fixes.add(new ConnectFix(getInfo().getFileObject(), handle,
+                            probableComponentFqn));
+                }
+                if (!allSourceComponents.isEmpty()) {
+                    fixes.add(new ConnectFix(getInfo().getFileObject(), handle,
+                            allSourceComponents));
+                }
+            }
+
+            myNoConnectAnnotation =
+                    ErrorDescriptionFactory.createErrorDescription(
+                            getSeverity(Severity.WARNING), Bundle
+                                    .notConnected(), fixes, getInfo()
+                                    .getFileObject(), positions.get(0),
+                            positions.get(1));
+            getDescriptions().add(myNoConnectAnnotation);
+        }
+    }
+
+    private String collectExistingComponents( TypeElement clientConnector,
+            SourceGroup[] groups, List<String> sourceComponents )
+            throws InterruptedException
+    {
+        String connectorName = getType().getSimpleName().toString();
+        int index = connectorName.indexOf(WidgetGenerator.CONNECTOR);
+        if (index >= 0) {
+            connectorName = connectorName.substring(0, index);
+        }
+        String componentFqn = null;
+        Set<TypeElement> components =
+                JavaUtils.getSubclasses(clientConnector, getInfo());
+        for (TypeElement component : components) {
+            Set<Modifier> modifiers = component.getModifiers();
+            if (modifiers.contains(Modifier.ABSTRACT)) {
+                continue;
+            }
+            String fqn = component.getQualifiedName().toString();
+            if (fqn.startsWith(VAADIN_PKG)) {
+                continue;
+            }
+            if (isInSource(component, groups)) {
+                sourceComponents.add(fqn);
+                String simpleName = component.getSimpleName().toString();
+                if (simpleName.equals(connectorName)) {
+                    componentFqn = fqn;
+                }
+            }
+        }
+        return componentFqn;
     }
 
     @NbBundle.Messages("badConnectorClass=@Connect annotation must attached to ServerConnector subclass")
@@ -167,7 +271,26 @@ public class ConnectorAnalyzer extends ClientClassAnalyzer {
         }
     }
 
+    // TODO : rewrite this method and use IsInSourceQuery created in other changeset
+    private boolean isInSource( TypeElement type, SourceGroup[] groups ) {
+        FileObject fileObject =
+                SourceUtils.getFile(ElementHandle.create(type), getInfo()
+                        .getClasspathInfo());
+        if (fileObject == null) {
+            return false;
+        }
+        for (SourceGroup sourceGroup : groups) {
+            FileObject rootFolder = sourceGroup.getRootFolder();
+            if (FileUtil.isParentOf(rootFolder, fileObject)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private ErrorDescription myBadConnectValue;
 
     private ErrorDescription myBadConnectorClass;
+
+    private ErrorDescription myNoConnectAnnotation;
 }
