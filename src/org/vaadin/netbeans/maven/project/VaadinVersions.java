@@ -32,28 +32,29 @@ import org.openide.util.RequestProcessor;
 import org.vaadin.netbeans.customizer.RemoteDataAccessStrategy;
 import org.vaadin.netbeans.customizer.VaadinConfiguration;
 import org.vaadin.netbeans.retriever.AbstractRetriever;
+import org.vaadin.netbeans.retriever.CachedResource;
 
 /**
  * @author denis
  */
+@CachedResource(url = VaadinVersions.VERSIONS_URL,
+        resourcePath = VaadinVersions.RESOURCE_VERSIONS)
 public final class VaadinVersions extends AbstractRetriever {
 
     private static final String VERSIONS = "versions"; // NOI18N
 
-    private static final String LOCAL_VERSION = VERSIONS + ".txt"; // NOI18N
+    static final String RESOURCE_VERSIONS = VERSIONS + ".txt"; // NOI18N
 
     private static final VaadinVersions INSTANCE = new VaadinVersions();
 
-    private static final String VERSIONS_URL =
-            "http://vaadin.com/download/VERSIONS_7"; // NOI18N
+    static final String VERSIONS_URL = "http://vaadin.com/download/VERSIONS_7"; // NOI18N
 
     private static final Logger LOG = Logger.getLogger(VaadinVersions.class
             .getName()); // NOI18N  
 
     private VaadinVersions() {
         myVersions = new AtomicReference<>();
-
-        initCache(VaadinVersions.class.getResourceAsStream(LOCAL_VERSION));
+        initCache(VaadinVersions.class.getResourceAsStream(RESOURCE_VERSIONS));
 
         try {
             readVersions(getCachedFile());

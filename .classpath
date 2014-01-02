@@ -2,6 +2,7 @@
 <classpath>
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-libs-lucene.jar"/>
 	<classpathentry kind="src" path="build/classes-generated"/>
+	<classpathentry kind="src" path="extsrc"/>
 	<classpathentry kind="src" path="test/unit/src"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-api-annotations-common.jar"/>

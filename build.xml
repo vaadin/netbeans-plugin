@@ -5,4 +5,17 @@
 <project name="org.vaadin.netbeans.maven" default="netbeans" basedir=".">
     <description>Builds, tests, and runs the project org.vaadin.netbeans.maven.</description>
     <import file="nbproject/build-impl.xml"/>
+
+    <target name="build-init" depends="harness.build-init, init-extra"/>
+
+    <target name="init-extra" depends="-build-dir-init">
+        <property file="nbproject/project.properties"/>
+        <property name="ext.dist" value="${build.dir}/${ext.classes}"/>
+	<mkdir dir="${ext.dist}"/>
+	<javac srcdir="${ext.src}" destdir="${ext.dist}"/>
+        <copy todir="${ext.dist}">
+            <fileset dir="${ext.src}" excludes="**/*.java"/>
+        </copy>
+    </target>
+
 </project>

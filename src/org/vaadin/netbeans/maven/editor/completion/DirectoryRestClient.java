@@ -34,10 +34,14 @@ import org.json.simple.parser.ParseException;
 import org.vaadin.netbeans.maven.editor.completion.AbstractAddOn.Builder;
 import org.vaadin.netbeans.maven.editor.completion.AbstractAddOn.License;
 import org.vaadin.netbeans.retriever.AbstractRetriever;
+import org.vaadin.netbeans.retriever.CachedResource;
 
 /**
  * @author denis
  */
+@CachedResource(url = DirectoryRestClient.DIRECTORY_URL
+        + DirectoryRestClient.VAADIN_VERSION,
+        resourcePath = DirectoryRestClient.ADDON_INFO)
 final class DirectoryRestClient extends AbstractRetriever {
 
     private static final String LICENSES = "licenses"; // NOI18N
@@ -60,14 +64,14 @@ final class DirectoryRestClient extends AbstractRetriever {
 
     private static final String ARTIFACT_ID = "artifactId"; // NOI18N
 
-    private static final String DIRECTORY_URL =
+    static final String DIRECTORY_URL =
             "https://vaadin.com/Directory/resource/addon/all?detailed=true&vaadin="; // NOI18N
 
-    private static final int VAADIN_VERSION = 7;
+    static final int VAADIN_VERSION = 7;
 
     private static final String DIRECTORY_ADDONS = "directoryAddons"; // NOI18N
 
-    private static final String ADDON_INFO = "resources/addons.json"; // NOI18N
+    static final String ADDON_INFO = "resources/addons.json"; // NOI18N
 
     private static final Logger LOG = Logger
             .getLogger(DirectoryRestClient.class.getName()); // NOI18N  
