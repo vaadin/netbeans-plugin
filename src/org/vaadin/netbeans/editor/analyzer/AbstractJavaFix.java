@@ -23,6 +23,7 @@ import java.util.logging.Logger;
 
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
+import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
@@ -32,6 +33,7 @@ import org.netbeans.api.java.lexer.JavaTokenId;
 import org.netbeans.api.java.source.CompilationInfo;
 import org.netbeans.api.java.source.ElementHandle;
 import org.netbeans.api.java.source.ModificationResult;
+import org.netbeans.api.java.source.WorkingCopy;
 import org.netbeans.api.java.source.ModificationResult.Difference;
 import org.netbeans.api.java.source.TreeMaker;
 import org.netbeans.api.java.source.TreeUtilities;
@@ -50,8 +52,10 @@ import org.vaadin.netbeans.utils.XmlUtils;
 import com.sun.source.tree.AnnotationTree;
 import com.sun.source.tree.AssignmentTree;
 import com.sun.source.tree.ClassTree;
+import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.IdentifierTree;
+import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.LiteralTree;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.NewClassTree;
@@ -88,6 +92,32 @@ abstract class AbstractJavaFix implements Fix {
             }
         }
         return changeInfo;
+    }
+
+    protected void addImport( String ifaceFqn,
+            ElementHandle<TypeElement> handle, WorkingCopy copy,
+            TreeMaker treeMaker )
+    {
+        // Don't add import if the interface is in the same package
+        TypeElement sourceElement = handle.resolve(copy);
+        PackageElement pkg = copy.getElements().getPackageOf(sourceElement);
+        String pkgName = pkg.getQualifiedName().toString();
+        if (ifaceFqn.startsWith(pkgName)) {
+            String suffix = ifaceFqn.substring(pkgName.length());
+            int index = suffix.indexOf('.');
+            if (index == 0 && 0 == suffix.lastIndexOf('.')) {
+                return;
+            }
+        }
+
+        ImportTree imprt =
+                treeMaker.Import(treeMaker.QualIdent(ifaceFqn), false);
+
+        CompilationUnitTree unitTree = copy.getCompilationUnit();
+        CompilationUnitTree withImport =
+                treeMaker.addCompUnitImport(copy.getCompilationUnit(), imprt);
+
+        copy.rewrite(unitTree, withImport);
     }
 
     protected FileObject getFileObject() {

@@ -24,7 +24,6 @@ import java.util.logging.Logger;
 
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
-import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.ElementFilter;
 
@@ -44,17 +43,15 @@ import org.openide.filesystems.FileObject;
 import org.openide.util.Mutex;
 import org.openide.util.NbBundle;
 import org.vaadin.netbeans.VaadinSupport;
-import org.vaadin.netbeans.editor.analyzer.ui.RpcInterfacePanel;
+import org.vaadin.netbeans.editor.analyzer.ui.NamePanel;
 import org.vaadin.netbeans.model.ModelOperation;
 import org.vaadin.netbeans.model.VaadinModel;
 import org.vaadin.netbeans.utils.JavaUtils;
 import org.vaadin.netbeans.utils.XmlUtils;
 
 import com.sun.source.tree.ClassTree;
-import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.IdentifierTree;
-import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.util.TreePathScanner;
@@ -187,7 +184,7 @@ abstract class AbstractRpcFix extends AbstractJavaFix {
 
                     @Override
                     public String run() {
-                        RpcInterfacePanel panel = new RpcInterfacePanel(name);
+                        NamePanel panel = new NamePanel(name);
                         DialogDescriptor descriptor =
                                 new DialogDescriptor(panel,
                                         getInterfaceCreationDialogTitle());
@@ -223,25 +220,7 @@ abstract class AbstractRpcFix extends AbstractJavaFix {
     protected void addImport( String ifaceFqn, WorkingCopy copy,
             TreeMaker treeMaker )
     {
-        // Don't add import if the interface is in the same package
-        TypeElement sourceElement = getTypeHandle().resolve(copy);
-        PackageElement pkg = copy.getElements().getPackageOf(sourceElement);
-        String pkgName = pkg.getQualifiedName().toString();
-        if (ifaceFqn.startsWith(pkgName)) {
-            String suffix = ifaceFqn.substring(pkgName.length());
-            if (suffix.indexOf('.') == suffix.lastIndexOf('.')) {
-                return;
-            }
-        }
-
-        ImportTree imprt =
-                treeMaker.Import(treeMaker.QualIdent(ifaceFqn), false);
-
-        CompilationUnitTree unitTree = copy.getCompilationUnit();
-        CompilationUnitTree withImport =
-                treeMaker.addCompUnitImport(copy.getCompilationUnit(), imprt);
-
-        copy.rewrite(unitTree, withImport);
+        addImport(ifaceFqn, getTypeHandle(), copy, treeMaker);
     }
 
     protected String findFreeGetterName( TypeElement clazz, String suffix ) {

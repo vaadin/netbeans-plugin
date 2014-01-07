@@ -27,17 +27,13 @@ import javax.lang.model.type.TypeMirror;
 
 import org.netbeans.api.java.source.CompilationInfo;
 import org.netbeans.api.java.source.ElementHandle;
-import org.netbeans.api.java.source.SourceUtils;
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
-import org.netbeans.api.project.SourceGroup;
 import org.netbeans.spi.editor.hints.ErrorDescription;
 import org.netbeans.spi.editor.hints.ErrorDescriptionFactory;
 import org.netbeans.spi.editor.hints.Fix;
 import org.netbeans.spi.editor.hints.Severity;
 import org.netbeans.spi.java.hints.HintContext;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
 import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.editor.hints.Analyzer;
@@ -164,7 +160,7 @@ public class RpcRegistrationAnalyzer extends Analyzer {
                     Set<TypeElement> subInterfaces =
                             JavaUtils.getSubinterfaces(clientRpc, info);
                     for (TypeElement iface : subInterfaces) {
-                        if (isInSource(iface, info)) {
+                        if (IsInSourceQuery.isInSource(iface, info)) {
                             fixes.add(new CreateClientRpcFix(info
                                     .getFileObject(), ElementHandle
                                     .create(type), iface.getQualifiedName()
@@ -202,7 +198,7 @@ public class RpcRegistrationAnalyzer extends Analyzer {
                     Set<TypeElement> subInterfaces =
                             JavaUtils.getSubinterfaces(serverRpc, info);
                     for (TypeElement iface : subInterfaces) {
-                        if (isInSource(iface, info)) {
+                        if (IsInSourceQuery.isInSource(iface, info)) {
                             fixes.add(new CreateServerRpcFix(info
                                     .getFileObject(), ElementHandle
                                     .create(type), iface.getQualifiedName()
@@ -241,7 +237,7 @@ public class RpcRegistrationAnalyzer extends Analyzer {
                     Set<TypeElement> subInterfaces =
                             JavaUtils.getSubinterfaces(clientRpc, info);
                     for (TypeElement iface : subInterfaces) {
-                        if (isInSource(iface, info)) {
+                        if (IsInSourceQuery.isInSource(iface, info)) {
                             fixes.add(new ClientRpcProxyFix(info
                                     .getFileObject(), iface.getQualifiedName()
                                     .toString(), ElementHandle.create(type)));
@@ -277,7 +273,7 @@ public class RpcRegistrationAnalyzer extends Analyzer {
                     Set<TypeElement> subInterfaces =
                             JavaUtils.getSubinterfaces(serverRpc, info);
                     for (TypeElement iface : subInterfaces) {
-                        if (isInSource(iface, info)) {
+                        if (IsInSourceQuery.isInSource(iface, info)) {
                             fixes.add(new ServerRpcProxyFix(info
                                     .getFileObject(), iface.getQualifiedName()
                                     .toString(), ElementHandle.create(type)));
@@ -302,24 +298,6 @@ public class RpcRegistrationAnalyzer extends Analyzer {
         return ErrorDescriptionFactory.createErrorDescription(
                 getSeverity(Severity.HINT), msg, fixes, info.getFileObject(),
                 positions.get(0), positions.get(1));
-    }
-
-    private boolean isInSource( TypeElement type, CompilationInfo info ) {
-        FileObject fileObject =
-                SourceUtils.getFile(ElementHandle.create(type),
-                        info.getClasspathInfo());
-        if (fileObject == null) {
-            return false;
-        }
-        Project project = FileOwnerQuery.getOwner(info.getFileObject());
-        SourceGroup[] groups = JavaUtils.getJavaSourceGroups(project);
-        for (SourceGroup sourceGroup : groups) {
-            FileObject rootFolder = sourceGroup.getRootFolder();
-            if (FileUtil.isParentOf(rootFolder, fileObject)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private ErrorDescription myNoServerRpc;

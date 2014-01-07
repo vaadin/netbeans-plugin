@@ -20,14 +20,13 @@ import javax.swing.SwingUtilities;
 /**
  * @author denis
  */
-public class RpcInterfacePanel extends javax.swing.JPanel {
+public class NamePanel extends javax.swing.JPanel {
 
-    /**
-     * Creates new form RpcInterfacePanel
-     */
-    public RpcInterfacePanel( String iface ) {
+    public NamePanel( String name ) {
         initComponents();
-        myName.setText(iface);
+        if (name != null) {
+            myName.setText(name);
+        }
 
         selectText();
     }
@@ -41,8 +40,7 @@ public class RpcInterfacePanel extends javax.swing.JPanel {
 
             @Override
             public void run() {
-                if (SwingUtilities.getWindowAncestor(RpcInterfacePanel.this) == null)
-                {
+                if (SwingUtilities.getWindowAncestor(NamePanel.this) == null) {
                     selectText();
                 }
                 else {
@@ -67,7 +65,7 @@ public class RpcInterfacePanel extends javax.swing.JPanel {
 
         nameLbl.setLabelFor(myName);
         org.openide.awt.Mnemonics.setLocalizedText(nameLbl,
-                org.openide.util.NbBundle.getMessage(RpcInterfacePanel.class,
+                org.openide.util.NbBundle.getMessage(NamePanel.class,
                         "LBL_RpcInterfaceName")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -102,10 +100,10 @@ public class RpcInterfacePanel extends javax.swing.JPanel {
                                         Short.MAX_VALUE)));
 
         nameLbl.getAccessibleContext().setAccessibleName(
-                org.openide.util.NbBundle.getMessage(RpcInterfacePanel.class,
+                org.openide.util.NbBundle.getMessage(NamePanel.class,
                         "ACSN_RpcInterfaceName")); // NOI18N
         nameLbl.getAccessibleContext().setAccessibleDescription(
-                org.openide.util.NbBundle.getMessage(RpcInterfacePanel.class,
+                org.openide.util.NbBundle.getMessage(NamePanel.class,
                         "ACSD_RpcInterfaceName")); // NOI18N
         myName.getAccessibleContext().setAccessibleName(
                 nameLbl.getAccessibleContext().getAccessibleName());

@@ -43,10 +43,6 @@ import javax.lang.model.util.ElementFilter;
 
 import org.netbeans.api.java.source.CompilationInfo;
 import org.netbeans.api.java.source.ElementHandle;
-import org.netbeans.api.java.source.SourceUtils;
-import org.netbeans.api.project.FileOwnerQuery;
-import org.netbeans.api.project.Project;
-import org.netbeans.api.project.SourceGroup;
 import org.netbeans.spi.editor.hints.ErrorDescription;
 import org.netbeans.spi.editor.hints.ErrorDescriptionFactory;
 import org.netbeans.spi.editor.hints.Fix;
@@ -58,7 +54,6 @@ import org.openide.util.NbBundle;
 import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.model.ModelOperation;
 import org.vaadin.netbeans.model.VaadinModel;
-import org.vaadin.netbeans.utils.JavaUtils;
 import org.vaadin.netbeans.utils.XmlUtils;
 
 /**
@@ -266,22 +261,8 @@ public class RpcInterfacesAnalyzer extends AbstractJavaBeanAnalyzer {
         if (isCanceled()) {
             return;
         }
-        FileObject fileObject =
-                SourceUtils.getFile(ElementHandle.create(type.asElement()),
-                        info.getClasspathInfo());
-        if (fileObject == null) {
-            return;
-        }
-        Project project = FileOwnerQuery.getOwner(info.getFileObject());
-        SourceGroup[] groups = JavaUtils.getJavaSourceGroups(project);
-        boolean isInSource = false;
-        for (SourceGroup sourceGroup : groups) {
-            FileObject rootFolder = sourceGroup.getRootFolder();
-            if (FileUtil.isParentOf(rootFolder, fileObject)) {
-                isInSource = true;
-                break;
-            }
-        }
+        boolean isInSource =
+                IsInSourceQuery.isInSource(type.asElement(), getInfo());
         if (!isInSource || isCanceled()) {
             return;
         }

@@ -2,11 +2,18 @@
 package ${package};
 </#if>
 
+<#if state_super_class_fqn?? && state_super_class_fqn != "">
+import ${state_super_class_fqn};
+<#else>
 import com.vaadin.shared.AbstractComponentState;
+</#if>
 
-public class ${name} extends AbstractComponentState {
 
+public class ${name} extends <#if state_super_class?? && state_super_class != "">${state_super_class}<#else>AbstractComponentState</#if> {
+
+<#if component?? && component != "">
     // TODO: example state field
     public String text = "This is ${component}";
+</#if>
 
 }

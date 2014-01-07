@@ -95,7 +95,9 @@ abstract class SimpleConnectorGenerator implements WidgetGenerator {
                 @Override
                 public void run( VaadinModel model ) {
                     gwtXml[0] = model.getGwtXml();
-                    srcPaths.addAll(model.getSourcePaths());
+                    if (gwtXml[0] != null) {
+                        srcPaths.addAll(model.getSourcePaths());
+                    }
                 }
             });
         }

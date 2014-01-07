@@ -31,7 +31,7 @@ public class SharedStateAnalyzer extends AbstractJavaBeanAnalyzer {
         super(context, mode);
     }
 
-    private static final String SHARED_STATE =
+    static final String SHARED_STATE =
             "com.vaadin.shared.communication.SharedState"; // NOI18N
 
     @Override

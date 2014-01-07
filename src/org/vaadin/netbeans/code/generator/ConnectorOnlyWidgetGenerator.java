@@ -23,6 +23,7 @@ import org.openide.util.NbBundle;
 @NbBundle.Messages({
         "generateServerComponent=Generate Server Side Component class",
         "generateConnector=Generate Connector class" })
+
 public class ConnectorOnlyWidgetGenerator extends SimpleConnectorGenerator {
 
     private static final String COMPONENT_TEMPLATE = "Templates/Vaadin/ConnectorComponent.java"; // NOI18N

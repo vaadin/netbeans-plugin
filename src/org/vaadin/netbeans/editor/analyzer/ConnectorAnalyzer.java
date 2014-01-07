@@ -64,8 +64,8 @@ public class ConnectorAnalyzer extends ClientClassAnalyzer {
     private static final String SERVER_CONNECTOR = VAADIN_PKG
             + "client.ServerConnector"; // NOI18N
 
-    private static final String ABSTRACT_COMPONENT_CONNECTOR = VAADIN_PKG
-            + "client.ui.AbstractComponentConnector"; // NOI18N
+    static final String ABSTRACT_COMPONENT_CONNECTOR =
+            "com.vaadin.client.ui.AbstractComponentConnector"; // NOI18N
 
     public ConnectorAnalyzer( HintContext context, boolean packageCheckMode ) {
         super(context, packageCheckMode);
