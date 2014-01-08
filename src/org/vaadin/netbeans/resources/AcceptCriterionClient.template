@@ -1,0 +1,19 @@
+<#if package?? && package != "">
+package ${package};
+</#if>
+
+import ${server_class_fqn};
+import com.vaadin.client.UIDL;
+import com.vaadin.client.ui.dd.VAcceptCriterion;
+import com.vaadin.client.ui.dd.VDragEvent;
+import com.vaadin.shared.ui.dd.AcceptCriterion;
+
+@AcceptCriterion(${server_class}.class)
+public class ${name} extends VAcceptCriterion {
+
+    @Override
+    protected boolean accept(VDragEvent drag, UIDL configuration) {
+        // TODO: provide implementation
+        return true;
+    }
+}

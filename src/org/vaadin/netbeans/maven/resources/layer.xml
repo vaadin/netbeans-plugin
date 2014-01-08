@@ -146,6 +146,11 @@
                 <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
             </file>
             
+            <file name="AcceptCriterionClient.java" url="nbres:/org/vaadin/netbeans/resources/AcceptCriterionClient.template">
+                <attr name="position" intvalue="0"/>
+                <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
+            </file>
+            
         </folder>
     </folder>
     
