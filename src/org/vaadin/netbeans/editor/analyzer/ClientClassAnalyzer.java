@@ -19,12 +19,18 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.lang.model.element.TypeElement;
 
 import org.netbeans.api.java.source.CompilationInfo;
+import org.netbeans.api.java.source.ElementHandle;
+import org.netbeans.api.java.source.SourceUtils;
+import org.netbeans.api.project.FileOwnerQuery;
+import org.netbeans.api.project.Project;
+import org.netbeans.api.project.SourceGroup;
 import org.netbeans.spi.editor.hints.ErrorDescription;
 import org.netbeans.spi.editor.hints.ErrorDescriptionFactory;
 import org.netbeans.spi.editor.hints.Fix;
@@ -37,6 +43,7 @@ import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.editor.hints.Analyzer;
 import org.vaadin.netbeans.model.ModelOperation;
 import org.vaadin.netbeans.model.VaadinModel;
+import org.vaadin.netbeans.utils.JavaUtils;
 import org.vaadin.netbeans.utils.XmlUtils;
 
 /**
@@ -53,11 +60,16 @@ public abstract class ClientClassAnalyzer extends Analyzer {
         return myNotClientPackage;
     }
 
+    public ErrorDescription getNoGwtModule() {
+        return myNoGwtModule;
+    }
+
     protected boolean isPackageCheckMode() {
         return isPackageCheckMode;
     }
 
     @NbBundle.Messages({
+            "absentGwtModule=No GWT module file found",
             "# {0} - clientPackage",
             "notClientPackage=Class''s package is incorrect, it must be inside client package ({0})" })
     protected void checkClientPackage() {
@@ -100,7 +112,15 @@ public abstract class ClientClassAnalyzer extends Analyzer {
                 }
             });
             if (!hasWidgetset[0]) {
-                // TODO : no widgetset file error
+                List<Integer> positions =
+                        AbstractJavaFix.getElementPosition(info, type);
+                myNoGwtModule =
+                        ErrorDescriptionFactory.createErrorDescription(
+                                getSeverity(Severity.ERROR),
+                                Bundle.absentGwtModule(),
+                                createGwtModuleFixes(), info.getFileObject(),
+                                positions.get(0), positions.get(1));
+                getDescriptions().add(myNoGwtModule);
             }
             else {
                 boolean isInsideClientPkg = false;
@@ -138,6 +158,33 @@ public abstract class ClientClassAnalyzer extends Analyzer {
         }
     }
 
+    private List<Fix> createGwtModuleFixes() {
+        TypeElement ui =
+                getInfo().getElements().getTypeElement(JavaUtils.VAADIN_UI_FQN);
+        List<Fix> fixes = new LinkedList<>();
+        if (ui != null) {
+            try {
+                Set<TypeElement> uis = JavaUtils.getSubclasses(ui, getInfo());
+                for (TypeElement vaadinUi : uis) {
+                    if (isInSource(vaadinUi, getInfo())) {
+                        FileObject fileObject =
+                                SourceUtils.getFile(
+                                        ElementHandle.create(vaadinUi),
+                                        getInfo().getClasspathInfo());
+                        fixes.add(new CreateGwtModuleFix(getInfo()
+                                .getFileObject(), fileObject.getParent()));
+                    }
+                }
+            }
+            catch (InterruptedException e) {
+                Logger.getLogger(ClientClassAnalyzer.class.getName()).log(
+                        Level.INFO, null, e);
+            }
+        }
+        fixes.add(new CreateGwtModuleFix(getInfo().getFileObject(), null));
+        return fixes;
+    }
+
     private String getPackages( List<String> fqns ) {
         StringBuilder result = new StringBuilder();
         for (String fqn : fqns) {
@@ -150,7 +197,28 @@ public abstract class ClientClassAnalyzer extends Analyzer {
         return result.toString();
     }
 
+    // TODO : use IsIsSourceQuery from other commit
+    private boolean isInSource( TypeElement type, CompilationInfo info ) {
+        FileObject fileObject =
+                SourceUtils.getFile(ElementHandle.create(type),
+                        info.getClasspathInfo());
+        if (fileObject == null) {
+            return false;
+        }
+        Project project = FileOwnerQuery.getOwner(info.getFileObject());
+        SourceGroup[] groups = JavaUtils.getJavaSourceGroups(project);
+        for (SourceGroup sourceGroup : groups) {
+            FileObject rootFolder = sourceGroup.getRootFolder();
+            if (FileUtil.isParentOf(rootFolder, fileObject)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private ErrorDescription myNotClientPackage;
+
+    private ErrorDescription myNoGwtModule;
 
     private boolean isPackageCheckMode;
 }

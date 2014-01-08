@@ -88,18 +88,22 @@ public final class XmlUtils {
 
     }
 
-    public static FileObject createGwtXml( FileObject folder )
-            throws IOException
-    {
+    public static String getDefaultGwtModuleName( FileObject folder ) {
         FileObject templateFileObject = FileUtil.getConfigFile(MODULE_TEMPLATE);
         String name = templateFileObject.getNameExt();
         if (name.endsWith(GWT_XML)) {
             name = name.substring(0, name.length() - GWT_XML.length());
         }
-        String moduleName =
-                JavaUtils.getFreeName(folder, MODULE_PREFIX + name, GWT_XML)
-                        + GWT;
-        return createGwtXml(folder, moduleName);
+        if (folder == null) {
+            return MODULE_PREFIX + name;
+        }
+        return JavaUtils.getFreeName(folder, MODULE_PREFIX + name, GWT_XML);
+    }
+
+    public static FileObject createGwtXml( FileObject folder )
+            throws IOException
+    {
+        return createGwtXml(folder, getDefaultGwtModuleName(folder) + GWT);
     }
 
     public static FileObject createGwtXml( FileObject folder, String name )

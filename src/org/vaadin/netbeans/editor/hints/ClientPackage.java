@@ -51,6 +51,20 @@ public class ClientPackage {
         return null;
     }
 
+    @Hint(displayName = "#DN_ClientNoGwtModule",
+            description = "#DESC_ClientNoGwtModule", category = "vaadin",
+            options = Options.QUERY, severity = Severity.ERROR)
+    @TriggerTreeKind({ Kind.CLASS, Kind.INTERFACE })
+    public static ErrorDescription checkGwtModule( HintContext context ) {
+        for (ClientClassAnalyzer analyzer : getPackageAnalyzers(context)) {
+            analyzer.analyze();
+            if (analyzer.getNoGwtModule() != null) {
+                return analyzer.getNoGwtModule();
+            }
+        }
+        return null;
+    }
+
     private static List<ClientClassAnalyzer> getPackageAnalyzers(
             HintContext context )
     {

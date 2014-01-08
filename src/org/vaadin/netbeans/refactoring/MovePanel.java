@@ -26,19 +26,14 @@ import java.util.List;
 
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
-import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.ListCellRenderer;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.plaf.UIResource;
 
 import org.netbeans.api.project.Project;
-import org.netbeans.api.project.ProjectInformation;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.ui.OpenProjects;
@@ -47,6 +42,8 @@ import org.netbeans.spi.java.project.support.ui.PackageView;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.vaadin.netbeans.VaadinSupport;
+import org.vaadin.netbeans.common.ui.GroupCellRenderer;
+import org.vaadin.netbeans.common.ui.ProjectCellRenderer;
 import org.vaadin.netbeans.utils.JavaUtils;
 
 /**
@@ -133,19 +130,19 @@ class MovePanel extends JPanel implements CustomRefactoringPanel {
         Project openProjects[] = OpenProjects.getDefault().getOpenProjects();
         List<Project> projects = new ArrayList<>(openProjects.length);
         for (Project project : openProjects) {
-            VaadinSupport support = project.getLookup().lookup(
-                    VaadinSupport.class);
+            VaadinSupport support =
+                    project.getLookup().lookup(VaadinSupport.class);
             if (support != null && support.isEnabled()) {
                 projects.add(project);
             }
         }
 
-        Project[] vaadinProjects = projects
-                .toArray(new Project[projects.size()]);
+        Project[] vaadinProjects =
+                projects.toArray(new Project[projects.size()]);
 
         Arrays.sort(vaadinProjects, new ProjectNameComparator());
-        DefaultComboBoxModel<Project> projectsModel = new DefaultComboBoxModel<>(
-                vaadinProjects);
+        DefaultComboBoxModel<Project> projectsModel =
+                new DefaultComboBoxModel<>(vaadinProjects);
         myProject.setModel(projectsModel);
         myProject.setSelectedItem(myCurrentProject);
 
@@ -218,10 +215,11 @@ class MovePanel extends JPanel implements CustomRefactoringPanel {
     private void setSourceGroups() {
         Project project = (Project) myProject.getSelectedItem();
         SourceGroup[] javaSourceGroups = JavaUtils.getJavaSourceGroups(project);
-        SourceGroup[] resourcesSourceGroups = JavaUtils
-                .getResourcesSourceGroups(project);
-        SourceGroup[] groups = new SourceGroup[javaSourceGroups.length
-                + resourcesSourceGroups.length];
+        SourceGroup[] resourcesSourceGroups =
+                JavaUtils.getResourcesSourceGroups(project);
+        SourceGroup[] groups =
+                new SourceGroup[javaSourceGroups.length
+                        + resourcesSourceGroups.length];
         System.arraycopy(javaSourceGroups, 0, groups, 0,
                 javaSourceGroups.length);
         System.arraycopy(resourcesSourceGroups, 0, groups,
@@ -494,78 +492,6 @@ class MovePanel extends JPanel implements CustomRefactoringPanel {
             return COLLATOR.compare(ProjectUtils.getInformation(p1)
                     .getDisplayName(), ProjectUtils.getInformation(p2)
                     .getDisplayName());
-        }
-    }
-
-    static class GroupCellRenderer extends JLabel implements ListCellRenderer,
-            UIResource
-    {
-
-        GroupCellRenderer() {
-            setOpaque(true);
-        }
-
-        @Override
-        public Component getListCellRendererComponent( JList list,
-                Object value, int index, boolean isSelected,
-                boolean cellHasFocus )
-        {
-            if (!(value instanceof SourceGroup)) {
-                return this;
-            }
-            // #89393: GTK needs name to render cell renderer "natively"
-            setName("ComboBox.listRenderer"); // NOI18N
-
-            setText(((SourceGroup) value).getDisplayName());
-            setIcon(((SourceGroup) value).getIcon(false));
-
-            if (isSelected) {
-                setBackground(list.getSelectionBackground());
-                setForeground(list.getSelectionForeground());
-            }
-            else {
-                setBackground(list.getBackground());
-                setForeground(list.getForeground());
-            }
-
-            return this;
-        }
-    }
-
-    static class ProjectCellRenderer extends JLabel implements
-            ListCellRenderer, UIResource
-    {
-
-        public ProjectCellRenderer() {
-            setOpaque(true);
-        }
-
-        @Override
-        public Component getListCellRendererComponent( JList list,
-                Object value, int index, boolean isSelected,
-                boolean cellHasFocus )
-        {
-            if (!(value instanceof Project)) {
-                return this;
-            }
-            // #89393: GTK needs name to render cell renderer "natively"
-            setName("ComboBox.listRenderer"); // NOI18N
-
-            ProjectInformation pi = ProjectUtils
-                    .getInformation((Project) value);
-            setText(pi.getDisplayName());
-            setIcon(pi.getIcon());
-
-            if (isSelected) {
-                setBackground(list.getSelectionBackground());
-                setForeground(list.getSelectionForeground());
-            }
-            else {
-                setBackground(list.getBackground());
-                setForeground(list.getForeground());
-            }
-
-            return this;
         }
     }
 }
