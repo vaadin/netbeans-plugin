@@ -16,7 +16,6 @@
 package org.vaadin.netbeans.editor.analyzer;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -77,7 +76,7 @@ public abstract class ClientClassAnalyzer extends Analyzer {
             return;
         }
         final List<FileObject> clientPackage = new LinkedList<>();
-        final boolean[] hasWidgetset = new boolean[1];
+        final FileObject[] gwtXml = new FileObject[1];
         final List<String> clientPkgFqn = new LinkedList<>();
 
         VaadinSupport support = getSupport();
@@ -91,27 +90,27 @@ public abstract class ClientClassAnalyzer extends Analyzer {
 
                 @Override
                 public void run( VaadinModel model ) {
-                    FileObject gwtXml = model.getGwtXml();
-                    hasWidgetset[0] = gwtXml != null;
-                    if (gwtXml == null) {
+                    gwtXml[0] = model.getGwtXml();
+                    if (gwtXml[0] == null) {
                         return;
                     }
                     try {
-                        String fqn = AbstractJavaFix.getWidgetsetFqn(gwtXml);
+                        String fqn = AbstractJavaFix.getWidgetsetFqn(gwtXml[0]);
                         for (String path : model.getSourcePaths()) {
                             clientPackage.add(XmlUtils.getClientWidgetPackage(
-                                    gwtXml, path, false));
+                                    gwtXml[0], path, false));
                             clientPkgFqn.add(fqn.substring(0, fqn.length()
-                                    - gwtXml.getNameExt().length()
+                                    - gwtXml[0].getNameExt().length()
                                     + XmlUtils.GWT_XML.length())
-                                    + path);
+                                    + path.replace('/', '.'));
                         }
                     }
                     catch (IOException ignore) {
                     }
                 }
             });
-            if (!hasWidgetset[0]) {
+            boolean hasWidgetset = gwtXml[0] != null;
+            if (!hasWidgetset) {
                 List<Integer> positions =
                         AbstractJavaFix.getElementPosition(info, type);
                 myNoGwtModule =
@@ -125,11 +124,9 @@ public abstract class ClientClassAnalyzer extends Analyzer {
             else {
                 boolean isInsideClientPkg = false;
                 for (FileObject clientPkg : clientPackage) {
-                    if (clientPkg == null) {
-                        // TODO : for fix hint. Package has to be created
-                    }
-                    else if (FileUtil.isParentOf(clientPkg,
-                            info.getFileObject()))
+                    if (clientPkg != null
+                            && FileUtil.isParentOf(clientPkg,
+                                    info.getFileObject()))
                     {
                         isInsideClientPkg = true;
                         break;
@@ -137,7 +134,6 @@ public abstract class ClientClassAnalyzer extends Analyzer {
                 }
 
                 if (!isInsideClientPkg) {
-                    // TODO : provide a hint to move class into the client package (using refactoring)
                     List<Integer> positions =
                             AbstractJavaFix.getElementPosition(info, type);
                     myNotClientPackage =
@@ -145,8 +141,9 @@ public abstract class ClientClassAnalyzer extends Analyzer {
                                     .createErrorDescription(
                                             getSeverity(Severity.ERROR),
                                             Bundle.notClientPackage(getPackages(clientPkgFqn)),
-                                            Collections.<Fix> emptyList(), info
-                                                    .getFileObject(), positions
+                                            createRelocationFixes(gwtXml[0],
+                                                    clientPackage, clientPkgFqn),
+                                            info.getFileObject(), positions
                                                     .get(0), positions.get(1));
                     getDescriptions().add(myNotClientPackage);
                 }
@@ -182,6 +179,35 @@ public abstract class ClientClassAnalyzer extends Analyzer {
             }
         }
         fixes.add(new CreateGwtModuleFix(getInfo().getFileObject(), null));
+        return fixes;
+    }
+
+    private List<Fix> createRelocationFixes( FileObject gwtXml,
+            List<FileObject> clientPackages, List<String> clientPkgFqns )
+    {
+        List<Fix> fixes = new LinkedList<>();
+        FileObject baseFolder = gwtXml.getParent();
+        FileObject currentPkg = getInfo().getFileObject().getParent();
+
+        if (FileUtil.isParentOf(baseFolder, currentPkg)) {
+            String relativePath =
+                    FileUtil.getRelativePath(baseFolder, currentPkg);
+            fixes.add(new AddSourcePathFix(relativePath, gwtXml));
+        }
+        int i = 0;
+        for (FileObject clientPackage : clientPackages) {
+            if (clientPackage != null) {
+                fixes.add(new MoveClientClassFix(getInfo().getFileObject(),
+                        clientPackage, clientPkgFqns.get(i), false));
+            }
+            else {
+                String fqn = clientPkgFqns.get(i);
+                fixes.add(new RenamePackageFix(currentPkg, fqn));
+                fixes.add(new MoveClientClassFix(getInfo().getFileObject(),
+                        null, fqn, false));
+            }
+            i++;
+        }
         return fixes;
     }
 
