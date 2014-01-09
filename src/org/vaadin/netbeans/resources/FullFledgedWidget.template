@@ -2,15 +2,20 @@
 package ${package};
 </#if>
 
+<#if widget_super_fqn?? && widget_super_fqn != "">
+import ${widget_super_fqn};
+<#else>
 import com.google.gwt.user.client.ui.Label;
 
-// TODO: extend any GWT Widget
-public class ${name} extends Label {
+</#if>
+public class ${name} extends <#if widget_super?? && widget_super != "">${widget_super}<#else>Label</#if> {
 
     public static final String CLASSNAME = "${style_name}";
 
     public ${name}() {
+       <#if shared_state?? && shared_state != "">
         // setText("${name} sets the text via ${connector} using ${shared_state}");
+        </#if>
         setStyleName(CLASSNAME);
     }
 

@@ -52,6 +52,12 @@ abstract class SimpleConnectorGenerator implements WidgetGenerator {
 
     private static final String SERVER_COMPONENT = "server_component";//NOI18N
 
+    private static final String SUPER_CONNECTOR_FQN = "super_connector_fqn"; //NOI18N
+
+    private static final String SUPER_CONNECTOR = "super_connector"; //NOI18N
+
+    private static final String WIDGET_PARAM = "widget";//NOI18N
+
     @NbBundle.Messages("generateGwtXml=Generate GWT Module XML file")
     @Override
     public Set<FileObject> generate( WizardDescriptor wizard,
@@ -135,6 +141,9 @@ abstract class SimpleConnectorGenerator implements WidgetGenerator {
         Map<String, String> map = new HashMap<>();
         map.put(getServerClassNameParam(), componentClassName);
         map.put(getServerClassFqnParam(), JavaUtils.getFqn(serverComponent));
+        map.put(SUPER_CONNECTOR_FQN, null);
+        map.put(SUPER_CONNECTOR, null);
+        map.put(WIDGET_PARAM, null);
         dataObject =
                 JavaUtils.createDataObjectFromTemplate(getConnectorTemplate(),
                         clientPackage, connectorName, map);

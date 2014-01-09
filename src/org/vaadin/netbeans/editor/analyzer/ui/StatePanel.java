@@ -74,56 +74,100 @@ public class StatePanel extends javax.swing.JPanel {
         mySuperclass = new javax.swing.JTextField();
 
         nameLbl.setLabelFor(myName);
-        org.openide.awt.Mnemonics.setLocalizedText(nameLbl, org.openide.util.NbBundle.getMessage(StatePanel.class, "LBL_RpcInterfaceName")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(nameLbl,
+                org.openide.util.NbBundle.getMessage(StatePanel.class,
+                        "LBL_RpcInterfaceName")); // NOI18N
 
         superClassLbl.setLabelFor(mySuperclass);
-        org.openide.awt.Mnemonics.setLocalizedText(superClassLbl, org.openide.util.NbBundle.getMessage(StatePanel.class, "LBL_StateSuperClass")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(superClassLbl,
+                org.openide.util.NbBundle.getMessage(StatePanel.class,
+                        "LBL_StateSuperClass")); // NOI18N
 
         mySuperclass.setEditable(false);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(nameLbl)
-                    .addComponent(superClassLbl))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(myName, javax.swing.GroupLayout.DEFAULT_SIZE, 304, Short.MAX_VALUE)
-                    .addComponent(mySuperclass))
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(nameLbl)
-                    .addComponent(myName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(superClassLbl)
-                    .addComponent(mySuperclass, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
+        layout.setHorizontalGroup(layout
+                .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(
+                        layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(
+                                        layout.createParallelGroup(
+                                                javax.swing.GroupLayout.Alignment.LEADING)
+                                                .addComponent(nameLbl)
+                                                .addComponent(superClassLbl))
+                                .addPreferredGap(
+                                        javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addGroup(
+                                        layout.createParallelGroup(
+                                                javax.swing.GroupLayout.Alignment.LEADING)
+                                                .addComponent(
+                                                        myName,
+                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                        304, Short.MAX_VALUE)
+                                                .addComponent(mySuperclass))
+                                .addContainerGap()));
+        layout.setVerticalGroup(layout
+                .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(
+                        layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(
+                                        layout.createParallelGroup(
+                                                javax.swing.GroupLayout.Alignment.BASELINE)
+                                                .addComponent(nameLbl)
+                                                .addComponent(
+                                                        myName,
+                                                        javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                        javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(
+                                        javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addGroup(
+                                        layout.createParallelGroup(
+                                                javax.swing.GroupLayout.Alignment.BASELINE)
+                                                .addComponent(superClassLbl)
+                                                .addComponent(
+                                                        mySuperclass,
+                                                        javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                        javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addContainerGap(
+                                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                                        Short.MAX_VALUE)));
 
-        nameLbl.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(StatePanel.class, "ACSN_RpcInterfaceName")); // NOI18N
-        nameLbl.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(StatePanel.class, "ACSD_RpcInterfaceName")); // NOI18N
-        myName.getAccessibleContext().setAccessibleName(nameLbl.getAccessibleContext().getAccessibleName());
-        myName.getAccessibleContext().setAccessibleDescription(nameLbl.getAccessibleContext().getAccessibleDescription());
-        superClassLbl.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(StatePanel.class, "ACSN_StateSuperclass")); // NOI18N
-        superClassLbl.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(StatePanel.class, "ACSD_StateSuperclass")); // NOI18N
-        mySuperclass.getAccessibleContext().setAccessibleName(superClassLbl.getAccessibleContext().getAccessibleName());
-        mySuperclass.getAccessibleContext().setAccessibleDescription(superClassLbl.getAccessibleContext().getAccessibleDescription());
+        nameLbl.getAccessibleContext().setAccessibleName(
+                org.openide.util.NbBundle.getMessage(StatePanel.class,
+                        "ACSN_RpcInterfaceName")); // NOI18N
+        nameLbl.getAccessibleContext().setAccessibleDescription(
+                org.openide.util.NbBundle.getMessage(StatePanel.class,
+                        "ACSD_RpcInterfaceName")); // NOI18N
+        myName.getAccessibleContext().setAccessibleName(
+                nameLbl.getAccessibleContext().getAccessibleName());
+        myName.getAccessibleContext().setAccessibleDescription(
+                nameLbl.getAccessibleContext().getAccessibleDescription());
+        superClassLbl.getAccessibleContext().setAccessibleName(
+                org.openide.util.NbBundle.getMessage(StatePanel.class,
+                        "ACSN_StateSuperclass")); // NOI18N
+        superClassLbl.getAccessibleContext().setAccessibleDescription(
+                org.openide.util.NbBundle.getMessage(StatePanel.class,
+                        "ACSD_StateSuperclass")); // NOI18N
+        mySuperclass.getAccessibleContext().setAccessibleName(
+                superClassLbl.getAccessibleContext().getAccessibleName());
+        mySuperclass.getAccessibleContext()
+                .setAccessibleDescription(
+                        superClassLbl.getAccessibleContext()
+                                .getAccessibleDescription());
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField myName;
+
     private javax.swing.JTextField mySuperclass;
+
     private javax.swing.JLabel nameLbl;
+
     private javax.swing.JLabel superClassLbl;
     // End of variables declaration//GEN-END:variables
 }

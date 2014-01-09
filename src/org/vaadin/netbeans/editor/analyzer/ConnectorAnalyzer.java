@@ -58,7 +58,7 @@ public class ConnectorAnalyzer extends ClientClassAnalyzer {
 
     static final String CONNECTOR = VAADIN_PKG + "shared.ui.Connect"; // NOI18N
 
-    private static final String CLIENT_CONNECTOR = VAADIN_PKG
+    static final String CLIENT_CONNECTOR = VAADIN_PKG
             + "server.ClientConnector"; // NOI18N
 
     private static final String SERVER_CONNECTOR = VAADIN_PKG

@@ -3,25 +3,34 @@ package ${package};
 </#if>
 
 import ${server_component_fqn};
-import com.google.gwt.core.client.GWT;
+<#if super_connector?? && super_connector != "">
+<#else>
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.Widget;
+</#if>
+<#if super_connector_fqn?? && super_connector_fqn != "">
+import ${super_connector_fqn};
+<#else>
 import com.vaadin.client.ui.AbstractComponentConnector;
+</#if>
 import com.vaadin.shared.ui.Connect;
 
 @Connect(${server_component}.class)
-public class ${name} extends AbstractComponentConnector {
+public class ${name} extends <#if super_connector?? && super_connector != "">${super_connector}<#else>AbstractComponentConnector</#if> {
 
-	public ${name}() {
-	}
-	
-	@Override
-    protected Widget createWidget() {
-        return GWT.create(Label.class);
+    public ${name}() {
     }
 
+    <#if super_connector?? && super_connector != "">
+         <#if widget?? && widget != "">
+    @Override
+    public ${widget} getWidget() {
+        return (${widget}) super.getWidget();
+    }
+        </#if>
+    <#else>
     @Override
     public Label getWidget() {
         return (Label) super.getWidget();
     }
+    </#if>
 }

@@ -46,27 +46,33 @@ import org.vaadin.netbeans.utils.JavaUtils.JavaModelElement;
  */
 public class FullFledgedWidgetGenerator implements WidgetGenerator {
 
-    private static final String SHARED_STATE = "shared_state";
+    private static final String STYLE_NAME = "style_name";//NOI18N
 
-    private static final String CLIENT_RPC = "client_rpc";
+    private static final String SHARED_STATE = "shared_state";//NOI18N
 
-    private static final String SERVER_RPC = "server_rpc";
+    private static final String CLIENT_RPC = "client_rpc";//NOI18N
 
-    private static final String SHARED_STATE_FQN = "shared_state_fqn";
+    private static final String SERVER_RPC = "server_rpc";//NOI18N
 
-    private static final String SERVER_RPC_FQN = "server_rpc_fqn";
+    private static final String SHARED_STATE_FQN = "shared_state_fqn";//NOI18N
 
-    private static final String CLIENT_RPC_FQN = "client_rpc_fqn";
+    private static final String SERVER_RPC_FQN = "server_rpc_fqn";//NOI18N
 
-    private static final String WIDGET = "widget";
+    private static final String CLIENT_RPC_FQN = "client_rpc_fqn";//NOI18N
 
-    private static final String CONNECTOR_VAR = "connector";
+    private static final String WIDGET = "widget";//NOI18N
 
-    private static final String COMPONENT_VAR = "component";
+    private static final String CONNECTOR_VAR = "connector";//NOI18N
+
+    private static final String COMPONENT_VAR = "component";//NOI18N
 
     private static final String SERVER_COMPONENT_FQN = "server_component_fqn";//NOI18N
 
     private static final String SERVER_COMPONENT = "server_component";//NOI18N
+
+    private static final String WIDGET_SUPER = "widget_super";//NOI18N
+
+    private static final String WIDGET_SUPER_FQN = "widget_super_fqn";//NOI18N
 
     private static final String CONNECTOR_TEMPLATE =
             "Templates/Vaadin/FullFledgedConnector.java"; // NOI18N
@@ -216,6 +222,9 @@ public class FullFledgedWidgetGenerator implements WidgetGenerator {
         Map<String, String> map = new HashMap<>();
         map.put(SHARED_STATE, stateName);
         map.put(CONNECTOR_VAR, connectorName);
+        map.put(STYLE_NAME, componentClassName.toLowerCase());
+        map.put(WIDGET_SUPER, null);
+        map.put(WIDGET_SUPER_FQN, null);
         return JavaUtils.createDataObjectFromTemplate(WIDGET_TEMPLATE,
                 clientPackage, name, map).getPrimaryFile();
     }

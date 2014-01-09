@@ -11,7 +11,7 @@ import com.vaadin.shared.AbstractComponentState;
 
 public class ${name} extends <#if state_super_class?? && state_super_class != "">${state_super_class}<#else>AbstractComponentState</#if> {
 
-<#if component?? && component != "">
+<#if component?? && component != "">	
     // TODO: example state field
     public String text = "This is ${component}";
 </#if>
