@@ -43,6 +43,7 @@ import org.netbeans.spi.java.hints.HintContext;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
+import org.vaadin.netbeans.code.WidgetUtils;
 import org.vaadin.netbeans.code.generator.WidgetGenerator;
 import org.vaadin.netbeans.utils.JavaUtils;
 
@@ -56,16 +57,11 @@ public class ConnectorAnalyzer extends ClientClassAnalyzer {
 
     private static final String VAADIN_PKG = "com.vaadin."; // NOI18N
 
-    static final String CONNECTOR = VAADIN_PKG + "shared.ui.Connect"; // NOI18N
-
     static final String CLIENT_CONNECTOR = VAADIN_PKG
             + "server.ClientConnector"; // NOI18N
 
-    private static final String SERVER_CONNECTOR = VAADIN_PKG
+    static final String SERVER_CONNECTOR = VAADIN_PKG
             + "client.ServerConnector"; // NOI18N
-
-    static final String ABSTRACT_COMPONENT_CONNECTOR =
-            "com.vaadin.client.ui.AbstractComponentConnector"; // NOI18N
 
     public ConnectorAnalyzer( HintContext context, boolean packageCheckMode ) {
         super(context, packageCheckMode);
@@ -86,7 +82,7 @@ public class ConnectorAnalyzer extends ClientClassAnalyzer {
         }
         else {
             AnnotationMirror annotation =
-                    JavaUtils.getAnnotation(getType(), CONNECTOR);
+                    JavaUtils.getAnnotation(getType(), WidgetUtils.CONNECTOR);
 
             if (annotation == null) {
                 checkConnectAnnotation();
@@ -208,7 +204,7 @@ public class ConnectorAnalyzer extends ClientClassAnalyzer {
         return componentFqn;
     }
 
-    @NbBundle.Messages("badConnectorClass=@Connect annotation must attached to ServerConnector subclass")
+    @NbBundle.Messages("badConnectorClass=@Connect annotation must be attached to ServerConnector subclass")
     private void checkConnectorClass( AnnotationMirror annotation ) {
         CompilationInfo info = getInfo();
         TypeElement serverConnector =

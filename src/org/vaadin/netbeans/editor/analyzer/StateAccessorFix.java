@@ -33,6 +33,7 @@ import org.netbeans.api.java.source.WorkingCopy;
 import org.netbeans.spi.editor.hints.ChangeInfo;
 import org.openide.filesystems.FileObject;
 import org.openide.util.NbBundle;
+import org.vaadin.netbeans.code.WidgetUtils;
 
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.ExpressionTree;
@@ -162,18 +163,16 @@ class StateAccessorFix extends AbstractJavaFix {
                                                 Collections
                                                         .<ExpressionTree> emptyList())));
                         MethodTree method =
-                                treeMaker
-                                        .Method(modifiers,
-                                                StateAccessorAnalyzer.GET_STATE,
-                                                treeMaker
-                                                        .Identifier(stateSimpleName),
-                                                Collections
-                                                        .<TypeParameterTree> emptyList(),
-                                                Collections
-                                                        .<VariableTree> emptyList(),
-                                                Collections
-                                                        .<ExpressionTree> emptyList(),
-                                                builder.toString(), null);
+                                treeMaker.Method(
+                                        modifiers,
+                                        WidgetUtils.GET_STATE,
+                                        treeMaker.Identifier(stateSimpleName),
+                                        Collections
+                                                .<TypeParameterTree> emptyList(),
+                                        Collections.<VariableTree> emptyList(),
+                                        Collections
+                                                .<ExpressionTree> emptyList(),
+                                        builder.toString(), null);
                         ClassTree newTree =
                                 treeMaker.addClassMember(oldTree, method);
                         copy.rewrite(oldTree, newTree);

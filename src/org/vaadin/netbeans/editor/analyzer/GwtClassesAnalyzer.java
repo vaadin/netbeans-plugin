@@ -55,7 +55,7 @@ public class GwtClassesAnalyzer extends ClientClassAnalyzer {
                 JavaUtils.getSupertypes(type.asType(), info);
         for (TypeMirror typeMirror : supertypes) {
             Logger.getLogger(GwtClassesAnalyzer.class.getName()).log(
-                    Level.INFO, "Found super type for {0} : {1}",
+                    Level.FINE, "Found super type for {0} : {1}",
                     new Object[] { type, typeMirror });
             Element typeElement = info.getTypes().asElement(typeMirror);
             if (typeElement instanceof TypeElement) {

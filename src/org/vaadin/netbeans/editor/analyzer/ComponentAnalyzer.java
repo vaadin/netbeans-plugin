@@ -33,6 +33,7 @@ import org.netbeans.spi.editor.hints.Fix;
 import org.netbeans.spi.editor.hints.Severity;
 import org.netbeans.spi.java.hints.HintContext;
 import org.openide.util.NbBundle;
+import org.vaadin.netbeans.code.WidgetUtils;
 import org.vaadin.netbeans.editor.hints.Analyzer;
 import org.vaadin.netbeans.utils.JavaUtils;
 
@@ -60,7 +61,7 @@ public class ComponentAnalyzer extends Analyzer {
         Set<Modifier> modifiers = getType().getModifiers();
         if (isClientConnector() && !modifiers.contains(Modifier.ABSTRACT)) {
             TypeElement connector =
-                    StateAccessorAnalyzer.getConnector(getType(), getInfo());
+                    WidgetUtils.getConnector(getType(), getInfo());
             if (connector == null) {
                 List<Integer> positions =
                         AbstractJavaFix
@@ -78,7 +79,8 @@ public class ComponentAnalyzer extends Analyzer {
 
     private List<Fix> createConnectorFixes() {
         Collection<? extends TypeMirror> superclasses =
-                JavaUtils.getSupertypes(getType().asType(), getInfo());
+                JavaUtils.getSupertypes(getType().asType(), ElementKind.CLASS,
+                        getInfo());
         TypeElement connector = null;
         for (TypeMirror type : superclasses) {
             Element element = getInfo().getTypes().asElement(type);
@@ -86,9 +88,7 @@ public class ComponentAnalyzer extends Analyzer {
                     && element instanceof TypeElement)
             {
                 TypeElement typeElement = (TypeElement) element;
-                connector =
-                        StateAccessorAnalyzer.getConnector(typeElement,
-                                getInfo());
+                connector = WidgetUtils.getConnector(typeElement, getInfo());
                 if (connector != null) {
                     break;
                 }

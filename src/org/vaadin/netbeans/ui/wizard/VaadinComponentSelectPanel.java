@@ -15,8 +15,6 @@
  */
 package org.vaadin.netbeans.ui.wizard;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -28,6 +26,7 @@ import java.util.logging.Logger;
 
 import javax.lang.model.element.TypeElement;
 import javax.swing.AbstractListModel;
+import javax.swing.BorderFactory;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingWorker;
 import javax.swing.event.DocumentEvent;
@@ -40,15 +39,13 @@ import org.netbeans.api.java.source.CompilationController;
 import org.netbeans.api.java.source.JavaSource;
 import org.netbeans.api.java.source.Task;
 import org.openide.util.NbBundle;
+import org.vaadin.netbeans.code.WidgetUtils;
 import org.vaadin.netbeans.utils.JavaUtils;
 
 /**
  * @author denis
  */
 class VaadinComponentSelectPanel extends javax.swing.JPanel {
-
-    private static final String ABSTRACT_COMPONENT =
-            "com.vaadin.ui.AbstractComponent"; // NOI18N
 
     VaadinComponentSelectPanel( final ComponentSelectPanel panel ) {
         initComponents();
@@ -79,6 +76,10 @@ class VaadinComponentSelectPanel extends javax.swing.JPanel {
             return selected.toString();
         }
         return null;
+    }
+
+    void setTitle( String title ) {
+        panel.setBorder(BorderFactory.createTitledBorder(title));
     }
 
     /**
@@ -179,7 +180,7 @@ class VaadinComponentSelectPanel extends javax.swing.JPanel {
 
                     TypeElement baseComponent =
                             controller.getElements().getTypeElement(
-                                    ABSTRACT_COMPONENT);
+                                    WidgetUtils.ABSTRACT_COMPONENT);
                     if (baseComponent == null) {
                         return;
                     }

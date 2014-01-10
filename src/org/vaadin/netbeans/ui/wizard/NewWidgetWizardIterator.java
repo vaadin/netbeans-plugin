@@ -47,6 +47,8 @@ public class NewWidgetWizardIterator implements
         ProgressInstantiatingIterator<WizardDescriptor>
 {
 
+    static final String SELECTED_TEMPLATE = "selectedTemplate"; // NOI18N
+
     private static final Map<Template, WidgetGenerator> TEMPLATE_GENERATORS =
             new EnumMap<>(WidgetTypePanel.Template.class);
 
@@ -97,13 +99,7 @@ public class NewWidgetWizardIterator implements
 
     @Override
     public boolean hasNext() {
-        FinishableWizardPanel panel = (FinishableWizardPanel) myPanels[0];
-        if (!panel.isFinishPanel()) {
-            return myIndex < myPanels.length - 1;
-        }
-        else {
-            return false;
-        }
+        return myIndex < myPanels.length - 1;
     }
 
     @Override

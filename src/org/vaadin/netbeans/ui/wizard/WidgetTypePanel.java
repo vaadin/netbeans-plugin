@@ -60,6 +60,10 @@ class WidgetTypePanel implements WizardDescriptor.Panel<WizardDescriptor> {
 
     @Override
     public void storeSettings( WizardDescriptor settings ) {
+        if (myDescriptor != null) {
+            myDescriptor.putProperty(NewWidgetWizardIterator.SELECTED_TEMPLATE,
+                    getSelectedTemplate());
+        }
     }
 
     @NbBundle.Messages("noVaadinSupport=Chosen project has no Vaadin support.")

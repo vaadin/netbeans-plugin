@@ -25,6 +25,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import javax.lang.model.element.TypeElement;
+
+import org.netbeans.api.java.source.ElementHandle;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.project.Project;
 import org.netbeans.spi.project.ui.templates.support.Templates;
@@ -33,6 +36,8 @@ import org.openide.filesystems.FileObject;
 import org.openide.loaders.DataObject;
 import org.openide.util.NbBundle;
 import org.vaadin.netbeans.VaadinSupport;
+import org.vaadin.netbeans.code.WidgetUtils;
+import org.vaadin.netbeans.code.WidgetUtils.ConnectorInfo;
 import org.vaadin.netbeans.model.ModelOperation;
 import org.vaadin.netbeans.model.VaadinModel;
 import org.vaadin.netbeans.utils.JavaUtils;
@@ -42,19 +47,6 @@ import org.vaadin.netbeans.utils.XmlUtils;
  * @author denis
  */
 abstract class SimpleConnectorGenerator implements WidgetGenerator {
-
-    private static final String SERVER_COMPONENT_FQN = "server_component_fqn";//NOI18N
-
-    private static final String SELECTED_COMPONENT_FQN =
-            "selected_component_fqn"; //NOI18N
-
-    private static final String SELECTED_COMPONENT = "selected_component"; //NOI18N
-
-    private static final String SERVER_COMPONENT = "server_component";//NOI18N
-
-    private static final String SUPER_CONNECTOR_FQN = "super_connector_fqn"; //NOI18N
-
-    private static final String SUPER_CONNECTOR = "super_connector"; //NOI18N
 
     private static final String WIDGET_PARAM = "widget";//NOI18N
 
@@ -70,19 +62,7 @@ abstract class SimpleConnectorGenerator implements WidgetGenerator {
         // Generate server component
         handle.progress(getComponentClassGenerationMessage());
 
-        Object component = wizard.getProperty(COMPONENT_PROPERTY);
-        Map<String, String> params = null;
-        if (component != null) {
-            String fqn = component.toString();
-            int index = fqn.lastIndexOf('.');
-            String name = fqn;
-            if (index != -1) {
-                name = fqn.substring(index + 1);
-            }
-            params = new HashMap<>();
-            params.put(SELECTED_COMPONENT, name);
-            params.put(SELECTED_COMPONENT_FQN, fqn);
-        }
+        Map<String, String> params = initComponentParameters(wizard);
         DataObject dataObject =
                 JavaUtils.createDataObjectFromTemplate(getComponentTemplate(),
                         targetPackage, componentClassName, params);
@@ -139,17 +119,103 @@ abstract class SimpleConnectorGenerator implements WidgetGenerator {
 
         handle.progress(getConnectorClassGenerationMessage());
         Map<String, String> map = new HashMap<>();
-        map.put(getServerClassNameParam(), componentClassName);
-        map.put(getServerClassFqnParam(), JavaUtils.getFqn(serverComponent));
-        map.put(SUPER_CONNECTOR_FQN, null);
-        map.put(SUPER_CONNECTOR, null);
-        map.put(WIDGET_PARAM, null);
+        FileObject widget =
+                createWidget(wizard, componentClassName, serverComponent,
+                        clientPackage, project, map);
+        if (widget != null) {
+            classes.add(widget);
+        }
         dataObject =
                 JavaUtils.createDataObjectFromTemplate(getConnectorTemplate(),
                         clientPackage, connectorName, map);
         classes.add(dataObject.getPrimaryFile());
 
         return classes;
+    }
+
+    private FileObject createWidget( String componentClassName,
+            FileObject clientPackage, String widgetSuper, Project project )
+            throws IOException
+    {
+        String name =
+                JavaUtils.getFreeName(clientPackage, componentClassName
+                        + WIDGET_SUFFIX, JavaUtils.JAVA_SUFFIX);
+        Map<String, String> map = new HashMap<>();
+        map.put(SHARED_STATE, null);
+        map.put(CONNECTOR_VAR, null);
+        map.put(STYLE_NAME, componentClassName.toLowerCase());
+        int index = widgetSuper.lastIndexOf('.');
+        map.put(WIDGET_SUPER, widgetSuper.substring(index + 1));
+        map.put(WIDGET_SUPER_FQN, widgetSuper);
+        return JavaUtils.createDataObjectFromTemplate(WIDGET_TEMPLATE,
+                clientPackage, name, map).getPrimaryFile();
+    }
+
+    private FileObject createWidget( WizardDescriptor wizard,
+            String componentClassName, FileObject serverComponent,
+            FileObject clientPackage, Project project, Map<String, String> map )
+            throws IOException
+    {
+        map.put(getServerClassNameParam(), componentClassName);
+        map.put(getServerClassFqnParam(), JavaUtils.getFqn(serverComponent));
+
+        String superConnectorFqn = null;
+        String superConnector = null;
+        String widget = null;
+
+        Object component = wizard.getProperty(COMPONENT_PROPERTY);
+        FileObject widgetFile = null;
+        if (component != null) {
+            String fqn = component.toString();
+            ConnectorInfo connectorInfo =
+                    WidgetUtils.getConnectorInfo(Templates.getProject(wizard),
+                            fqn);
+            if (connectorInfo != null) {
+                ElementHandle<TypeElement> connectorHandle =
+                        connectorInfo.getConnector();
+                superConnectorFqn = connectorHandle.getQualifiedName();
+                int index = superConnectorFqn.lastIndexOf('.');
+                superConnector = superConnectorFqn.substring(index + 1);
+
+                ElementHandle<TypeElement> widgetHandle =
+                        connectorInfo.getWidget();
+                if (widgetHandle != null
+                        && !WidgetUtils.isDefaultWidget(superConnectorFqn,
+                                widgetHandle.getQualifiedName()))
+                {
+                    widgetFile =
+                            createWidget(componentClassName, clientPackage,
+                                    widgetHandle.getQualifiedName(), project);
+                    widget = widgetFile.getName();
+                }
+            }
+        }
+
+        map.put(SUPER_CONNECTOR_FQN, superConnectorFqn);
+        map.put(SUPER_CONNECTOR, superConnector);
+        map.put(WIDGET_PARAM, widget);
+        return widgetFile;
+    }
+
+    private Map<String, String> initComponentParameters( WizardDescriptor wizard )
+    {
+        Object component = wizard.getProperty(COMPONENT_PROPERTY);
+        Map<String, String> params = new HashMap<>();
+        if (component != null) {
+            String fqn = component.toString();
+            int index = fqn.lastIndexOf('.');
+            String name = fqn;
+            if (index != -1) {
+                name = fqn.substring(index + 1);
+            }
+            params.put(SELECTED_COMPONENT, name);
+            params.put(SELECTED_COMPONENT_FQN, fqn);
+        }
+        else {
+            params.put(SELECTED_COMPONENT, null);
+            params.put(SELECTED_COMPONENT_FQN, null);
+        }
+        return params;
     }
 
     protected String getServerClassNameParam() {

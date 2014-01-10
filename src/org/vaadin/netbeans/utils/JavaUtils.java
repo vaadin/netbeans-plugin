@@ -577,17 +577,23 @@ public final class JavaUtils {
     public static Collection<? extends TypeMirror> getSupertypes(
             TypeMirror type, CompilationInfo info )
     {
+        return getSupertypes(type, null, info);
+    }
+
+    public static Collection<? extends TypeMirror> getSupertypes(
+            TypeMirror type, ElementKind kind, CompilationInfo info )
+    {
         Collection<TypeMirror> result = new LinkedList<>();
         List<TypeMirror> walkThrough = new LinkedList<>();
         walkThrough.add(type);
         Set<Element> visited = new HashSet<>();
-        collectSupertypes(walkThrough, result, visited, info);
+        collectSupertypes(walkThrough, result, visited, kind, info);
         return result;
     }
 
     private static void collectSupertypes( List<TypeMirror> types,
             Collection<TypeMirror> superTypes, Set<Element> visited,
-            CompilationInfo info )
+            ElementKind kind, CompilationInfo info )
     {
         while (!types.isEmpty()) {
             TypeMirror typeMirror = types.remove(0);
@@ -597,6 +603,12 @@ public final class JavaUtils {
                     info.getTypes().directSupertypes(typeMirror);
             for (TypeMirror directSupertype : directSupertypes) {
                 typeElement = info.getTypes().asElement(directSupertype);
+                if (kind != null && kind.equals(ElementKind.CLASS)) {
+                    if (!typeElement.getKind().equals(kind)) {
+                        visited.add(typeElement);
+                        continue;
+                    }
+                }
                 if (!visited.contains(typeElement)) {
                     types.add(directSupertype);
                     superTypes.add(directSupertype);
@@ -692,7 +704,7 @@ public final class JavaUtils {
                     "ClassIndex.getElements() was interrupted"); // NOI18N
         }
         for (ElementHandle<TypeElement> elementHandle : handles) {
-            Logger.getLogger(JavaUtils.class.getName()).log(Level.INFO,
+            Logger.getLogger(JavaUtils.class.getName()).log(Level.FINE,
                     elementHandle.getQualifiedName()); // NOI18N
             TypeElement derivedElement = elementHandle.resolve(info);
             if (derivedElement == null

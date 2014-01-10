@@ -2,9 +2,13 @@
 package ${package};
 </#if>
 
+<#if selected_component_fqn?? && selected_component_fqn != "">
+import ${selected_component_fqn};
+<#else>
 import com.vaadin.ui.AbstractComponent;
+</#if>
 
-public class ${name} extends AbstractComponent {
+public class ${name} extends <#if selected_component?? && selected_component != "">${selected_component}<#else>AbstractComponent</#if> {
 
 	public ${name}() {
 	}

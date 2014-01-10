@@ -30,6 +30,7 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.code.generator.WidgetGenerator;
+import org.vaadin.netbeans.ui.wizard.WidgetTypePanel.Template;
 
 /**
  * @author denis
@@ -57,9 +58,18 @@ class ComponentSelectPanel implements WizardDescriptor.Panel<WizardDescriptor> {
         return null;
     }
 
+    @NbBundle.Messages("superClassTitle=Select Super Class to Inherit")
     @Override
     public void readSettings( WizardDescriptor settings ) {
         myDescriptor = settings;
+        if (settings != null) {
+            Object template =
+                    myDescriptor
+                            .getProperty(NewWidgetWizardIterator.SELECTED_TEMPLATE);
+            if (!Template.EXTENSION.equals(template)) {
+                myComponent.setTitle(Bundle.superClassTitle());
+            }
+        }
     }
 
     @Override

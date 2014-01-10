@@ -9,12 +9,16 @@ import com.google.gwt.user.client.Window;
 import com.vaadin.client.MouseEventDetailsBuilder;
 import com.vaadin.client.communication.RpcProxy;
 import com.vaadin.client.communication.StateChangeEvent;
+<#if super_connector_fqn?? && super_connector_fqn != "">
+import ${super_connector_fqn};
+<#else>
 import com.vaadin.client.ui.AbstractComponentConnector;
+</#if>
 import com.vaadin.shared.MouseEventDetails;
 import com.vaadin.shared.ui.Connect;
 
 @Connect(${server_component}.class)
-public class ${name} extends AbstractComponentConnector {
+public class ${name} extends <#if super_connector?? && super_connector != "">${super_connector}<#else>AbstractComponentConnector</#if> {
 
     private ${server_rpc} rpc = RpcProxy.create(${server_rpc}.class,this);
 
@@ -36,6 +40,13 @@ public class ${name} extends AbstractComponentConnector {
             }
         });
     }
+    
+   <#if super_connector?? && super_connector != "">
+    @Override
+    protected Widget createWidget() {
+        return GWT.create(${widget}.class);
+    }
+    </#if>
     
     @Override
     public ${widget} getWidget() {

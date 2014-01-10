@@ -19,18 +19,15 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.ElementFilter;
 
 import org.netbeans.api.java.source.CompilationController;
-import org.netbeans.api.java.source.CompilationInfo;
 import org.netbeans.api.java.source.ElementHandle;
 import org.netbeans.api.java.source.JavaSource;
 import org.netbeans.api.java.source.JavaSource.Phase;
@@ -47,6 +44,7 @@ import org.openide.loaders.DataObject;
 import org.openide.util.Mutex;
 import org.openide.util.NbBundle;
 import org.vaadin.netbeans.VaadinSupport;
+import org.vaadin.netbeans.code.WidgetUtils;
 import org.vaadin.netbeans.code.generator.WidgetGenerator;
 import org.vaadin.netbeans.editor.analyzer.ui.ConnectorPanel;
 import org.vaadin.netbeans.model.ModelOperation;
@@ -59,13 +57,7 @@ import org.vaadin.netbeans.utils.XmlUtils;
  */
 public class CreateConnectorFix extends AbstractJavaFix {
 
-    private static final String WIDGET_SUPER = "widget_super";//NOI18N
-
-    private static final String WIDGET_SUPER_FQN = "widget_super_fqn";//NOI18N
-
     private static final String WIDGET_PARAM = "widget";//NOI18N
-
-    private static final String STYLE_NAME = "style_name";//NOI18N
 
     private static final String SERVER_COMPONENT = "server_component";//NOI18N
 
@@ -74,18 +66,6 @@ public class CreateConnectorFix extends AbstractJavaFix {
     private static final String SUPER_CONNECTOR = "super_connector"; //NOI18N
 
     private static final String SUPER_CONNECTOR_FQN = "super_connector_fqn"; //NOI18N
-
-    private static final String SHARED_STATE = "shared_state";//NOI18N
-
-    private static final String WIDGET = "Widget"; // NOI18N
-
-    private static final String GET_WIDGET = "getWidget"; // NOI18N
-
-    private static final String COMPOSITE_WIDGET =
-            "com.google.gwt.user.client.ui.Composite"; // NOI18N
-
-    private static final String WIDGET_CLASS =
-            "com.google.gwt.user.client.ui.Widget"; // NOI18N
 
     private static final String CONNECTOR_TEMPLATE =
             "Templates/Vaadin/ConnectorConnector.java"; // NOI18N
@@ -162,11 +142,13 @@ public class CreateConnectorFix extends AbstractJavaFix {
 
     private DataObject createWidget( String styleName ) throws IOException {
         Map<String, String> map = new HashMap<>();
-        map.put(STYLE_NAME, styleName);
-        map.put(WIDGET_SUPER_FQN, myWidgetSuperClass);
+        map.put(WidgetGenerator.STYLE_NAME, styleName);
+        map.put(WidgetGenerator.WIDGET_SUPER_FQN, myWidgetSuperClass);
         int index = myWidgetSuperClass.lastIndexOf('.');
-        map.put(WIDGET_SUPER, myWidgetSuperClass.substring(index + 1));
-        map.put(SHARED_STATE, null);
+        map.put(WidgetGenerator.WIDGET_SUPER,
+                myWidgetSuperClass.substring(index + 1));
+        map.put(WidgetGenerator.SHARED_STATE, null);
+        map.put(WidgetGenerator.CONNECTOR_VAR, null);
         return JavaUtils.createDataObjectFromTemplate(WIDGET_TEMPLATE,
                 myClientPackage, myWidgetName, map);
     }
@@ -215,7 +197,7 @@ public class CreateConnectorFix extends AbstractJavaFix {
     }
 
     private String getWidgetSuper( String widget ) {
-        return widget == null || widget.equals(WIDGET_CLASS) ? COMPOSITE_WIDGET
+        return widget == null || widget.equals(WidgetUtils.WIDGET_CLASS) ? WidgetUtils.COMPOSITE_WIDGET
                 : widget;
     }
 
@@ -238,17 +220,14 @@ public class CreateConnectorFix extends AbstractJavaFix {
                     }
                     Collection<? extends TypeMirror> superclasses =
                             JavaUtils.getSupertypes(connector.asType(),
-                                    controller);
+                                    ElementKind.CLASS, controller);
                     TypeElement abstractConnector =
-                            controller
-                                    .getElements()
-                                    .getTypeElement(
-                                            ConnectorAnalyzer.ABSTRACT_COMPONENT_CONNECTOR);
+                            controller.getElements().getTypeElement(
+                                    WidgetUtils.ABSTRACT_COMPONENT_CONNECTOR);
 
-                    myConnectorSupers
-                            .put(connector.getQualifiedName().toString(),
-                                    getWidgetSuper(getWidgetFqn(connector,
-                                            controller)));
+                    myConnectorSupers.put(connector.getQualifiedName()
+                            .toString(), getWidgetSuper(WidgetUtils
+                            .getWidgetFqn(connector, controller)));
 
                     for (TypeMirror superType : superclasses) {
                         Element element =
@@ -258,7 +237,8 @@ public class CreateConnectorFix extends AbstractJavaFix {
                                     ((TypeElement) element).getQualifiedName()
                                             .toString();
                             String widgetFqn =
-                                    getWidgetFqn(element, controller);
+                                    WidgetUtils.getWidgetFqn(element,
+                                            controller);
                             myConnectorSupers.put(connectorFqn,
                                     getWidgetSuper(widgetFqn));
                         }
@@ -270,16 +250,15 @@ public class CreateConnectorFix extends AbstractJavaFix {
             }, true);
         }
         if (myConnectorSupers.isEmpty()) {
-            myConnectorSupers.put(
-                    ConnectorAnalyzer.ABSTRACT_COMPONENT_CONNECTOR,
-                    COMPOSITE_WIDGET);
+            myConnectorSupers.put(WidgetUtils.ABSTRACT_COMPONENT_CONNECTOR,
+                    WidgetUtils.COMPOSITE_WIDGET);
         }
     }
 
     private String suggestWidgetName() {
         if (myCreateWidget) {
             String name = getFileObject().getName();
-            name = name + WIDGET;
+            name = name + WidgetGenerator.WIDGET_SUFFIX;
             return findFreeName(name, myClientPackage);
         }
         return null;
@@ -339,46 +318,6 @@ public class CreateConnectorFix extends AbstractJavaFix {
                 }
             }
         });
-    }
-
-    static String getWidgetFqn( Element connector, CompilationInfo info ) {
-        ExecutableElement getWidget = getWidgetGetter(connector);
-        if (getWidget == null) {
-            Collection<? extends TypeMirror> superclasses =
-                    JavaUtils.getSupertypes(connector.asType(), info);
-            for (TypeMirror superType : superclasses) {
-                Element type = info.getTypes().asElement(superType);
-                if (type != null) {
-                    getWidget = getWidgetGetter(type);
-                }
-                if (getWidget != null) {
-                    break;
-                }
-            }
-        }
-        if (getWidget == null) {
-            return null;
-        }
-
-        Element returnElement =
-                info.getTypes().asElement(getWidget.getReturnType());
-        if (returnElement instanceof TypeElement) {
-            return ((TypeElement) returnElement).getQualifiedName().toString();
-        }
-        return null;
-    }
-
-    static ExecutableElement getWidgetGetter( Element clazz ) {
-        List<ExecutableElement> methods =
-                ElementFilter.methodsIn(clazz.getEnclosedElements());
-        for (ExecutableElement method : methods) {
-            if (method.getParameters().isEmpty()
-                    && method.getSimpleName().contentEquals(GET_WIDGET))
-            {
-                return method;
-            }
-        }
-        return null;
     }
 
     private final ElementHandle<TypeElement> myHandle;

@@ -19,11 +19,16 @@ public class ${name} extends <#if super_connector?? && super_connector != "">${s
 
     public ${name}() {
     }
-
+    
     <#if super_connector?? && super_connector != "">
-         <#if widget?? && widget != "">
+        <#if widget?? && widget != "">
     @Override
-    public ${widget} getWidget() {
+    protected Widget createWidget() {
+        return GWT.create(${widget}.class);
+    }
+    
+    @Override
+     public ${widget} getWidget() {
         return (${widget}) super.getWidget();
     }
         </#if>

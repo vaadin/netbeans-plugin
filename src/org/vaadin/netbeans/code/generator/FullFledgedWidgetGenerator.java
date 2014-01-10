@@ -26,6 +26,9 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.lang.model.element.TypeElement;
+
+import org.netbeans.api.java.source.ElementHandle;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.project.Project;
 import org.netbeans.spi.project.ui.templates.support.Templates;
@@ -35,20 +38,18 @@ import org.openide.loaders.DataFolder;
 import org.openide.loaders.DataObject;
 import org.openide.util.NbBundle;
 import org.vaadin.netbeans.VaadinSupport;
+import org.vaadin.netbeans.code.WidgetUtils;
+import org.vaadin.netbeans.code.WidgetUtils.ConnectorInfo;
 import org.vaadin.netbeans.model.ModelOperation;
 import org.vaadin.netbeans.model.VaadinModel;
 import org.vaadin.netbeans.utils.JavaUtils;
-import org.vaadin.netbeans.utils.XmlUtils;
 import org.vaadin.netbeans.utils.JavaUtils.JavaModelElement;
+import org.vaadin.netbeans.utils.XmlUtils;
 
 /**
  * @author denis
  */
 public class FullFledgedWidgetGenerator implements WidgetGenerator {
-
-    private static final String STYLE_NAME = "style_name";//NOI18N
-
-    private static final String SHARED_STATE = "shared_state";//NOI18N
 
     private static final String CLIENT_RPC = "client_rpc";//NOI18N
 
@@ -62,26 +63,11 @@ public class FullFledgedWidgetGenerator implements WidgetGenerator {
 
     private static final String WIDGET = "widget";//NOI18N
 
-    private static final String CONNECTOR_VAR = "connector";//NOI18N
-
-    private static final String COMPONENT_VAR = "component";//NOI18N
-
-    private static final String SERVER_COMPONENT_FQN = "server_component_fqn";//NOI18N
-
-    private static final String SERVER_COMPONENT = "server_component";//NOI18N
-
-    private static final String WIDGET_SUPER = "widget_super";//NOI18N
-
-    private static final String WIDGET_SUPER_FQN = "widget_super_fqn";//NOI18N
-
     private static final String CONNECTOR_TEMPLATE =
             "Templates/Vaadin/FullFledgedConnector.java"; // NOI18N
 
     private static final String SHARED_STATE_TEMPLATE =
             "Templates/Vaadin/SharedState.java"; // NOI18N
-
-    private static final String WIDGET_TEMPLATE =
-            "Templates/Vaadin/FullFledgedWidget.java";// NOI18N
 
     private static final String SERVER_RPC_TEMPLATE =
             "Templates/Vaadin/ServerRpc.java";// NOI18N
@@ -94,8 +80,6 @@ public class FullFledgedWidgetGenerator implements WidgetGenerator {
     private static final String SERVER_RPC_SUFFIX = "ServerRpc";// NOI18N
 
     private static final String SHARED_STATE_SUFFIX = "State";// NOI18N
-
-    private static final String WIDGET_SUFFIX = "Widget";// NOI18N
 
     @Override
     @NbBundle.Messages({ "generateWidget=Generate Widget class",
@@ -145,6 +129,8 @@ public class FullFledgedWidgetGenerator implements WidgetGenerator {
                 XmlUtils.getClientWidgetPackage(gwtXml[0], srcPaths.get(0),
                         true);
 
+        ComponentBean bean = getComponentData(wizard);
+
         // Generate rpcs, shared state
         handle.progress(Bundle.generateClientRpc());
         FileObject clientRpc =
@@ -155,9 +141,10 @@ public class FullFledgedWidgetGenerator implements WidgetGenerator {
                 createServerRpc(componentClassName, clientPackage, project);
         classes.add(serverRpc);
         handle.progress(Bundle.generateState());
+
         FileObject sharedState =
-                createSharedState(componentClassName, clientPackage, project,
-                        Templates.getTargetName(wizard));
+                createSharedState(componentClassName, clientPackage, bean,
+                        project, Templates.getTargetName(wizard));
         classes.add(sharedState);
 
         JavaModelElement clientRpcElement =
@@ -176,6 +163,8 @@ public class FullFledgedWidgetGenerator implements WidgetGenerator {
         template.setAttribute(SERVER_RPC, serverRpc.getName());
         template.setAttribute(CLIENT_RPC, clientRpc.getName());
         template.setAttribute(SHARED_STATE, stateElement.getName());
+        template.setAttribute(SELECTED_COMPONENT, bean.getComponent());
+        template.setAttribute(SELECTED_COMPONENT_FQN, bean.getComponentFqn());
         DataObject dataTemplate = DataObject.find(template);
         DataFolder dataFolder = DataFolder.findFolder(targetPackage);
         DataObject dataObject =
@@ -191,7 +180,7 @@ public class FullFledgedWidgetGenerator implements WidgetGenerator {
         // Generate widget
         handle.progress(Bundle.generateWidget());
         FileObject widget =
-                createWidget(componentClassName, clientPackage, project,
+                createWidget(componentClassName, clientPackage, bean, project,
                         connectorName, sharedState.getName());
         classes.add(widget);
 
@@ -204,6 +193,8 @@ public class FullFledgedWidgetGenerator implements WidgetGenerator {
         map.put(CLIENT_RPC, clientRpc.getName());
         map.put(SHARED_STATE, stateElement.getName());
         map.put(WIDGET, widget.getName());
+        map.put(SUPER_CONNECTOR, bean.getConnector());
+        map.put(SUPER_CONNECTOR_FQN, bean.getConnectorFqn());
         dataObject =
                 JavaUtils.createDataObjectFromTemplate(CONNECTOR_TEMPLATE,
                         clientPackage, connectorName, map);
@@ -213,8 +204,8 @@ public class FullFledgedWidgetGenerator implements WidgetGenerator {
     }
 
     private FileObject createWidget( String componentClassName,
-            FileObject clientPackage, Project project, String connectorName,
-            String stateName ) throws IOException
+            FileObject clientPackage, ComponentBean bean, Project project,
+            String connectorName, String stateName ) throws IOException
     {
         String name =
                 JavaUtils.getFreeName(clientPackage, componentClassName
@@ -223,23 +214,31 @@ public class FullFledgedWidgetGenerator implements WidgetGenerator {
         map.put(SHARED_STATE, stateName);
         map.put(CONNECTOR_VAR, connectorName);
         map.put(STYLE_NAME, componentClassName.toLowerCase());
-        map.put(WIDGET_SUPER, null);
-        map.put(WIDGET_SUPER_FQN, null);
+        map.put(WIDGET_SUPER, bean.getWidget());
+        map.put(WIDGET_SUPER_FQN, bean.getWidgetFqn());
         return JavaUtils.createDataObjectFromTemplate(WIDGET_TEMPLATE,
                 clientPackage, name, map).getPrimaryFile();
     }
 
     private FileObject createSharedState( String componentClassName,
-            FileObject clientPackage, Project project, String componentName )
-            throws IOException
+            FileObject clientPackage, ComponentBean bean, Project project,
+            String componentName ) throws IOException
     {
         String name =
                 JavaUtils.getFreeName(clientPackage, componentClassName
                         + SHARED_STATE_SUFFIX, JavaUtils.JAVA_SUFFIX);
+        Map<String, String> map = new HashMap<>();
+        map.put(COMPONENT_VAR, componentName);
+        map.put(STATE_SUPER_CLASS_FQN, bean.getStateFqn());
+        map.put(STATE_SUPER_CLASS, bean.getState());
         return JavaUtils.createDataObjectFromTemplate(SHARED_STATE_TEMPLATE,
-                clientPackage, name,
-                Collections.singletonMap(COMPONENT_VAR, componentName))
-                .getPrimaryFile();
+                clientPackage, name, map).getPrimaryFile();
+    }
+
+    private boolean isDefaultConnector( String connectorFqn ) {
+        return connectorFqn == null
+                || WidgetUtils.ABSTRACT_COMPONENT_CONNECTOR
+                        .equals(connectorFqn);
     }
 
     private FileObject createServerRpc( String componentClassName,
@@ -260,6 +259,59 @@ public class FullFledgedWidgetGenerator implements WidgetGenerator {
                         + CLIENT_RPC_SUFFIX, JavaUtils.JAVA_SUFFIX);
         return JavaUtils.createDataObjectFromTemplate(CLIENT_RPC_TEMPLATE,
                 clientPackage, name, null).getPrimaryFile();
+    }
+
+    private ComponentBean getComponentData( WizardDescriptor wizard )
+            throws IOException
+    {
+        Object component = wizard.getProperty(COMPONENT_PROPERTY);
+        ComponentBean bean = new ComponentBean();
+        if (component != null) {
+            String fqn = component.toString();
+            ConnectorInfo connectorInfo =
+                    WidgetUtils.getConnectorInfo(Templates.getProject(wizard),
+                            fqn);
+
+            if (connectorInfo == null) {
+                return bean;
+            }
+
+            int index = fqn.lastIndexOf('.');
+            String componentName = fqn.substring(index + 1);
+            bean.setComponent(componentName);
+            bean.setComponentFqn(fqn);
+
+            ElementHandle<TypeElement> connectorHandle =
+                    connectorInfo.getConnector();
+            String connectorFqn = connectorHandle.getQualifiedName();
+            index = connectorFqn.lastIndexOf('.');
+            String connector = connectorFqn.substring(index + 1);
+            bean.setConnectorFqn(connectorFqn);
+            bean.setConnector(connector);
+
+            ElementHandle<TypeElement> widgetHandle = connectorInfo.getWidget();
+            if (widgetHandle != null
+                    && !WidgetUtils.isDefaultWidget(connectorFqn,
+                            widgetHandle.getQualifiedName()))
+            {
+                String widgetFqn = widgetHandle.getQualifiedName();
+                index = widgetFqn.lastIndexOf('.');
+                String widget = widgetFqn.substring(index + 1);
+                bean.setWidget(widget);
+                bean.setWidgetFqn(widgetFqn);
+            }
+
+            ElementHandle<TypeElement> stateHandle = connectorInfo.getState();
+            if (stateHandle != null) {
+                String stateFqn = stateHandle.getQualifiedName();
+                index = stateFqn.lastIndexOf('.');
+                String state = stateFqn.substring(index + 1);
+                bean.setStateFqn(stateFqn);
+                bean.setState(state);
+            }
+
+        }
+        return bean;
     }
 
     static void waitGwtXml( final VaadinSupport support,
@@ -290,5 +342,88 @@ public class FullFledgedWidgetGenerator implements WidgetGenerator {
             Logger.getLogger(FullFledgedWidgetGenerator.class.getName()).log(
                     Level.INFO, null, e);
         }
+    }
+
+    private static class ComponentBean {
+
+        public String getConnector() {
+            return myConnector;
+        }
+
+        public String getConnectorFqn() {
+            return myConnectorFqn;
+        }
+
+        public String getWidget() {
+            return myWidget;
+        }
+
+        public String getWidgetFqn() {
+            return myWidgetFqn;
+        }
+
+        public String getState() {
+            return myState;
+        }
+
+        public String getStateFqn() {
+            return myStateFqn;
+        }
+
+        public String getComponent() {
+            return myComponent;
+        }
+
+        public String getComponentFqn() {
+            return myComponentFqn;
+        }
+
+        private void setConnector( String connector ) {
+            myConnector = connector;
+        }
+
+        private void setConnectorFqn( String connectorFqn ) {
+            myConnectorFqn = connectorFqn;
+        }
+
+        private void setWidget( String widget ) {
+            myWidget = widget;
+        }
+
+        private void setWidgetFqn( String widgetFqn ) {
+            myWidgetFqn = widgetFqn;
+        }
+
+        private void setState( String state ) {
+            myState = state;
+        }
+
+        private void setStateFqn( String stateFqn ) {
+            myStateFqn = stateFqn;
+        }
+
+        private void setComponentFqn( String componentFqn ) {
+            myComponentFqn = componentFqn;
+        }
+
+        private void setComponent( String component ) {
+            myComponent = component;
+        }
+
+        private String myConnector;
+
+        private String myConnectorFqn;
+
+        private String myWidget;
+
+        private String myWidgetFqn;
+
+        private String myState;
+
+        private String myStateFqn;
+
+        private String myComponent;
+
+        private String myComponentFqn;
     }
 }

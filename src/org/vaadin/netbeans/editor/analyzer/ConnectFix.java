@@ -36,6 +36,7 @@ import org.openide.NotifyDescriptor;
 import org.openide.filesystems.FileObject;
 import org.openide.util.Mutex;
 import org.openide.util.NbBundle;
+import org.vaadin.netbeans.code.WidgetUtils;
 import org.vaadin.netbeans.editor.analyzer.ui.ClientConnectPanel;
 
 import com.sun.source.tree.AnnotationTree;
@@ -123,8 +124,7 @@ public class ConnectFix extends AbstractJavaFix {
                                         "class"); // NOI18N
                         AnnotationTree connectorAnnotation =
                                 treeMaker.Annotation(
-                                        treeMaker
-                                                .Type(ConnectorAnalyzer.CONNECTOR),
+                                        treeMaker.Type(WidgetUtils.CONNECTOR),
                                         Collections
                                                 .singletonList(componentClassSelect));
                         ClassTree newTree =

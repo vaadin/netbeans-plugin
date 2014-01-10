@@ -19,17 +19,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Types;
 
-import org.netbeans.api.java.source.CompilationInfo;
 import org.netbeans.api.java.source.ElementHandle;
 import org.netbeans.spi.editor.hints.ErrorDescription;
 import org.netbeans.spi.editor.hints.ErrorDescriptionFactory;
@@ -37,6 +32,7 @@ import org.netbeans.spi.editor.hints.Fix;
 import org.netbeans.spi.editor.hints.Severity;
 import org.netbeans.spi.java.hints.HintContext;
 import org.openide.util.NbBundle;
+import org.vaadin.netbeans.code.WidgetUtils;
 import org.vaadin.netbeans.editor.hints.Analyzer;
 import org.vaadin.netbeans.utils.JavaUtils;
 
@@ -44,11 +40,6 @@ import org.vaadin.netbeans.utils.JavaUtils;
  * @author denis
  */
 public class StateAccessorAnalyzer extends Analyzer {
-
-    private static final String ABSTRACT_COMPONENT =
-            "com.vaadin.ui.AbstractComponent"; // NOI18N
-
-    static final String GET_STATE = "getState"; // NOI18N
 
     public StateAccessorAnalyzer( HintContext context ) {
         super(context);
@@ -62,27 +53,31 @@ public class StateAccessorAnalyzer extends Analyzer {
         }
         Types types = getInfo().getTypes();
         TypeElement abstractComponent =
-                getInfo().getElements().getTypeElement(ABSTRACT_COMPONENT);
+                getInfo().getElements().getTypeElement(
+                        WidgetUtils.ABSTRACT_COMPONENT);
         if (abstractComponent != null) {
             if (types.isSubtype(type.asType(), abstractComponent.asType())
                     && !hasGetStateMethod())
             {
-                TypeElement connector = getConnector(getType(), getInfo());
+                TypeElement connector =
+                        WidgetUtils.getConnector(getType(), getInfo());
                 addDescription(true, connector,
-                        getTypeFqn(getStateMethodReturnType(connector)));
+                        getTypeFqn(WidgetUtils
+                                .getStateMethodReturnType(connector)));
             }
         }
         TypeElement abstractConnector =
                 getInfo().getElements().getTypeElement(
-                        ConnectorAnalyzer.ABSTRACT_COMPONENT_CONNECTOR);
+                        WidgetUtils.ABSTRACT_COMPONENT_CONNECTOR);
         if (abstractConnector != null) {
             if (types.isSubtype(type.asType(), abstractConnector.asType())
                     && !hasGetStateMethod())
             {
                 TypeElement serverComponent =
-                        getServerComponent(getType(), getInfo());
+                        WidgetUtils.getServerComponent(getType(), getInfo());
                 addDescription(false, serverComponent,
-                        getTypeFqn(getStateMethodReturnType(serverComponent)));
+                        getTypeFqn(WidgetUtils
+                                .getStateMethodReturnType(serverComponent)));
             }
         }
     }
@@ -167,23 +162,7 @@ public class StateAccessorAnalyzer extends Analyzer {
     }
 
     private TypeMirror getStateMethodReturnType() {
-        return getStateMethodReturnType(getType());
-    }
-
-    static TypeMirror getStateMethodReturnType( Element element ) {
-        if (element == null) {
-            return null;
-        }
-        List<ExecutableElement> methods =
-                ElementFilter.methodsIn(element.getEnclosedElements());
-        for (ExecutableElement method : methods) {
-            if (GET_STATE.contentEquals(method.getSimpleName())
-                    && method.getParameters().isEmpty())
-            {
-                return method.getReturnType();
-            }
-        }
-        return null;
+        return WidgetUtils.getStateMethodReturnType(getType());
     }
 
     private String getTypeFqn( TypeMirror type ) {
@@ -197,50 +176,4 @@ public class StateAccessorAnalyzer extends Analyzer {
         return null;
     }
 
-    static TypeElement getConnector( TypeElement serverComponent,
-            CompilationInfo info )
-    {
-        if (serverComponent == null) {
-            return null;
-        }
-        try {
-            List<TypeElement> connectors =
-                    JavaUtils.findAnnotatedElements(
-                            ConnectorAnalyzer.CONNECTOR, info);
-            for (TypeElement connector : connectors) {
-                TypeElement serverPair = getServerComponent(connector, info);
-                if (serverComponent.equals(serverPair)) {
-                    return connector;
-                }
-            }
-        }
-        catch (InterruptedException ignore) {
-        }
-        return null;
-    }
-
-    static TypeElement getServerComponent( TypeElement clientWidget,
-            CompilationInfo info )
-    {
-        AnnotationMirror annotation =
-                JavaUtils.getAnnotation(clientWidget,
-                        ConnectorAnalyzer.CONNECTOR);
-        if (annotation == null) {
-            return null;
-        }
-        AnnotationValue value =
-                JavaUtils.getAnnotationValue(annotation, JavaUtils.VALUE);
-        if (value == null) {
-            return null;
-        }
-        Object clazz = value.getValue();
-        if (clazz instanceof TypeMirror) {
-            TypeMirror type = (TypeMirror) clazz;
-            Element element = info.getTypes().asElement(type);
-            if (element instanceof TypeElement) {
-                return (TypeElement) element;
-            }
-        }
-        return null;
-    }
 }

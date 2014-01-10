@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 
@@ -90,7 +91,8 @@ public class RpcRegistrationAnalyzer extends Analyzer {
         }
 
         Collection<? extends TypeMirror> supertypes =
-                JavaUtils.getSupertypes(getType().asType(), getInfo());
+                JavaUtils.getSupertypes(getType().asType(), ElementKind.CLASS,
+                        getInfo());
         boolean serverComponent = false;
         boolean clientComponent = false;
         for (TypeMirror superType : supertypes) {

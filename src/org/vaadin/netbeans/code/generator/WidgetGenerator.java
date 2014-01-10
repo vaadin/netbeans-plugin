@@ -32,6 +32,38 @@ public interface WidgetGenerator {
 
     String COMPONENT_PROPERTY = "vaadinComponent"; // NOI18N
 
+    String WIDGET_SUFFIX = "Widget";// NOI18N
+
+    String SHARED_STATE = "shared_state";//NOI18N
+
+    String CONNECTOR_VAR = "connector";//NOI18N
+
+    String STYLE_NAME = "style_name";//NOI18N
+
+    String WIDGET_SUPER = "widget_super";//NOI18N
+
+    String WIDGET_SUPER_FQN = "widget_super_fqn";//NOI18N
+
+    String STATE_SUPER_CLASS = "state_super_class"; // NOI18N
+
+    String STATE_SUPER_CLASS_FQN = "state_super_class_fqn"; // NOI18N
+
+    String COMPONENT_VAR = "component"; // NOI18N
+
+    String SUPER_CONNECTOR_FQN = "super_connector_fqn"; //NOI18N
+
+    String SUPER_CONNECTOR = "super_connector"; //NOI18N
+
+    String SERVER_COMPONENT = "server_component";//NOI18N
+
+    String SERVER_COMPONENT_FQN = "server_component_fqn";//NOI18N
+
+    String SELECTED_COMPONENT_FQN = "selected_component_fqn"; //NOI18N
+
+    String SELECTED_COMPONENT = "selected_component"; //NOI18N
+
+    String WIDGET_TEMPLATE = "Templates/Vaadin/FullFledgedWidget.java";// NOI18N
+
     Set<FileObject> generate( WizardDescriptor wizard, ProgressHandle handle )
             throws IOException;
 

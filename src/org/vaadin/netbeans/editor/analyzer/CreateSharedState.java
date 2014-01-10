@@ -16,16 +16,11 @@
 package org.vaadin.netbeans.editor.analyzer;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.TypeMirror;
 
 import org.netbeans.api.java.source.CompilationController;
 import org.netbeans.api.java.source.ElementHandle;
@@ -43,6 +38,7 @@ import org.openide.filesystems.FileObject;
 import org.openide.util.Mutex;
 import org.openide.util.NbBundle;
 import org.vaadin.netbeans.VaadinSupport;
+import org.vaadin.netbeans.code.WidgetUtils;
 import org.vaadin.netbeans.code.generator.WidgetGenerator;
 import org.vaadin.netbeans.editor.analyzer.ui.StatePanel;
 import org.vaadin.netbeans.model.ModelOperation;
@@ -54,12 +50,6 @@ import org.vaadin.netbeans.utils.XmlUtils;
  * @author denis
  */
 class CreateSharedState extends StateAccessorFix {
-
-    private static final String STATE_SUPER_CLASS = "state_super_class"; // NOI18N
-
-    private static final String STATE_SUPER_CLASS_FQN = "state_super_class_fqn"; // NOI18N
-
-    private static final String COMPONENT_VAR = "component"; // NOI18N
 
     private static final String STATE_SUFFIX = "State"; // NOI18N
 
@@ -96,14 +86,17 @@ class CreateSharedState extends StateAccessorFix {
         if (myClientPackage == null) {
             createClientPackage();
         }
-        Map<String, String> map = Collections.singletonMap(COMPONENT_VAR, null);
+        Map<String, String> map = new HashMap<String, String>();
+        map.put(WidgetGenerator.COMPONENT_VAR, null);
         if (mySuperClass != null) {
             int index = mySuperClass.lastIndexOf('.');
             String simpleSuperClassName = mySuperClass.substring(index + 1);
-            map = new HashMap<String, String>();
-            map.put(STATE_SUPER_CLASS_FQN, mySuperClass);
-            map.put(STATE_SUPER_CLASS, simpleSuperClassName);
-            map.put(COMPONENT_VAR, null);
+            map.put(WidgetGenerator.STATE_SUPER_CLASS_FQN, mySuperClass);
+            map.put(WidgetGenerator.STATE_SUPER_CLASS, simpleSuperClassName);
+        }
+        else {
+            map.put(WidgetGenerator.STATE_SUPER_CLASS_FQN, null);
+            map.put(WidgetGenerator.STATE_SUPER_CLASS, null);
         }
         FileObject stateFile =
                 JavaUtils.createDataObjectFromTemplate(SHARED_STATE_TEMPLATE,
@@ -167,29 +160,9 @@ class CreateSharedState extends StateAccessorFix {
                     return;
                 }
 
-                controller.getTypes().directSupertypes(type.asType());
-
-                Collection<? extends TypeMirror> supertypes =
-                        JavaUtils.getSupertypes(type.asType(), controller);
-                for (TypeMirror typeMirror : supertypes) {
-                    Element superClass =
-                            controller.getTypes().asElement(typeMirror);
-                    if (superClass.getKind().equals(ElementKind.CLASS)) {
-                        TypeMirror returnType =
-                                StateAccessorAnalyzer
-                                        .getStateMethodReturnType(superClass);
-                        if (returnType != null) {
-                            Element returnElement =
-                                    controller.getTypes().asElement(returnType);
-                            if (returnElement instanceof TypeElement) {
-                                mySuperClass =
-                                        ((TypeElement) returnElement)
-                                                .getQualifiedName().toString();
-                                return;
-
-                            }
-                        }
-                    }
+                TypeElement state = WidgetUtils.getState(type, controller);
+                if (state != null) {
+                    mySuperClass = state.getQualifiedName().toString();
                 }
             }
 
