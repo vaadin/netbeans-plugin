@@ -34,7 +34,9 @@ import org.netbeans.spi.editor.hints.ChangeInfo;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
+import org.openide.cookies.EditorCookie;
 import org.openide.filesystems.FileObject;
+import org.openide.loaders.DataObject;
 import org.openide.util.Mutex;
 import org.openide.util.NbBundle;
 import org.vaadin.netbeans.VaadinSupport;
@@ -98,11 +100,21 @@ class CreateSharedState extends StateAccessorFix {
             map.put(WidgetGenerator.STATE_SUPER_CLASS_FQN, null);
             map.put(WidgetGenerator.STATE_SUPER_CLASS, null);
         }
-        FileObject stateFile =
-                JavaUtils.createDataObjectFromTemplate(SHARED_STATE_TEMPLATE,
-                        myClientPackage, name, map).getPrimaryFile();
 
-        return doImplement(JavaUtils.getFqn(stateFile));
+        DataObject dataObject =
+                JavaUtils.createDataObjectFromTemplate(SHARED_STATE_TEMPLATE,
+                        myClientPackage, name, map);
+        if (dataObject != null) {
+            EditorCookie cookie =
+                    dataObject.getLookup().lookup(EditorCookie.class);
+            if (cookie != null) {
+                cookie.open();
+            }
+            FileObject stateFile = dataObject.getPrimaryFile();
+
+            return doImplement(JavaUtils.getFqn(stateFile));
+        }
+        return null;
     }
 
     private void createClientPackage() throws IOException {

@@ -41,13 +41,13 @@ import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.filesystems.FileObject;
+import org.openide.util.Mutex;
 import org.openide.util.NbBundle;
 import org.vaadin.netbeans.editor.analyzer.ui.ThemePanel;
 import org.vaadin.netbeans.utils.JavaUtils;
 
 import com.sun.source.tree.AnnotationTree;
 import com.sun.source.tree.ClassTree;
-import org.openide.util.Mutex;
 
 /**
  * @author denis
@@ -62,11 +62,13 @@ class ThemeFix extends AbstractJavaFix {
 
     private static final String THEME_FQN = "com.vaadin.annotations.Theme"; // NOI18N
 
-    private static final String ADDONS_TEMPLATE = "Templates/Vaadin/addons.scss";// NOI18N
+    private static final String ADDONS_TEMPLATE =
+            "Templates/Vaadin/addons.scss";// NOI18N
 
     private static final String THEME_TEMPLATE = "Templates/Vaadin/theme.scss";// NOI18N
 
-    private static final String STYLES_TEMPLATE = "Templates/Vaadin/styles.scss";// NOI18N
+    private static final String STYLES_TEMPLATE =
+            "Templates/Vaadin/styles.scss";// NOI18N
 
     private static final String FAVORITE_ICON = "Templates/Vaadin/favicon.ico";// NOI18N
 
@@ -99,8 +101,8 @@ class ThemeFix extends AbstractJavaFix {
         if (sources == null) {
             return null;
         }
-        SourceGroup[] webGroup = sources
-                .getSourceGroups(WebProjectConstants.TYPE_DOC_ROOT);
+        SourceGroup[] webGroup =
+                sources.getSourceGroups(WebProjectConstants.TYPE_DOC_ROOT);
         String theme = DEFAULT_THEME_NAME;
         FileObject themes = null;
         FileObject webRoot = null;
@@ -122,8 +124,9 @@ class ThemeFix extends AbstractJavaFix {
             }
         }
         if (webRoot == null) {
-            NotifyDescriptor descriptor = new NotifyDescriptor.Message(
-                    Bundle.noWebRoot(), NotifyDescriptor.ERROR_MESSAGE);
+            NotifyDescriptor descriptor =
+                    new NotifyDescriptor.Message(Bundle.noWebRoot(),
+                            NotifyDescriptor.ERROR_MESSAGE);
             DialogDisplayer.getDefault().notify(descriptor);
             return null;
         }
@@ -147,8 +150,8 @@ class ThemeFix extends AbstractJavaFix {
                     getFileObject().getPath());
             return null;
         }
-        ModificationResult task = javaSource
-                .runModificationTask(new Task<WorkingCopy>() {
+        ModificationResult task =
+                javaSource.runModificationTask(new Task<WorkingCopy>() {
 
                     @Override
                     public void run( WorkingCopy copy ) throws Exception {
@@ -163,15 +166,18 @@ class ThemeFix extends AbstractJavaFix {
                             return;
                         }
                         TreeMaker treeMaker = copy.getTreeMaker();
-                        AnnotationTree themeAnnotation = treeMaker.Annotation(
-                                treeMaker.Type(THEME_FQN),
-                                Collections.singletonList(treeMaker
-                                        .Literal(theme)));
-                        ClassTree newTree = treeMaker.Class(treeMaker
-                                .addModifiersAnnotation(oldTree.getModifiers(),
-                                        themeAnnotation), oldTree
-                                .getSimpleName(), oldTree.getTypeParameters(),
-                                oldTree.getExtendsClause(), oldTree
+                        AnnotationTree themeAnnotation =
+                                treeMaker.Annotation(treeMaker.Type(THEME_FQN),
+                                        Collections.singletonList(treeMaker
+                                                .Literal(theme)));
+                        ClassTree newTree =
+                                treeMaker.Class(treeMaker
+                                        .addModifiersAnnotation(
+                                                oldTree.getModifiers(),
+                                                themeAnnotation), oldTree
+                                        .getSimpleName(), oldTree
+                                        .getTypeParameters(), oldTree
+                                        .getExtendsClause(), oldTree
                                         .getImplementsClause(), oldTree
                                         .getMembers());
                         copy.rewrite(oldTree, newTree);
@@ -190,8 +196,8 @@ class ThemeFix extends AbstractJavaFix {
             @Override
             public String run() {
                 ThemePanel panel = new ThemePanel(theme);
-                DialogDescriptor descriptor = new DialogDescriptor(panel,
-                        Bundle.setThemeName());
+                DialogDescriptor descriptor =
+                        new DialogDescriptor(panel, Bundle.setThemeName());
                 Object result = DialogDisplayer.getDefault().notify(descriptor);
                 if (NotifyDescriptor.OK_OPTION.equals(result)) {
                     return panel.getThemeName();
@@ -217,8 +223,8 @@ class ThemeFix extends AbstractJavaFix {
             }
             FileObject theme = themesFolder.createFolder(themeName);
 
-            Map<String, String> map = Collections.singletonMap(
-                    THEME_PARAM_NAME, themeName);
+            Map<String, String> map =
+                    Collections.singletonMap(THEME_PARAM_NAME, themeName);
             JavaUtils.createDataObjectFromTemplate(ADDONS_TEMPLATE, theme,
                     null, map);
             JavaUtils.createDataObjectFromTemplate(STYLES_TEMPLATE, theme,

@@ -39,7 +39,9 @@ import org.netbeans.spi.editor.hints.ChangeInfo;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
+import org.openide.cookies.EditorCookie;
 import org.openide.filesystems.FileObject;
+import org.openide.loaders.DataObject;
 import org.openide.util.Mutex;
 import org.openide.util.NbBundle;
 import org.vaadin.netbeans.VaadinSupport;
@@ -279,8 +281,18 @@ abstract class AbstractRpcFix extends AbstractJavaFix {
             return false;
         }
         try {
-            JavaUtils.createDataObjectFromTemplate(getRpcInterfaceTemplate(),
-                    pkg, interfaceName, null);
+            DataObject dataObject =
+                    JavaUtils
+                            .createDataObjectFromTemplate(
+                                    getRpcInterfaceTemplate(), pkg,
+                                    interfaceName, null);
+            if (dataObject != null) {
+                EditorCookie cookie =
+                        dataObject.getLookup().lookup(EditorCookie.class);
+                if (cookie != null) {
+                    cookie.open();
+                }
+            }
         }
         catch (IOException e) {
             Logger.getLogger(CreateServerRpcFix.class.getName()).log(
