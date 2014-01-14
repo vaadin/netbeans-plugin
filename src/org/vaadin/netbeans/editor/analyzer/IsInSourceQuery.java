@@ -15,8 +15,12 @@
  */
 package org.vaadin.netbeans.editor.analyzer;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.lang.model.element.Element;
 
+import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.source.CompilationInfo;
 import org.netbeans.api.java.source.ElementHandle;
 import org.netbeans.api.java.source.SourceUtils;
@@ -24,7 +28,6 @@ import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.SourceGroup;
 import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 import org.vaadin.netbeans.utils.JavaUtils;
 
 /**
@@ -39,14 +42,45 @@ public final class IsInSourceQuery {
         if (fileObject == null) {
             return false;
         }
+        return isInSourceRoots(element, info, getSourceRoots(info));
+    }
+
+    public static Set<FileObject> getSourceRoots( CompilationInfo info ) {
         Project project = FileOwnerQuery.getOwner(info.getFileObject());
-        SourceGroup[] groups = JavaUtils.getJavaSourceGroups(project);
-        for (SourceGroup sourceGroup : groups) {
+        return getSourceRoots(project);
+    }
+
+    public static Set<FileObject> getSourceRoots( Project project ) {
+        SourceGroup[] sourceGroups = JavaUtils.getJavaSourceGroups(project);
+        Set<FileObject> roots = new HashSet<>();
+        for (SourceGroup sourceGroup : sourceGroups) {
             FileObject rootFolder = sourceGroup.getRootFolder();
-            if (FileUtil.isParentOf(rootFolder, fileObject)) {
-                return true;
-            }
+            roots.add(rootFolder);
         }
-        return false;
+        return roots;
+    }
+
+    public static boolean isInSourceRoots( Element element,
+            CompilationInfo info, Set<FileObject> roots )
+    {
+        FileObject fileObject =
+                SourceUtils.getFile(ElementHandle.create(element),
+                        info.getClasspathInfo());
+        return isInSourceRoots(fileObject, roots);
+    }
+
+    public static boolean isInSourceRoots( FileObject fileObject,
+            Set<FileObject> roots )
+    {
+        if (fileObject == null) {
+            return false;
+        }
+        ClassPath classPath =
+                ClassPath.getClassPath(fileObject, ClassPath.SOURCE);
+        if (classPath == null) {
+            return false;
+        }
+        FileObject root = classPath.findOwnerRoot(fileObject);
+        return roots.contains(root);
     }
 }

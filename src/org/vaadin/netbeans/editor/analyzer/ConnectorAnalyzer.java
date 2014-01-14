@@ -31,17 +31,12 @@ import javax.lang.model.type.TypeMirror;
 
 import org.netbeans.api.java.source.CompilationInfo;
 import org.netbeans.api.java.source.ElementHandle;
-import org.netbeans.api.java.source.SourceUtils;
-import org.netbeans.api.project.FileOwnerQuery;
-import org.netbeans.api.project.Project;
-import org.netbeans.api.project.SourceGroup;
 import org.netbeans.spi.editor.hints.ErrorDescription;
 import org.netbeans.spi.editor.hints.ErrorDescriptionFactory;
 import org.netbeans.spi.editor.hints.Fix;
 import org.netbeans.spi.editor.hints.Severity;
 import org.netbeans.spi.java.hints.HintContext;
 import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
 import org.vaadin.netbeans.code.WidgetUtils;
 import org.vaadin.netbeans.code.generator.WidgetGenerator;
@@ -136,15 +131,14 @@ public class ConnectorAnalyzer extends ClientClassAnalyzer {
             TypeElement clientConnector =
                     getInfo().getElements().getTypeElement(CLIENT_CONNECTOR);
             if (clientConnector != null) {
-                Project project =
-                        FileOwnerQuery.getOwner(getInfo().getFileObject());
-                SourceGroup[] groups = JavaUtils.getJavaSourceGroups(project);
+                Set<FileObject> sourceRoots =
+                        IsInSourceQuery.getSourceRoots(getInfo());
                 List<String> allSourceComponents = new LinkedList<>();
                 String probableComponentFqn = null;
                 try {
                     probableComponentFqn =
-                            collectExistingComponents(clientConnector, groups,
-                                    allSourceComponents);
+                            collectExistingComponents(clientConnector,
+                                    sourceRoots, allSourceComponents);
                 }
                 catch (InterruptedException e) {
                     Logger.getLogger(ConnectorAnalyzer.class.getName()).log(
@@ -173,7 +167,7 @@ public class ConnectorAnalyzer extends ClientClassAnalyzer {
     }
 
     private String collectExistingComponents( TypeElement clientConnector,
-            SourceGroup[] groups, List<String> sourceComponents )
+            Set<FileObject> sourceRoots, List<String> sourceComponents )
             throws InterruptedException
     {
         String connectorName = getType().getSimpleName().toString();
@@ -193,7 +187,9 @@ public class ConnectorAnalyzer extends ClientClassAnalyzer {
             if (fqn.startsWith(VAADIN_PKG)) {
                 continue;
             }
-            if (isInSource(component, groups)) {
+            if (IsInSourceQuery.isInSourceRoots(component, getInfo(),
+                    sourceRoots))
+            {
                 sourceComponents.add(fqn);
                 String simpleName = component.getSimpleName().toString();
                 if (simpleName.equals(connectorName)) {
@@ -265,23 +261,6 @@ public class ConnectorAnalyzer extends ClientClassAnalyzer {
                 getDescriptions().add(myBadConnectValue);
             }
         }
-    }
-
-    // TODO : rewrite this method and use IsInSourceQuery created in other changeset
-    private boolean isInSource( TypeElement type, SourceGroup[] groups ) {
-        FileObject fileObject =
-                SourceUtils.getFile(ElementHandle.create(type), getInfo()
-                        .getClasspathInfo());
-        if (fileObject == null) {
-            return false;
-        }
-        for (SourceGroup sourceGroup : groups) {
-            FileObject rootFolder = sourceGroup.getRootFolder();
-            if (FileUtil.isParentOf(rootFolder, fileObject)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private ErrorDescription myBadConnectValue;

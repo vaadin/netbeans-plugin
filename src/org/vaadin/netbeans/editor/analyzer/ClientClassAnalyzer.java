@@ -27,9 +27,6 @@ import javax.lang.model.element.TypeElement;
 import org.netbeans.api.java.source.CompilationInfo;
 import org.netbeans.api.java.source.ElementHandle;
 import org.netbeans.api.java.source.SourceUtils;
-import org.netbeans.api.project.FileOwnerQuery;
-import org.netbeans.api.project.Project;
-import org.netbeans.api.project.SourceGroup;
 import org.netbeans.spi.editor.hints.ErrorDescription;
 import org.netbeans.spi.editor.hints.ErrorDescriptionFactory;
 import org.netbeans.spi.editor.hints.Fix;
@@ -162,8 +159,12 @@ public abstract class ClientClassAnalyzer extends Analyzer {
         if (ui != null) {
             try {
                 Set<TypeElement> uis = JavaUtils.getSubclasses(ui, getInfo());
+                Set<FileObject> sourceRoots =
+                        IsInSourceQuery.getSourceRoots(getInfo());
                 for (TypeElement vaadinUi : uis) {
-                    if (isInSource(vaadinUi, getInfo())) {
+                    if (IsInSourceQuery.isInSourceRoots(vaadinUi, getInfo(),
+                            sourceRoots))
+                    {
                         FileObject fileObject =
                                 SourceUtils.getFile(
                                         ElementHandle.create(vaadinUi),
@@ -221,25 +222,6 @@ public abstract class ClientClassAnalyzer extends Analyzer {
             return result.substring(0, result.length() - 2);
         }
         return result.toString();
-    }
-
-    // TODO : use IsIsSourceQuery from other commit
-    private boolean isInSource( TypeElement type, CompilationInfo info ) {
-        FileObject fileObject =
-                SourceUtils.getFile(ElementHandle.create(type),
-                        info.getClasspathInfo());
-        if (fileObject == null) {
-            return false;
-        }
-        Project project = FileOwnerQuery.getOwner(info.getFileObject());
-        SourceGroup[] groups = JavaUtils.getJavaSourceGroups(project);
-        for (SourceGroup sourceGroup : groups) {
-            FileObject rootFolder = sourceGroup.getRootFolder();
-            if (FileUtil.isParentOf(rootFolder, fileObject)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private ErrorDescription myNotClientPackage;

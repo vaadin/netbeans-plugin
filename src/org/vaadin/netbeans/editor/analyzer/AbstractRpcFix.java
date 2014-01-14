@@ -33,23 +33,14 @@ import org.netbeans.api.java.source.GeneratorUtilities;
 import org.netbeans.api.java.source.JavaSource;
 import org.netbeans.api.java.source.TreeMaker;
 import org.netbeans.api.java.source.WorkingCopy;
-import org.netbeans.api.project.FileOwnerQuery;
-import org.netbeans.api.project.Project;
 import org.netbeans.spi.editor.hints.ChangeInfo;
-import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.cookies.EditorCookie;
 import org.openide.filesystems.FileObject;
 import org.openide.loaders.DataObject;
-import org.openide.util.Mutex;
 import org.openide.util.NbBundle;
-import org.vaadin.netbeans.VaadinSupport;
-import org.vaadin.netbeans.editor.analyzer.ui.NamePanel;
-import org.vaadin.netbeans.model.ModelOperation;
-import org.vaadin.netbeans.model.VaadinModel;
 import org.vaadin.netbeans.utils.JavaUtils;
-import org.vaadin.netbeans.utils.XmlUtils;
 
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.ExpressionTree;
@@ -61,7 +52,7 @@ import com.sun.source.util.TreePathScanner;
 /**
  * @author denis
  */
-abstract class AbstractRpcFix extends AbstractJavaFix {
+abstract class AbstractRpcFix extends AbstractCreateFix {
 
     static final String CLIENT_RPC = "ClientRpc"; // NOI18N
 
@@ -84,10 +75,12 @@ abstract class AbstractRpcFix extends AbstractJavaFix {
 
     @Override
     public ChangeInfo implement() throws Exception {
-        FileObject pkg = getClientPackage();
-        if (pkg == null) {
-            return null;
+        searchClientPackage(false);
+        if (getClientPackage() == null) {
+            createClientPackage();
         }
+        FileObject pkg = getClientPackage();
+
         String interfaceName = null;
         String ifaceFqn = getRpcVariableType();
         if (ifaceFqn == null) {
@@ -133,44 +126,6 @@ abstract class AbstractRpcFix extends AbstractJavaFix {
             JavaSource javaSource, final String ifaceFqn, final String ifaceName )
             throws IOException;
 
-    protected FileObject getClientPackage() throws IOException {
-        Project project = FileOwnerQuery.getOwner(getFileObject());
-        if (project == null) {
-            return null;
-        }
-        VaadinSupport support = project.getLookup().lookup(VaadinSupport.class);
-        if (support == null || !support.isEnabled()) {
-            return null;
-        }
-        final FileObject[] pkg = new FileObject[1];
-        support.runModelOperation(new ModelOperation() {
-
-            @Override
-            public void run( VaadinModel model ) {
-                FileObject gwtXml = model.getGwtXml();
-                if (gwtXml == null) {
-                    return;
-                }
-                try {
-                    for (String path : model.getSourcePaths()) {
-                        FileObject clientPkg =
-                                XmlUtils.getClientWidgetPackage(gwtXml, path,
-                                        false);
-                        if (clientPkg != null) {
-                            pkg[0] = clientPkg;
-                            return;
-                        }
-                    }
-                }
-                catch (IOException e) {
-                    Logger.getLogger(AbstractRpcFix.class.getName()).log(
-                            Level.INFO, null, e);
-                }
-            }
-        });
-        return pkg[0];
-    }
-
     protected String getRpcVariable() {
         return myRpcVar;
     }
@@ -181,27 +136,7 @@ abstract class AbstractRpcFix extends AbstractJavaFix {
 
     protected String requestInterfaceName( FileObject targetPkg ) {
         final String name = suggestInterfaceName(targetPkg);
-        String interfaceName =
-                Mutex.EVENT.readAccess(new Mutex.Action<String>() {
-
-                    @Override
-                    public String run() {
-                        NamePanel panel = new NamePanel(name);
-                        DialogDescriptor descriptor =
-                                new DialogDescriptor(panel,
-                                        getInterfaceCreationDialogTitle());
-                        Object result =
-                                DialogDisplayer.getDefault().notify(descriptor);
-                        if (NotifyDescriptor.OK_OPTION.equals(result)) {
-                            return panel.getIfaceName();
-                        }
-                        else {
-                            return null;
-                        }
-                    }
-
-                });
-        return interfaceName;
+        return requestClassName(name);
     }
 
     protected String suggestInterfaceName( FileObject pkg, String prefix,

@@ -4,6 +4,8 @@ package ${package};
 
 import ${server_component_fqn};
 <#if super_connector?? && super_connector != "">
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.Widget;
 <#else>
 import com.google.gwt.user.client.ui.Label;
 </#if>

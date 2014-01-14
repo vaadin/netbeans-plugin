@@ -3,6 +3,10 @@ package ${package};
 </#if>
 
 import ${server_component_fqn};
+<#if super_connector?? && super_connector != "">
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.Widget;
+</#if> 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Window;

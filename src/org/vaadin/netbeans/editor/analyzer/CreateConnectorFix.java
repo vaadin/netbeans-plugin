@@ -32,8 +32,6 @@ import org.netbeans.api.java.source.ElementHandle;
 import org.netbeans.api.java.source.JavaSource;
 import org.netbeans.api.java.source.JavaSource.Phase;
 import org.netbeans.api.java.source.Task;
-import org.netbeans.api.project.FileOwnerQuery;
-import org.netbeans.api.project.Project;
 import org.netbeans.spi.editor.hints.ChangeInfo;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
@@ -43,19 +41,15 @@ import org.openide.filesystems.FileObject;
 import org.openide.loaders.DataObject;
 import org.openide.util.Mutex;
 import org.openide.util.NbBundle;
-import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.code.WidgetUtils;
 import org.vaadin.netbeans.code.generator.WidgetGenerator;
 import org.vaadin.netbeans.editor.analyzer.ui.ConnectorPanel;
-import org.vaadin.netbeans.model.ModelOperation;
-import org.vaadin.netbeans.model.VaadinModel;
 import org.vaadin.netbeans.utils.JavaUtils;
-import org.vaadin.netbeans.utils.XmlUtils;
 
 /**
  * @author denis
  */
-public class CreateConnectorFix extends AbstractJavaFix {
+public class CreateConnectorFix extends AbstractCreateFix {
 
     private static final String WIDGET_PARAM = "widget";//NOI18N
 
@@ -103,11 +97,8 @@ public class CreateConnectorFix extends AbstractJavaFix {
             return null;
         }
 
-        if (myClientPackage == null) {
-            if (!hasGwtXml) {
-                XmlUtils.createGwtXml(getFileObject().getParent());
-            }
-            searchClientPackage(true);
+        if (getClientPackage() == null) {
+            createClientPackage();
         }
 
         Map<String, String> params = new HashMap<>();
@@ -121,7 +112,7 @@ public class CreateConnectorFix extends AbstractJavaFix {
 
         DataObject connectorDataObject =
                 JavaUtils.createDataObjectFromTemplate(CONNECTOR_TEMPLATE,
-                        myClientPackage, myConnectorName, params);
+                        getClientPackage(), myConnectorName, params);
         EditorCookie cookie =
                 connectorDataObject.getLookup().lookup(EditorCookie.class);
         if (cookie != null) {
@@ -150,7 +141,7 @@ public class CreateConnectorFix extends AbstractJavaFix {
         map.put(WidgetGenerator.SHARED_STATE, null);
         map.put(WidgetGenerator.CONNECTOR_VAR, null);
         return JavaUtils.createDataObjectFromTemplate(WIDGET_TEMPLATE,
-                myClientPackage, myWidgetName, map);
+                getClientPackage(), myWidgetName, map);
     }
 
     @NbBundle.Messages("connectorPanelTitle=Set Up New Connector Class")
@@ -259,7 +250,7 @@ public class CreateConnectorFix extends AbstractJavaFix {
         if (myCreateWidget) {
             String name = getFileObject().getName();
             name = name + WidgetGenerator.WIDGET_SUFFIX;
-            return findFreeName(name, myClientPackage);
+            return findFreeName(name, getClientPackage());
         }
         return null;
     }
@@ -267,7 +258,7 @@ public class CreateConnectorFix extends AbstractJavaFix {
     private String suggestConnectorName() {
         String name = getFileObject().getName();
         name = name + WidgetGenerator.CONNECTOR;
-        return findFreeName(name, myClientPackage);
+        return findFreeName(name, getClientPackage());
     }
 
     private String findFreeName( String initialName, FileObject folder ) {
@@ -291,35 +282,6 @@ public class CreateConnectorFix extends AbstractJavaFix {
                 freeName.length() - JavaUtils.JAVA_SUFFIX.length());
     }
 
-    private void searchClientPackage( final boolean create ) throws IOException
-    {
-        Project project = FileOwnerQuery.getOwner(getFileObject());
-        VaadinSupport support = project.getLookup().lookup(VaadinSupport.class);
-        support.runModelOperation(new ModelOperation() {
-
-            @Override
-            public void run( VaadinModel model ) {
-                if (model.getGwtXml() == null) {
-                    return;
-                }
-                hasGwtXml = true;
-                for (String clientPath : model.getSourcePaths()) {
-                    try {
-                        myClientPackage =
-                                XmlUtils.getClientWidgetPackage(
-                                        model.getGwtXml(), clientPath, create);
-                        if (myClientPackage != null) {
-                            return;
-                        }
-                    }
-                    catch (IOException e) {
-                        getLogger().log(Level.FINE, null, e);
-                    }
-                }
-            }
-        });
-    }
-
     private final ElementHandle<TypeElement> myHandle;
 
     private final ElementHandle<TypeElement> myConnectorHandle;
@@ -335,9 +297,5 @@ public class CreateConnectorFix extends AbstractJavaFix {
     private volatile String myWidgetSuperClass;
 
     private volatile String myWidgetName;
-
-    private FileObject myClientPackage;
-
-    private boolean hasGwtXml;
 
 }

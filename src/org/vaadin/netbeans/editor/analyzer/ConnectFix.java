@@ -41,8 +41,6 @@ import org.vaadin.netbeans.editor.analyzer.ui.ClientConnectPanel;
 
 import com.sun.source.tree.AnnotationTree;
 import com.sun.source.tree.ClassTree;
-import com.sun.source.tree.CompilationUnitTree;
-import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.MemberSelectTree;
 
 /**
@@ -116,7 +114,7 @@ public class ConnectFix extends AbstractJavaFix {
 
                         TreeMaker treeMaker = copy.getTreeMaker();
 
-                        addImport(componentFqn, copy, treeMaker);
+                        addImport(componentFqn, myHandle, copy, treeMaker);
 
                         MemberSelectTree componentClassSelect =
                                 treeMaker.MemberSelect(
@@ -143,20 +141,6 @@ public class ConnectFix extends AbstractJavaFix {
         ChangeInfo changeInfo = createChangeInfo(task);
         task.commit();
         return changeInfo;
-    }
-
-    // TODO : Other commits has moved this method into AbstractJavaFix, so no need to define it here
-    protected void addImport( String ifaceFqn, WorkingCopy copy,
-            TreeMaker treeMaker )
-    {
-        ImportTree imprt =
-                treeMaker.Import(treeMaker.QualIdent(ifaceFqn), false);
-
-        CompilationUnitTree unitTree = copy.getCompilationUnit();
-        CompilationUnitTree withImport =
-                treeMaker.addCompUnitImport(copy.getCompilationUnit(), imprt);
-
-        copy.rewrite(unitTree, withImport);
     }
 
     private String selectComponent() {

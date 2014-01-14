@@ -45,7 +45,7 @@ import com.sun.source.tree.VariableTree;
 /**
  * @author denis
  */
-class StateAccessorFix extends AbstractJavaFix {
+class StateAccessorFix extends AbstractCreateFix {
 
     StateAccessorFix( FileObject fileObject, String stateFqn,
             ElementHandle<TypeElement> handle,

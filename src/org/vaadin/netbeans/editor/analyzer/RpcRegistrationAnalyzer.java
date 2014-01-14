@@ -35,6 +35,7 @@ import org.netbeans.spi.editor.hints.ErrorDescriptionFactory;
 import org.netbeans.spi.editor.hints.Fix;
 import org.netbeans.spi.editor.hints.Severity;
 import org.netbeans.spi.java.hints.HintContext;
+import org.openide.filesystems.FileObject;
 import org.openide.util.NbBundle;
 import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.editor.hints.Analyzer;
@@ -161,8 +162,12 @@ public class RpcRegistrationAnalyzer extends Analyzer {
                 try {
                     Set<TypeElement> subInterfaces =
                             JavaUtils.getSubinterfaces(clientRpc, info);
+                    Set<FileObject> sourceRoots =
+                            IsInSourceQuery.getSourceRoots(info);
                     for (TypeElement iface : subInterfaces) {
-                        if (IsInSourceQuery.isInSource(iface, info)) {
+                        if (IsInSourceQuery.isInSourceRoots(iface, info,
+                                sourceRoots))
+                        {
                             fixes.add(new CreateClientRpcFix(info
                                     .getFileObject(), ElementHandle
                                     .create(type), iface.getQualifiedName()

@@ -159,7 +159,7 @@ public class CreateGwtModuleFix implements Fix {
                                     DialogDisplayer.getDefault().notify(
                                             descriptor);
                             if (NotifyDescriptor.OK_OPTION.equals(result)) {
-                                return panel.getIfaceName();
+                                return panel.getClassName();
                             }
                             else {
                                 return null;

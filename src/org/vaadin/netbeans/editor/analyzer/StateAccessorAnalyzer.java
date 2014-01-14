@@ -31,6 +31,7 @@ import org.netbeans.spi.editor.hints.ErrorDescriptionFactory;
 import org.netbeans.spi.editor.hints.Fix;
 import org.netbeans.spi.editor.hints.Severity;
 import org.netbeans.spi.java.hints.HintContext;
+import org.openide.filesystems.FileObject;
 import org.openide.util.NbBundle;
 import org.vaadin.netbeans.code.WidgetUtils;
 import org.vaadin.netbeans.editor.hints.Analyzer;
@@ -98,9 +99,12 @@ public class StateAccessorAnalyzer extends Analyzer {
                 try {
                     Set<TypeElement> states =
                             JavaUtils.getSubclasses(sharedState, getInfo());
+                    Set<FileObject> sourceRoots =
+                            IsInSourceQuery.getSourceRoots(getInfo());
                     for (TypeElement state : states) {
                         Set<Modifier> modifiers = state.getModifiers();
-                        if (IsInSourceQuery.isInSource(state, getInfo())
+                        if (IsInSourceQuery.isInSourceRoots(state, getInfo(),
+                                sourceRoots)
                                 && !modifiers.contains(Modifier.ABSTRACT)
                                 && !modifiers.contains(Modifier.PRIVATE))
                         {

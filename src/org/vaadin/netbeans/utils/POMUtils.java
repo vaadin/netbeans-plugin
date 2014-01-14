@@ -40,7 +40,6 @@ import org.netbeans.api.java.source.JavaSource.Phase;
 import org.netbeans.api.java.source.SourceUtils;
 import org.netbeans.api.java.source.Task;
 import org.netbeans.api.project.Project;
-import org.netbeans.api.project.SourceGroup;
 import org.netbeans.modules.maven.api.ModelUtils;
 import org.netbeans.modules.maven.api.NbMavenProject;
 import org.netbeans.modules.maven.model.pom.Build;
@@ -54,6 +53,7 @@ import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.customizer.VaadinConfiguration;
+import org.vaadin.netbeans.editor.analyzer.IsInSourceQuery;
 import org.vaadin.netbeans.model.ModelOperation;
 import org.vaadin.netbeans.model.VaadinModel;
 
@@ -442,11 +442,15 @@ public final class POMUtils {
                     return;
                 }
                 Set<TypeElement> uis = JavaUtils.getSubclasses(ui, controller);
+                Set<FileObject> sourceRoots =
+                        IsInSourceQuery.getSourceRoots(project);
                 for (TypeElement element : uis) {
                     FileObject fileObject =
                             SourceUtils.getFile(ElementHandle.create(element),
                                     controller.getClasspathInfo());
-                    if (!ui.equals(element) && isInSource(fileObject, project))
+                    if (!ui.equals(element)
+                            && IsInSourceQuery.isInSourceRoots(fileObject,
+                                    sourceRoots))
                     {
                         uiFolder[0] = fileObject.getParent();
                         return;
@@ -459,19 +463,4 @@ public final class POMUtils {
         }
     }
 
-    // TODO : use IsInSourceQuery implemented in the other changeset instead of this method
-    private static boolean isInSource( FileObject fileObject, Project project )
-    {
-        if (fileObject == null) {
-            return false;
-        }
-        SourceGroup[] groups = JavaUtils.getJavaSourceGroups(project);
-        for (SourceGroup sourceGroup : groups) {
-            FileObject rootFolder = sourceGroup.getRootFolder();
-            if (FileUtil.isParentOf(rootFolder, fileObject)) {
-                return true;
-            }
-        }
-        return false;
-    }
 }

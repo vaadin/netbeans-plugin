@@ -31,7 +31,7 @@ public class NamePanel extends javax.swing.JPanel {
         selectText();
     }
 
-    public String getIfaceName() {
+    public String getClassName() {
         return myName.getText().toString();
     }
 

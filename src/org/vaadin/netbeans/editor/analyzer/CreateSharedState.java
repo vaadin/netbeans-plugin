@@ -18,7 +18,6 @@ package org.vaadin.netbeans.editor.analyzer;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
 
 import javax.lang.model.element.TypeElement;
 
@@ -28,8 +27,6 @@ import org.netbeans.api.java.source.JavaSource;
 import org.netbeans.api.java.source.JavaSource.Phase;
 import org.netbeans.api.java.source.SourceUtils;
 import org.netbeans.api.java.source.Task;
-import org.netbeans.api.project.FileOwnerQuery;
-import org.netbeans.api.project.Project;
 import org.netbeans.spi.editor.hints.ChangeInfo;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
@@ -39,14 +36,10 @@ import org.openide.filesystems.FileObject;
 import org.openide.loaders.DataObject;
 import org.openide.util.Mutex;
 import org.openide.util.NbBundle;
-import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.code.WidgetUtils;
 import org.vaadin.netbeans.code.generator.WidgetGenerator;
 import org.vaadin.netbeans.editor.analyzer.ui.StatePanel;
-import org.vaadin.netbeans.model.ModelOperation;
-import org.vaadin.netbeans.model.VaadinModel;
 import org.vaadin.netbeans.utils.JavaUtils;
-import org.vaadin.netbeans.utils.XmlUtils;
 
 /**
  * @author denis
@@ -85,7 +78,7 @@ class CreateSharedState extends StateAccessorFix {
         if (name == null) {
             return null;
         }
-        if (myClientPackage == null) {
+        if (getClientPackage() == null) {
             createClientPackage();
         }
         Map<String, String> map = new HashMap<String, String>();
@@ -100,10 +93,9 @@ class CreateSharedState extends StateAccessorFix {
             map.put(WidgetGenerator.STATE_SUPER_CLASS_FQN, null);
             map.put(WidgetGenerator.STATE_SUPER_CLASS, null);
         }
-
         DataObject dataObject =
                 JavaUtils.createDataObjectFromTemplate(SHARED_STATE_TEMPLATE,
-                        myClientPackage, name, map);
+                        getClientPackage(), name, map);
         if (dataObject != null) {
             EditorCookie cookie =
                     dataObject.getLookup().lookup(EditorCookie.class);
@@ -115,13 +107,6 @@ class CreateSharedState extends StateAccessorFix {
             return doImplement(JavaUtils.getFqn(stateFile));
         }
         return null;
-    }
-
-    private void createClientPackage() throws IOException {
-        if (myGwtXml == null) {
-            myGwtXml = XmlUtils.createGwtXml(getFileObject().getParent());
-        }
-        searchClientPackage(true);
     }
 
     @NbBundle.Messages("stateName=Shared State Name")
@@ -197,18 +182,18 @@ class CreateSharedState extends StateAccessorFix {
                                 SourceUtils.getFile(getPairHandle(),
                                         controller.getClasspathInfo());
                         if (fileObject != null) {
-                            myClientPackage = fileObject.getParent();
+                            setClientPackage(fileObject.getParent());
                         }
 
                     }
                 }, true);
-                if (myClientPackage != null) {
-                    return findFreeName(myClientPackage);
+                if (getClientPackage() != null) {
+                    return findFreeName(getClientPackage());
                 }
             }
             searchClientPackage(false);
-            if (myClientPackage != null) {
-                return findFreeName(myClientPackage);
+            if (getClientPackage() != null) {
+                return findFreeName(getClientPackage());
             }
             return null;
         }
@@ -217,39 +202,8 @@ class CreateSharedState extends StateAccessorFix {
         }
     }
 
-    private void searchClientPackage( final boolean create ) throws IOException
-    {
-        Project project = FileOwnerQuery.getOwner(getFileObject());
-        VaadinSupport support = project.getLookup().lookup(VaadinSupport.class);
-        final String[] path = new String[1];
-        support.runModelOperation(new ModelOperation() {
-
-            @Override
-            public void run( VaadinModel model ) {
-                if (model.getGwtXml() == null) {
-                    return;
-                }
-                myGwtXml = model.getGwtXml();
-                for (String clientPath : model.getSourcePaths()) {
-                    path[0] = clientPath;
-                    try {
-                        myClientPackage =
-                                XmlUtils.getClientWidgetPackage(myGwtXml,
-                                        clientPath, create);
-                        if (myClientPackage != null) {
-                            return;
-                        }
-                    }
-                    catch (IOException e) {
-                        getLogger().log(Level.FINE, null, e);
-                    }
-                }
-            }
-        });
-    }
-
     private String findFreeName( FileObject folder ) {
-        myClientPackage = folder;
+        setClientPackage(folder);
         StringBuilder freeName = new StringBuilder(getFileObject().getName());
         if (!isServer
                 && freeName.toString().endsWith(WidgetGenerator.CONNECTOR))
@@ -276,10 +230,6 @@ class CreateSharedState extends StateAccessorFix {
     }
 
     private boolean isServer;
-
-    private FileObject myClientPackage;
-
-    private FileObject myGwtXml;
 
     private String mySuperClass;
 
