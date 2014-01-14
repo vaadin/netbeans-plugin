@@ -20,6 +20,7 @@ import java.awt.event.ActionListener;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -28,6 +29,8 @@ import javax.swing.Action;
 import javax.swing.JButton;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
@@ -49,7 +52,14 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter.Popup;
 import org.vaadin.netbeans.VaadinSupport;
+import org.vaadin.netbeans.maven.directory.AbstractLicenseChooser;
 import org.vaadin.netbeans.maven.directory.SearchPanel;
+import org.vaadin.netbeans.maven.editor.completion.AbstractAddOn;
+import org.vaadin.netbeans.maven.editor.completion.AbstractAddOn.License;
+import org.vaadin.netbeans.maven.editor.completion.AddOn;
+import org.vaadin.netbeans.maven.editor.completion.SourceClass;
+import org.vaadin.netbeans.maven.editor.completion.SourceClass.SourceType;
+import org.vaadin.netbeans.utils.POMUtils;
 import org.vaadin.netbeans.utils.XmlUtils;
 
 /**
@@ -69,6 +79,10 @@ public class VaadinAction extends AbstractAction implements Popup,
     private static final String COMPILE = "vaadin:compile"; // NOI18N
 
     private static final String COMPILE_THEME = "vaadin:compile-theme"; // NOI18N
+
+    private static final String SCOPE_TEST = "test"; // NOI18N
+
+    private static final String SCOPE_COMPILE = "compile"; // NOI18N
 
     private static final Logger LOG = Logger.getLogger(VaadinAction.class
             .getName());
@@ -120,9 +134,8 @@ public class VaadinAction extends AbstractAction implements Popup,
              * Uncomment this code when it will be available.
              * menu.addSeparator(); menu.add(createVaadinPropertiesItem());
              */
-            // temporary disabled to separate functionality for the commit.
-            // menu.addSeparator();
-            // menu.add(createAddonsBrowserItem());
+            menu.addSeparator();
+            menu.add(createAddonsBrowserItem());
 
             menu.setEnabled(isEnabled());
             return menu;
@@ -153,11 +166,23 @@ public class VaadinAction extends AbstractAction implements Popup,
             "close=Close" })
     private JMenuItem createAddonsBrowserItem() {
         JMenuItem item = new JMenuItem(Bundle.browseAddonsAction());
-        item.addActionListener(new ActionListener() {
+        item.addActionListener(new AbstractActionListener() {
 
             @Override
             public void actionPerformed( ActionEvent e ) {
+                final JButton add = new JButton(Bundle.add());
+                add.setEnabled(false);
+
                 final SearchPanel panel = new SearchPanel();
+                panel.addChangeListener(new ChangeListener() {
+
+                    @Override
+                    public void stateChanged( ChangeEvent e ) {
+                        myAddOn = panel.getSelected();
+                        add.setEnabled(myAddOn != null);
+                    }
+                });
+
                 JButton search = new JButton(Bundle.search());
                 search.addActionListener(new ActionListener() {
 
@@ -166,7 +191,6 @@ public class VaadinAction extends AbstractAction implements Popup,
                         panel.updateTable();
                     }
                 });
-                JButton add = new JButton(Bundle.add());
                 JButton close = new JButton(Bundle.close());
 
                 DialogDescriptor descriptor =
@@ -177,10 +201,31 @@ public class VaadinAction extends AbstractAction implements Popup,
                 descriptor.setClosingOptions(new Object[] { add, close });
                 Object option = DialogDisplayer.getDefault().notify(descriptor);
                 if (option == add) {
-                    // TODO : add
+                    myLicense = null;
+                    if (myAddOn != null) {
+                        AddonHandler handler = new AddonHandler();
+                        myLicense = handler.getLicense(myAddOn);
+                    }
+                    if (myLicense != null) {
+                        runOutAwt();
+                    }
                 }
             }
+
+            @Override
+            public void run() {
+                if (myLicense != null) {
+                    POMUtils.addDependency(myProject, myLicense.getGroupId(),
+                            myLicense.getArtifactId(), myLicense.getVersion(),
+                            getScope(myAddOn));
+                }
+            }
+
+            private volatile AddOn myAddOn;
+
+            private volatile License myLicense;
         });
+
         return item;
     }
 
@@ -413,6 +458,29 @@ public class VaadinAction extends AbstractAction implements Popup,
             }
         });
         return item;
+    }
+
+    private String getScope( AddOn addon ) {
+        List<SourceClass> classes = addon.getClasses();
+        if (classes == null || classes.isEmpty()) {
+            return SCOPE_COMPILE;
+        }
+        for (SourceClass clazz : classes) {
+            SourceType type = clazz.getType();
+            if (!SourceType.TEST.equals(type)) {
+                return SCOPE_COMPILE;
+            }
+        }
+        return SCOPE_TEST;
+    }
+
+    private static class AddonHandler extends AbstractLicenseChooser {
+
+        @Override
+        public License getLicense( AbstractAddOn addon ) {
+            return super.getLicense(addon);
+        }
+
     }
 
     private Project myProject;

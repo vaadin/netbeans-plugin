@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.vaadin.netbeans.maven.editor.completion;
+package org.vaadin.netbeans.maven.directory;
 
 import java.awt.Component;
 import java.awt.Dimension;
@@ -135,40 +135,46 @@ class LicenseSelectPanel extends JPanel {
 
         innerPanel = new javax.swing.JPanel();
 
-        javax.swing.GroupLayout innerPanelLayout = new javax.swing.GroupLayout(innerPanel);
+        javax.swing.GroupLayout innerPanelLayout =
+                new javax.swing.GroupLayout(innerPanel);
         innerPanel.setLayout(innerPanelLayout);
-        innerPanelLayout.setHorizontalGroup(
-            innerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 323, Short.MAX_VALUE)
-        );
-        innerPanelLayout.setVerticalGroup(
-            innerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 216, Short.MAX_VALUE)
-        );
+        innerPanelLayout.setHorizontalGroup(innerPanelLayout
+                .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGap(0, 323, Short.MAX_VALUE));
+        innerPanelLayout.setVerticalGroup(innerPanelLayout.createParallelGroup(
+                javax.swing.GroupLayout.Alignment.LEADING).addGap(0, 216,
+                Short.MAX_VALUE));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(20, 20, 20)
-                .addComponent(innerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(20, 20, 20))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(20, 20, 20)
-                .addComponent(innerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(20, 20, 20))
-        );
+        layout.setHorizontalGroup(layout.createParallelGroup(
+                javax.swing.GroupLayout.Alignment.LEADING).addGroup(
+                layout.createSequentialGroup()
+                        .addGap(20, 20, 20)
+                        .addComponent(innerPanel,
+                                javax.swing.GroupLayout.DEFAULT_SIZE,
+                                javax.swing.GroupLayout.DEFAULT_SIZE,
+                                Short.MAX_VALUE).addGap(20, 20, 20)));
+        layout.setVerticalGroup(layout.createParallelGroup(
+                javax.swing.GroupLayout.Alignment.LEADING).addGroup(
+                layout.createSequentialGroup()
+                        .addGap(20, 20, 20)
+                        .addComponent(innerPanel,
+                                javax.swing.GroupLayout.DEFAULT_SIZE,
+                                javax.swing.GroupLayout.DEFAULT_SIZE,
+                                Short.MAX_VALUE).addGap(20, 20, 20)));
 
-        innerPanel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(LicenseSelectPanel.class, "ACSN_LicenseSelect")); // NOI18N
-        innerPanel.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(LicenseSelectPanel.class, "ACSD_LicenseSelect")); // NOI18N
+        innerPanel.getAccessibleContext().setAccessibleName(
+                org.openide.util.NbBundle.getMessage(LicenseSelectPanel.class,
+                        "ACSN_LicenseSelect")); // NOI18N
+        innerPanel.getAccessibleContext().setAccessibleDescription(
+                org.openide.util.NbBundle.getMessage(LicenseSelectPanel.class,
+                        "ACSD_LicenseSelect")); // NOI18N
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel innerPanel;
+
     // End of variables declaration//GEN-END:variables
 
     static JEditorPane getLinksComponent( Map<String, String> licenses,
@@ -207,12 +213,14 @@ class LicenseSelectPanel extends JPanel {
         StringBuilder builder = new StringBuilder();
         for (Entry<String, String> entry : licenses.entrySet()) {
             builder.append(A_HREF);
-            builder.append(entry.getValue());
+            builder.append(EscapeUtils.escapeAttribute(entry.getValue()));
             builder.append(CLOSE_TAG);
-            builder.append(entry.getKey());
+            builder.append(EscapeUtils.escapeHtml(entry.getKey()));
             builder.append(A_CLOSE);
         }
-        pane.setText(builder.substring(0, builder.length() - 2));
+        if (builder.length() > 0) {
+            pane.setText(builder.substring(0, builder.length() - 2));
+        }
         return pane;
     }
 

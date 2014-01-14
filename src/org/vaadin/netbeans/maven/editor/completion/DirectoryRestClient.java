@@ -19,11 +19,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -31,8 +28,8 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.vaadin.netbeans.maven.editor.completion.AbstractAddOn.Builder;
 import org.vaadin.netbeans.maven.editor.completion.AbstractAddOn.License;
+import org.vaadin.netbeans.maven.editor.completion.AddOn.Builder;
 import org.vaadin.netbeans.retriever.AbstractRetriever;
 import org.vaadin.netbeans.retriever.CachedResource;
 
@@ -63,6 +60,8 @@ final class DirectoryRestClient extends AbstractRetriever {
     private static final String SUMMARY = "summary"; // NOI18N
 
     private static final String ARTIFACT_ID = "artifactId"; // NOI18N
+
+    private static final String RELEASED = "released"; // NOI18N
 
     static final String DIRECTORY_URL =
             "https://vaadin.com/Directory/resource/addon/all?detailed=true&vaadin="; // NOI18N
@@ -99,7 +98,7 @@ final class DirectoryRestClient extends AbstractRetriever {
         requestData();
     }
 
-    boolean initAddons( Map<String, AddOn> addons ) {
+    void initAddons( Map<String, AddOn> addons ) {
         File cached = getCachedFile();
         JSONArray array = null;
         if (cached.exists()) {
@@ -111,49 +110,39 @@ final class DirectoryRestClient extends AbstractRetriever {
             }
         }
         if (array == null) {
-            return false;
+            addons.clear();
+            return;
         }
-        int count = 0;
-        Set<String> initializedNames = new HashSet<>();
         for (int i = 0; i < array.size(); i++) {
             JSONObject object = (JSONObject) array.get(i);
 
             String name = getValue(object, AddOnParser.NAME);
             AddOn addOn = addons.get(name);
+            if (addOn == null) {
+                addOn = new AddOn(name, Collections.<SourceClass> emptyList());
+            }
+            addOn = initAddon(addOn, object);
             if (addOn != null) {
-                initializedNames.add(name);
-                addons.put(addOn.getName(), initAddon(addOn, object));
-                count++;
+                addons.put(addOn.getName(), addOn);
             }
-            if (count == addons.size()) {
-                break;
+            else {
+                addons.remove(name);
             }
         }
-        // clean up not-initialized add-ons if any
-        if (addons.size() != initializedNames.size()) {
-            for (Iterator<String> iterator = addons.keySet().iterator(); iterator
-                    .hasNext();)
-            {
-                String next = iterator.next();
-                if (!initializedNames.contains(next)) {
-                    iterator.remove();
-                }
-            }
-        }
-        return true;
     }
 
     private AddOn initAddon( AddOn addOn, JSONObject object ) {
         String groupId = getValue(object, GROUP_ID);
         String artifactId = getValue(object, ARTIFACT_ID);
         if (groupId == null || artifactId == null) {
-            return addOn;
+            return null;
         }
-        Builder<AddOn> builder = new Builder<AddOn>(AddOn.class);
+        Builder builder = new Builder();
         return builder.build(addOn, groupId, artifactId,
                 getValue(object, VERSION), getValue(object, SUMMARY),
                 getValue(object, RATING), getValue(object, LINK_URL),
-                getValue(object, MATURITY), getLicenses(object));
+                getValue(object, MATURITY), getValue(object, RELEASED),
+                getLicenses(object));
 
     }
 
@@ -181,7 +170,7 @@ final class DirectoryRestClient extends AbstractRetriever {
         return new License(
                 Boolean.TRUE.toString().toLowerCase().equals(isFree), getValue(
                         license, AddOnParser.NAME), getValue(license,
-                        LICENSE_FILE_URI));
+                        LICENSE_FILE_URI), getValue(license, ARTIFACT_ID));
     }
 
     private String getValue( JSONObject object, String key ) {

@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.vaadin.netbeans.maven.editor.completion;
+package org.vaadin.netbeans.maven.directory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

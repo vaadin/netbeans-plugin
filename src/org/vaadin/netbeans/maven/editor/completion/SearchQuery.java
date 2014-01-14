@@ -26,7 +26,6 @@ import org.vaadin.netbeans.maven.editor.completion.AbstractAddOn.Maturity;
 public class SearchQuery {
 
     public enum Field {
-        ANY,
         NAME,
         DESCRIPTION;
     }
@@ -37,6 +36,9 @@ public class SearchQuery {
         myMaturity = maturity;
         isFree = free;
         myTextSearch = textSearch;
+        if (myTextSearch != null) {
+            myTextSearch = myTextSearch.toLowerCase();
+        }
         myFields = Collections.unmodifiableSet(fields);
     }
 

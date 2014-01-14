@@ -13,7 +13,7 @@
         <property name="ext.dist" value="${build.dir}/${ext.classes}"/>
 	<mkdir dir="${ext.dist}"/>
 	<javac srcdir="${ext.src}" destdir="${ext.dist}"/>
-        <copy todir="${ext.dist}">
+     <copy todir="${ext.dist}">
             <fileset dir="${ext.src}" excludes="**/*.java"/>
         </copy>
     </target>

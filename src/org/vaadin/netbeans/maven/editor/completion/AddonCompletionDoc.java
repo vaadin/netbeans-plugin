@@ -21,6 +21,7 @@ import java.net.URL;
 import javax.swing.Action;
 
 import org.netbeans.spi.editor.completion.CompletionDocumentation;
+import org.vaadin.netbeans.maven.directory.EscapeUtils;
 import org.vaadin.netbeans.maven.editor.completion.AbstractAddOn.License;
 
 /**
@@ -130,11 +131,11 @@ class AddonCompletionDoc implements CompletionDocumentation {
         //builder.append(CLOSE_TABLE);
 
         builder.append(PREFIX_NAME);
-        builder.append(doc.getName());
+        builder.append(EscapeUtils.escapeHtml(doc.getName()));
         builder.append(SUFFIX_NAME);
 
         builder.append(TABLE_PROPERTIES);
-        builder.append(doc.getMavenVersion());
+        builder.append(EscapeUtils.escapeHtml(doc.getMavenVersion()));
         builder.append(MATURITY_ROW);
         builder.append(doc.getMaturity());
 
@@ -147,14 +148,14 @@ class AddonCompletionDoc implements CompletionDocumentation {
             builder.replace(builder.length() - 2, builder.length(), "");
         }
         builder.append(RATING_ROW);
-        builder.append(doc.getRating());
+        builder.append(EscapeUtils.escapeHtml(doc.getRating()));
         builder.append(CLOSE_TABLE);
 
         builder.append(OVERVIEW);
-        builder.append(doc.getDescription());
+        builder.append(EscapeUtils.escapeHtml(doc.getDescription()));
 
         builder.append(PERMALINK);
-        builder.append(doc.getUrl());
+        builder.append(EscapeUtils.escapeHtml(doc.getUrl()));
         builder.append(CLOSE_P);
 
         return builder.toString();

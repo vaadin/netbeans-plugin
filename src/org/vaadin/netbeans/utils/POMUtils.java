@@ -17,6 +17,11 @@ package org.vaadin.netbeans.utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -48,6 +53,7 @@ import org.netbeans.modules.maven.model.pom.Plugin;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.vaadin.netbeans.VaadinSupport;
+import org.vaadin.netbeans.customizer.VaadinConfiguration;
 import org.vaadin.netbeans.model.ModelOperation;
 import org.vaadin.netbeans.model.VaadinModel;
 
@@ -74,6 +80,12 @@ public final class POMUtils {
             "org.apache.maven.plugins"; // NOI18N
 
     private static final String JAR_ARTIFACT_ID = "maven-jar-plugin"; // NOI18N
+
+    private static final String STATISTICS_URL =
+            "https://vaadin.com/stats/nbplugin?"
+                    + "pluginver={0}&addon={1}&addonver={2}"; // NOI18N
+
+    private static final String CURRENT_VERSION = "1.1"; // NOI18N
 
     private POMUtils() {
     }
@@ -365,6 +377,46 @@ public final class POMUtils {
         ModelUtils.addDependency(pom, groupId, artifactId, version, null,
                 scope, null, false);
         mavenProject.downloadDependencyAndJavadocSource(false);
+        sendUsageStatistics(artifactId, version);
+    }
+
+    private static void sendUsageStatistics( String artifactId, String version )
+    {
+        if (!VaadinConfiguration.getInstance().isStatisticsEnabled()) {
+            return;
+        }
+        String statistics =
+                MessageFormat.format(STATISTICS_URL, getPluginVersion(),
+                        artifactId, version);
+        InputStream inputStream = null;
+        try {
+            URL url = new URL(statistics);
+            URLConnection connection = url.openConnection();
+            connection.connect();
+            inputStream = connection.getInputStream();
+            byte[] bytes = new byte[100];
+            while (inputStream.read(bytes) != -1) {
+            }
+        }
+        catch (MalformedURLException e) {
+            Logger.getLogger(POMUtils.class.getName()).log(Level.INFO, null, e);
+        }
+        catch (IOException e) {
+            Logger.getLogger(POMUtils.class.getName()).log(Level.FINE, null, e);
+        }
+        finally {
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                }
+                catch (IOException ignore) {
+                }
+            }
+        }
+    }
+
+    private static String getPluginVersion() {
+        return CURRENT_VERSION;
     }
 
     private static void createGwtXml( VaadinSupport support,

@@ -18,6 +18,7 @@
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-editor-lib.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-editor-lib2.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-editor-mimelookup.jar"/>
+	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-editor-util.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-j2ee-dd.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-java-lexer.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-java-platform.jar"/>

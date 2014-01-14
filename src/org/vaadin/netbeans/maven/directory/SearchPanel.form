@@ -19,7 +19,7 @@
           <Group type="102" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="splitPanel" pref="642" max="32767" attributes="0"/>
+                  <Component id="mySplitPanel" pref="855" max="32767" attributes="0"/>
                   <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="search" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -32,11 +32,11 @@
                               <EmptySpace max="32767" attributes="0"/>
                               <Component id="license" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <Component id="mySearch" max="32767" attributes="0"/>
+                          <Component id="mySearch" min="-2" pref="552" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                          <Component id="myFields" min="-2" pref="205" max="-2" attributes="0"/>
+                          <Component id="myFields" pref="205" max="32767" attributes="0"/>
                           <Component id="myLicenseType" max="32767" attributes="0"/>
                       </Group>
                   </Group>
@@ -62,7 +62,7 @@
                   <Component id="myFields" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="splitPanel" pref="370" max="32767" attributes="0"/>
+              <Component id="mySplitPanel" pref="365" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
@@ -86,7 +86,7 @@
         </Property>
       </Properties>
       <AuxValues>
-        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;Object&gt;"/>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;MaturityWrapper&gt;"/>
       </AuxValues>
     </Component>
     <Component class="javax.swing.JLabel" name="license">
@@ -131,9 +131,9 @@
         <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;TextSearchFields&gt;"/>
       </AuxValues>
     </Component>
-    <Container class="javax.swing.JSplitPane" name="splitPanel">
+    <Container class="javax.swing.JSplitPane" name="mySplitPanel">
       <Properties>
-        <Property name="dividerLocation" type="int" value="250"/>
+        <Property name="dividerLocation" type="int" value="350"/>
       </Properties>
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JSplitPaneSupportLayout"/>
@@ -173,8 +173,12 @@
           <SubComponents>
             <Component class="javax.swing.JEditorPane" name="myDocPane">
               <Properties>
+                <Property name="editable" type="boolean" value="false"/>
                 <Property name="contentType" type="java.lang.String" value="text/html" noResource="true"/>
               </Properties>
+              <AuxValues>
+                <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new AddOnDocPane();"/>
+              </AuxValues>
             </Component>
           </SubComponents>
         </Container>

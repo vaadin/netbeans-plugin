@@ -15,6 +15,8 @@
  */
 package org.vaadin.netbeans.maven.editor.completion;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
@@ -22,15 +24,28 @@ import java.util.Date;
  */
 public class SearchResult {
 
+    private static final SimpleDateFormat FORMAT = new SimpleDateFormat(
+            "yyyy-MM-dd'T'HH:mm:ssX");
+
     SearchResult( String name, String rating, String updateDate ) {
         myName = name;
         myRating = rating;
         myUpdatedDate = updateDate;
 
         try {
-            myRatingValue = Double.parseDouble(rating);
+            if (rating != null) {
+                myRatingValue = Double.parseDouble(rating);
+            }
         }
         catch (NumberFormatException ignore) {
+        }
+
+        try {
+            if (updateDate != null) {
+                myDate = FORMAT.parse(updateDate);
+            }
+        }
+        catch (ParseException ignore) {
         }
     }
 

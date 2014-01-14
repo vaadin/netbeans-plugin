@@ -13,24 +13,28 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.vaadin.netbeans.maven.editor.completion;
+package org.vaadin.netbeans.maven.directory;
 
-import java.util.Collection;
-
-import org.vaadin.netbeans.maven.editor.completion.SourceClass.SourceType;
+import org.netbeans.lib.editor.util.StringEscapeUtils;
 
 /**
  * @author denis
  */
-public interface SearchStrategy {
+public final class EscapeUtils {
 
-    Collection<? extends AddOnClass> searchClasses( String prefix,
-            SourceType type );
+    private static final String QUOTE = "'"; // NOI18N
 
-    AddOnDoc getDoc( AddOnClass clazz );
+    private static final String ESCAPED_QUOTE = "%27"; // NOI18N
 
-    Collection<? extends SearchResult> searchAddons( SearchQuery query );
+    private EscapeUtils() {
+    }
 
-    AddOn getAddOn( SearchResult result );
+    public static String escapeHtml( String text ) {
+        return StringEscapeUtils.escapeHtml(text);
+    }
 
+    public static String escapeAttribute( String text ) {
+        String escaped = StringEscapeUtils.escapeHtml(text);
+        return escaped.replaceAll(QUOTE, ESCAPED_QUOTE);
+    }
 }

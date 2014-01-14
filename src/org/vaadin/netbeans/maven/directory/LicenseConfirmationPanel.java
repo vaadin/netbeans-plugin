@@ -14,7 +14,7 @@
  * the License.
  */
 
-package org.vaadin.netbeans.maven.editor.completion;
+package org.vaadin.netbeans.maven.directory;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;

@@ -23,13 +23,22 @@ import java.util.List;
  */
 public class AddOn extends AbstractAddOn {
 
+    AddOn( String name ) {
+        this(name, null);
+    }
+
     AddOn( String name, List<SourceClass> classes ) {
         super(name);
-        myClasses = classes;
+        if (classes == null) {
+            myClasses = Collections.emptyList();
+        }
+        else {
+            myClasses = Collections.unmodifiableList(classes);
+        }
     }
 
     public List<SourceClass> getClasses() {
-        return Collections.unmodifiableList(myClasses);
+        return myClasses;
     }
 
     public String getLastUpdate() {

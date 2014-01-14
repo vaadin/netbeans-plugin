@@ -20,15 +20,10 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.swing.ImageIcon;
-import javax.swing.JButton;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
@@ -50,14 +45,11 @@ import org.netbeans.spi.editor.completion.CompletionItem;
 import org.netbeans.spi.editor.completion.CompletionTask;
 import org.netbeans.spi.editor.completion.support.AsyncCompletionTask;
 import org.netbeans.spi.editor.completion.support.CompletionUtilities;
-import org.openide.DialogDescriptor;
-import org.openide.DialogDisplayer;
 import org.openide.filesystems.FileObject;
 import org.openide.util.ImageUtilities;
-import org.openide.util.Mutex;
 import org.openide.util.NbBundle;
 import org.openide.util.RequestProcessor;
-import org.vaadin.netbeans.customizer.VaadinConfiguration;
+import org.vaadin.netbeans.maven.directory.AbstractLicenseChooser;
 import org.vaadin.netbeans.maven.editor.completion.AbstractAddOn.License;
 import org.vaadin.netbeans.maven.editor.completion.SourceClass.SourceType;
 import org.vaadin.netbeans.utils.POMUtils;
@@ -68,8 +60,9 @@ import com.sun.source.tree.ImportTree;
 /**
  * @author denis
  */
-@NbBundle.Messages({ "ok=OK", "cancel=Cancel" })
-class AddonCompletionItem implements CompletionItem {
+class AddonCompletionItem extends AbstractLicenseChooser implements
+        CompletionItem
+{
 
     private static final String TEST = "test"; // NOI18N
 
@@ -194,7 +187,8 @@ class AddonCompletionItem implements CompletionItem {
     @NbBundle.Messages({ "# {0} - plugin",
             "addOnIsNotFound=Add-On ''{0}'' is not found in Vaadin directory" })
     private boolean addDependency( final Document document ) {
-        final License license = getLicense();
+        final License license =
+                getLicense(AddOnProvider.getInstance().getDoc(myClass));
         if (license == null) {
             return false;
         }
@@ -216,105 +210,6 @@ class AddonCompletionItem implements CompletionItem {
             }
         });
         return true;
-    }
-
-    private License getLicense() {
-        AddOnDoc doc = AddOnProvider.getInstance().getDoc(myClass);
-        List<License> licenses = doc.getLicenses();
-        if (licenses.size() == 1) {
-            if (acceptLicense(licenses.get(0))) {
-                return licenses.get(0);
-            }
-        }
-        else {
-            Map<String, String> map = new LinkedHashMap<>();
-            Map<String, License> licenseMap = new HashMap<>();
-            for (License license : licenses) {
-                map.put(license.getName(), license.getUrl());
-                licenseMap.put(license.getName(), license);
-            }
-            String license = chooseLicense(map);
-            if (license != null) {
-                License selected = licenseMap.get(license);
-                if (acceptLicense(selected)) {
-                    return selected;
-                }
-            }
-        }
-        return null;
-    }
-
-    private boolean acceptLicense( License license ) {
-        if (!license.isFree() || requireAcceptFreeLicense()) {
-            KnownLicense knownLicense =
-                    KnownLicense.forString(license.getName());
-            String text = null;
-            if (knownLicense != null) {
-                text = knownLicense.getText();
-            }
-            return confirm(text, license.getName(), license.getUrl());
-        }
-        return true;
-    }
-
-    private boolean requireAcceptFreeLicense() {
-        return VaadinConfiguration.getInstance()
-                .freeAddonRequiresConfirmation();
-    }
-
-    @NbBundle.Messages("selectLicense=Select License")
-    private String chooseLicense( final Map<String, String> map ) {
-        return Mutex.EVENT.readAccess(new Mutex.Action<String>() {
-
-            @Override
-            public String run() {
-                JButton ok = new JButton(Bundle.ok());
-                ok.setEnabled(false);
-                LicenseSelectPanel panel = new LicenseSelectPanel(map, ok);
-                JButton cancel = new JButton(Bundle.cancel());
-                DialogDescriptor descriptor =
-                        new DialogDescriptor(panel, Bundle.selectLicense(),
-                                true, new Object[] { ok, cancel }, ok,
-                                DialogDescriptor.DEFAULT_ALIGN, null, null);
-                Object result = DialogDisplayer.getDefault().notify(descriptor);
-                if (ok.equals(result)) {
-                    return panel.getSelectedLicense();
-                }
-                else {
-                    return null;
-                }
-            }
-
-        });
-    }
-
-    @NbBundle.Messages("acceptLicense=Accept License Agreement")
-    private boolean confirm( final String text, final String name,
-            final String url )
-    {
-        return Mutex.EVENT.readAccess(new Mutex.Action<Boolean>() {
-
-            @Override
-            public Boolean run() {
-                JButton ok = new JButton(Bundle.ok());
-                ok.setEnabled(false);
-                Object panel = null;
-                if (text == null) {
-                    panel = new LicenseUrlConfirmationPanel(name, url, ok);
-                }
-                else {
-                    panel = new LicenseConfirmationPanel(text, ok);
-                }
-                JButton cancel = new JButton(Bundle.cancel());
-                DialogDescriptor descriptor =
-                        new DialogDescriptor(panel, Bundle.acceptLicense(),
-                                true, new Object[] { ok, cancel }, ok,
-                                DialogDescriptor.DEFAULT_ALIGN, null, null);
-                Object result = DialogDisplayer.getDefault().notify(descriptor);
-                return ok.equals(result);
-            }
-
-        });
     }
 
     private void addImport( Document document, String fqn ) {

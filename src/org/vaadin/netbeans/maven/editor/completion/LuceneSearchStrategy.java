@@ -15,107 +15,48 @@
  */
 package org.vaadin.netbeans.maven.editor.completion;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.document.AbstractField;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Fieldable;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.IndexWriterConfig.OpenMode;
-import org.apache.lucene.index.Term;
 import org.apache.lucene.queryParser.ParseException;
-import org.apache.lucene.queryParser.QueryParser;
-import org.apache.lucene.search.BooleanClause.Occur;
-import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.PrefixQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
-import org.openide.modules.Places;
 import org.vaadin.netbeans.maven.editor.completion.AbstractAddOn.Builder;
 import org.vaadin.netbeans.maven.editor.completion.AbstractAddOn.License;
-import org.vaadin.netbeans.maven.editor.completion.AbstractAddOn.Maturity;
 import org.vaadin.netbeans.maven.editor.completion.SourceClass.SourceType;
-import org.vaadin.netbeans.retriever.AbstractRetriever;
 
 /**
  * @author denis
  */
-class LuceneSearchStrategy implements SearchStrategy {
-
-    private static final String ADD_ON_INDEX = "addOnIndex"; // NOI18N
+class LuceneSearchStrategy extends LuceneIndexing implements SearchStrategy {
 
     private static final Logger LOG = Logger
             .getLogger(LuceneSearchStrategy.class.getName());
 
-    private static final String NAME = "name"; // NOI18N
-
-    private static final String CLASS_NAME = "className"; // NOI18N
-
-    private static final String CLASS_FQN = "classFqn"; // NOI18N
-
-    private static final String URL = "url"; // NOI18N
-
-    private static final String DESCRIPTION = "description"; // NOI18N 
-
-    private static final String RATING = "rating"; // NOI18N
-
-    private static final String ARTIFACT_ID = "artifactId"; // NOI18N
-
-    private static final String GROUP_ID = "groupId"; // NOI18N
-
-    private static final String VERSION = "version"; // NOI18N
-
-    private static final String MATURITY = "maturity"; // NOI18N
-
-    private static final String SOURCE_TYPE = "sourceType"; // NOI18N
-
-    private static final String FREE = "free"; // NOI18N
-
-    private static final String DOC_TYPE = "type"; // NOI18N
-
-    private static final String ID = "id"; // NOI18N
-
-    private static final String LAST_UPDATE = "lastUpdate"; // NOI18N 
-
-    private enum DocType {
-        CLASS,
-        LICENSE,
-        INFO;
-    }
-
     LuceneSearchStrategy() {
-        myLock = new ReentrantReadWriteLock();
-        File vaadinFolder =
-                Places.getCacheSubdirectory(AbstractRetriever.VAADIN);
-        myIndexDir = new File(vaadinFolder, ADD_ON_INDEX);
+        myQuerySupport = new QuerySupport();
     }
 
     @Override
     public Collection<? extends AddOnClass> searchClasses( String prefix,
             SourceType type )
     {
-        myLock.readLock().lock();
+        getLock().readLock().lock();
         try {
             if (isInitialized()) {
                 return doSearchClasses(prefix, type, null);
@@ -125,13 +66,13 @@ class LuceneSearchStrategy implements SearchStrategy {
             }
         }
         finally {
-            myLock.readLock().unlock();
+            getLock().readLock().unlock();
         }
     }
 
     @Override
     public AddOnDoc getDoc( AddOnClass clazz ) {
-        myLock.readLock().lock();
+        getLock().readLock().lock();
         try {
             if (isInitialized()) {
                 return doGetDoc(clazz);
@@ -141,31 +82,191 @@ class LuceneSearchStrategy implements SearchStrategy {
             }
         }
         finally {
-            myLock.readLock().unlock();
+            getLock().readLock().unlock();
         }
     }
 
-    void index( Collection<AddOn> addons ) {
-        myLock.writeLock().lock();
+    @Override
+    public Collection<? extends SearchResult> searchAddons( SearchQuery query )
+    {
+        getLock().readLock().lock();
         try {
-            doIndex(addons);
+            if (isInitialized()) {
+                return doSearchAddons(query);
+            }
+            else {
+                return Collections.emptyList();
+            }
         }
         finally {
-            myLock.writeLock().unlock();
+            getLock().readLock().unlock();
         }
     }
 
-    boolean isInitialized() {
-        return myIndexDir.exists();
+    @Override
+    public AddOn getAddOn( SearchResult result ) {
+        getLock().readLock().lock();
+        try {
+            if (isInitialized()) {
+                return doGetAddon(result);
+            }
+            else {
+                return null;
+            }
+        }
+        finally {
+            getLock().readLock().unlock();
+        }
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return LOG;
+    }
+
+    private Collection<? extends SearchResult> doSearchAddons( SearchQuery query )
+    {
+        IndexReader reader = null;
+        IndexSearcher searcher = null;
+        Directory directory = null;
+        Analyzer analyzer = null;
+        try {
+            analyzer = new StandardAnalyzer(Version.LUCENE_35);
+            directory = FSDirectory.open(getIndexDir());
+            reader = IndexReader.open(directory);
+            searcher = new IndexSearcher(reader);
+
+            Query searchQuery =
+                    myQuerySupport.createSearchInfoQuery(query, analyzer);
+            return doSearchAddons(searchQuery, analyzer, reader, searcher);
+        }
+        catch (ParseException e) {
+            getLogger().log(Level.FINE, null, e);
+        }
+        catch (IOException e) {
+            getLogger().log(Level.FINE, null, e);
+        }
+        finally {
+            closeReadIndex(reader, searcher, directory, analyzer);
+        }
+        return Collections.emptyList();
+    }
+
+    private Collection<? extends SearchResult> doSearchAddons(
+            Query searchQuery, Analyzer analyzer, IndexReader reader,
+            IndexSearcher searcher ) throws IOException
+    {
+        List<LuceneSearchResult> result = new LinkedList<>();
+
+        ScoreDoc[] hits =
+                searcher.search(searchQuery, Integer.MAX_VALUE).scoreDocs;
+        for (int i = 0; i < hits.length; i++) {
+            Document hitDoc = searcher.doc(hits[i].doc);
+            String name = getField(QuerySupport.NAME, hitDoc);
+            String rating = getField(QuerySupport.RATING, hitDoc);
+            String date = getField(QuerySupport.LAST_UPDATE, hitDoc);
+            String id = getField(QuerySupport.ID, hitDoc);
+            LuceneSearchResult res =
+                    new LuceneSearchResult(name, rating, date, id,
+                            getSessionSeq());
+            result.add(res);
+        }
+        return result;
+    }
+
+    private AddOn doGetAddon( SearchResult result ) {
+        AddOn addOn = new AddOn(result.getName());
+
+        String id = getInfoId(result);
+        if (id == null) {
+            LOG.log(Level.WARNING, "Unable to find id for search result, name="//NOI18N
+                    + result.getName());
+            return null;
+        }
+        return doGetAddOnInfo(addOn, AddOn.class, id);
+    }
+
+    private String getInfoId( SearchResult result ) {
+        String id = null;
+        if (result instanceof LuceneSearchResult) {
+            LuceneSearchResult luceneResult = (LuceneSearchResult) result;
+            if (getSessionSeq() == luceneResult.getSessionId()) {
+                id = luceneResult.getId().toString();
+            }
+        }
+        if (id == null) {
+            /*
+             * In rare case <code>result</code> could be created by other 
+             * strategy or based on different indexing session.
+             */
+            id = getInfoIdByName(result.getName());
+        }
+        return id;
+    }
+
+    private String getInfoIdByName( String name ) {
+        IndexReader reader = null;
+        IndexSearcher searcher = null;
+        Directory directory = null;
+        String id = null;
+        try {
+            directory = FSDirectory.open(getIndexDir());
+            reader = IndexReader.open(directory);
+            searcher = new IndexSearcher(reader);
+
+            ScoreDoc[] hits =
+                    searcher.search(myQuerySupport.createInfoQuery(name),
+                            Integer.MAX_VALUE).scoreDocs;
+            for (int i = 0; i < hits.length; i++) {
+                Document hitDoc = searcher.doc(hits[i].doc);
+                String docName = getField(QuerySupport.NAME, hitDoc);
+                if (name.equals(docName)) {
+                    id = getField(QuerySupport.ID, hitDoc);
+                    break;
+                }
+            }
+        }
+        catch (IOException e) {
+            getLogger().log(Level.FINE, null, e);
+        }
+        finally {
+            closeReadIndex(reader, searcher, directory, null);
+        }
+        return id;
     }
 
     private AddOnDoc doGetDoc( AddOnClass clazz ) {
+        LuceneAddOnClass addOnClass = getLuceneAddOnClass(clazz);
+        if (addOnClass == null) {
+            LOG.log(Level.WARNING,
+                    "Unable to find lucene data for addon class, addon name={0}, "
+                            + "class name={1}", //NOI18N
+                    new Object[] { clazz.getAddOnName(),
+                            clazz.getQualifiedName() });
+            return null;
+        }
+
+        AddOnDoc result =
+                new AddOnDoc(addOnClass.getAddOnName(), addOnClass.getName(),
+                        addOnClass.getQualifiedName());
+        return doGetAddOnInfo(result, AddOnDoc.class, addOnClass.getId()
+                .toString());
+    }
+
+    private LuceneAddOnClass getLuceneAddOnClass( AddOnClass clazz ) {
         LuceneAddOnClass addOnClass = null;
         if (clazz instanceof LuceneAddOnClass) {
             addOnClass = (LuceneAddOnClass) clazz;
+            if (getSessionSeq() != addOnClass.getSessionId()) {
+                addOnClass = null;
+            }
         }
-        else {
-            // in rare case <code>clazz</code> could be created by other strategy
+
+        if (addOnClass == null) {
+            /*
+             *  In rare case <code>clazz</code> could be created by other 
+             *  strategy or based on different indexing session.
+             */
             Collection<LuceneAddOnClass> classes =
                     doSearchClasses(clazz.getName(), clazz.getType(),
                             clazz.getQualifiedName());
@@ -178,38 +279,40 @@ class LuceneSearchStrategy implements SearchStrategy {
                 }
             }
         }
-        assert addOnClass != null;
+        return addOnClass;
+    }
 
-        AddOnDoc result =
-                new AddOnDoc(addOnClass.getAddOnName(), addOnClass.getName(),
-                        addOnClass.getQualifiedName());
+    private <T extends AbstractAddOn> T doGetAddOnInfo( T addon,
+            Class<T> clazz, String id )
+    {
         IndexReader reader = null;
         IndexSearcher searcher = null;
         Directory directory = null;
         Analyzer analyzer = null;
         try {
             analyzer = new StandardAnalyzer(Version.LUCENE_35);
-            directory = FSDirectory.open(myIndexDir);
+            directory = FSDirectory.open(getIndexDir());
             reader = IndexReader.open(directory);
             searcher = new IndexSearcher(reader);
 
-            Query query = createDocQuery(addOnClass, analyzer);
-            result = searchDoc(result, searcher, query);
+            Query query = myQuerySupport.createAddOnInfoQuery(id, analyzer);
+            addon = searchAddOnInfo(addon, clazz, searcher, query);
         }
         catch (ParseException e) {
-            LOG.log(Level.FINE, null, e);
+            getLogger().log(Level.FINE, null, e);
         }
         catch (IOException e) {
-            LOG.log(Level.FINE, null, e);
+            getLogger().log(Level.FINE, null, e);
         }
         finally {
             closeReadIndex(reader, searcher, directory, analyzer);
         }
-        return result;
+        return addon;
     }
 
-    private AddOnDoc searchDoc( AddOnDoc result, IndexSearcher searcher,
-            Query query ) throws IOException, CorruptIndexException
+    private <T extends AbstractAddOn> T searchAddOnInfo( T result,
+            Class<T> clazz, IndexSearcher searcher, Query query )
+            throws IOException, CorruptIndexException
     {
         ScoreDoc[] hits = searcher.search(query, Integer.MAX_VALUE).scoreDocs;
         List<License> licenses = new ArrayList<>(hits.length);
@@ -221,55 +324,59 @@ class LuceneSearchStrategy implements SearchStrategy {
         String version = null;
         String url = null;
         String rating = null;
+        String lastUpdated = null;
 
         for (int i = 0; i < hits.length; i++) {
             Document hitDoc = searcher.doc(hits[i].doc);
-            String type = getField(DOC_TYPE, hitDoc);
-            if (DocType.LICENSE.toString().equals(type)) {
+            String type = getField(QuerySupport.DOC_TYPE, hitDoc);
+            if (QuerySupport.DocType.LICENSE.toString().equals(type)) {
                 licenses.add(buildLicense(hitDoc));
             }
-            else if (DocType.INFO.toString().equals(type)) {
+            else if (QuerySupport.DocType.INFO.toString().equals(type)) {
                 assert !infoFound;
                 infoFound = true;
-                artifactId = getField(ARTIFACT_ID, hitDoc);
-                groupId = getField(GROUP_ID, hitDoc);
-                description = getField(DESCRIPTION, hitDoc);
-                maturity = getField(MATURITY, hitDoc);
-                version = getField(VERSION, hitDoc);
-                rating = getField(RATING, hitDoc);
-                url = getField(URL, hitDoc);
+                artifactId = getField(QuerySupport.ARTIFACT_ID, hitDoc);
+                groupId = getField(QuerySupport.GROUP_ID, hitDoc);
+                description = getField(QuerySupport.DESCRIPTION, hitDoc);
+                maturity = getField(QuerySupport.MATURITY, hitDoc);
+                version = getField(QuerySupport.VERSION, hitDoc);
+                rating = getField(QuerySupport.RATING, hitDoc);
+                url = getField(QuerySupport.URL, hitDoc);
+                lastUpdated = getField(QuerySupport.LAST_UPDATE, hitDoc);
             }
         }
         assert infoFound;
-        Builder<AddOnDoc> builder = new Builder<>(AddOnDoc.class);
-        result =
-                builder.build(result, groupId, artifactId, version,
-                        description, rating, url, maturity,
-                        fillLicenses(licenses, groupId, artifactId, version));
+
+        if (clazz.equals(AddOn.class)) {
+            AddOn.Builder builder = new AddOn.Builder();
+            result =
+                    clazz.cast(builder.build(
+                            AddOn.class.cast(result),
+                            groupId,
+                            artifactId,
+                            version,
+                            description,
+                            rating,
+                            url,
+                            maturity,
+                            lastUpdated,
+                            fillLicenses(licenses, groupId, artifactId, version)));
+        }
+        else {
+            Builder<T> builder = new Builder<>(clazz);
+            result =
+                    builder.build(
+                            result,
+                            groupId,
+                            artifactId,
+                            version,
+                            description,
+                            rating,
+                            url,
+                            maturity,
+                            fillLicenses(licenses, groupId, artifactId, version));
+        }
         return result;
-    }
-
-    private Query createDocQuery( LuceneAddOnClass clazz, Analyzer analyzer )
-            throws ParseException
-    {
-        TermQuery infoQuery =
-                new TermQuery(new Term(DOC_TYPE, DocType.INFO.toString()));
-        TermQuery licenseQuery =
-                new TermQuery(new Term(DOC_TYPE, DocType.LICENSE.toString()));
-        BooleanQuery typeQuery = new BooleanQuery();
-        typeQuery.add(infoQuery, Occur.SHOULD);
-        typeQuery.add(licenseQuery, Occur.SHOULD);
-
-        TermQuery nameQuery =
-                new TermQuery(new Term(ID, clazz.getId().toString()));
-
-        BooleanQuery query = new BooleanQuery();
-        query.add(nameQuery, Occur.MUST);
-        query.add(typeQuery, Occur.MUST);
-
-        QueryParser parser = new QueryParser(Version.LUCENE_35, NAME, analyzer);
-        Query docQuery = parser.parse(query.toString());
-        return docQuery;
     }
 
     private List<License> fillLicenses( List<License> licenses, String groupId,
@@ -288,8 +395,9 @@ class LuceneSearchStrategy implements SearchStrategy {
     }
 
     private License buildLicense( Document doc ) {
-        return new License(Boolean.valueOf(getField(FREE, doc)), getField(NAME,
-                doc), getField(URL, doc));
+        return new License(Boolean.valueOf(getField(QuerySupport.FREE, doc)),
+                getField(QuerySupport.NAME, doc), getField(QuerySupport.URL,
+                        doc), getField(QuerySupport.ARTIFACT_ID, doc));
     }
 
     private Collection<LuceneAddOnClass> doSearchClasses( String prefix,
@@ -302,29 +410,32 @@ class LuceneSearchStrategy implements SearchStrategy {
         Analyzer analyzer = null;
         try {
             analyzer = new StandardAnalyzer(Version.LUCENE_35);
-            directory = FSDirectory.open(myIndexDir);
+            directory = FSDirectory.open(getIndexDir());
             reader = IndexReader.open(directory);
             searcher = new IndexSearcher(reader);
 
-            Query query = createClassesQuery(prefix, type, fqn, analyzer);
+            Query query =
+                    myQuerySupport.createClassesQuery(prefix, type, fqn,
+                            analyzer);
             ScoreDoc[] hits =
                     searcher.search(query, Integer.MAX_VALUE).scoreDocs;
             for (int i = 0; i < hits.length; i++) {
                 Document hitDoc = searcher.doc(hits[i].doc);
                 LuceneAddOnClass clazz =
-                        new LuceneAddOnClass(type,
-                                getField(CLASS_NAME, hitDoc), getField(
-                                        CLASS_FQN, hitDoc), getField(NAME,
-                                        hitDoc), getField(ID, hitDoc));
+                        new LuceneAddOnClass(type, getField(
+                                QuerySupport.CLASS_NAME, hitDoc), getField(
+                                QuerySupport.CLASS_FQN, hitDoc), getField(
+                                QuerySupport.NAME, hitDoc), getField(
+                                QuerySupport.ID, hitDoc), getSessionSeq());
                 classes.add(clazz);
             }
         }
         catch (ParseException e) {
             // could happen in case bad prefix
-            LOG.log(Level.INFO, null, e);
+            getLogger().log(Level.INFO, null, e);
         }
         catch (IOException e) {
-            LOG.log(Level.FINE, null, e);
+            getLogger().log(Level.FINE, null, e);
         }
         finally {
             closeReadIndex(reader, searcher, directory, analyzer);
@@ -332,313 +443,53 @@ class LuceneSearchStrategy implements SearchStrategy {
         return classes;
     }
 
-    private Query createClassesQuery( String prefix, SourceType type,
-            String fqn, Analyzer analyzer ) throws ParseException
-    {
-        Query prefixQuery = new PrefixQuery(new Term(CLASS_NAME, prefix));
-        Query typeQuery =
-                new TermQuery(new Term(DOC_TYPE, DocType.CLASS.toString()));
-        Query sourceType =
-                new TermQuery(new Term(SOURCE_TYPE, type.toString()));
-        BooleanQuery query = new BooleanQuery();
-        query.add(prefixQuery, Occur.MUST);
-        query.add(typeQuery, Occur.MUST);
-        query.add(sourceType, Occur.MUST);
-        if (fqn != null) {
-            query.add(new TermQuery(new Term(CLASS_FQN, fqn)), Occur.MUST);
-        }
-
-        QueryParser parser =
-                new QueryParser(Version.LUCENE_35, CLASS_NAME, analyzer);
-        Query serchQuery = parser.parse(query.toString());
-        return serchQuery;
-    }
-
-    private String getField( String name, Document document ) {
-        return document.get(name);
-    }
-
-    private void closeReadIndex( IndexReader reader, IndexSearcher searcher,
-            Directory directory, Analyzer analyzer )
-    {
-        if (reader != null) {
-            try {
-                reader.close();
-            }
-            catch (IOException e) {
-                LOG.log(Level.FINE, null, e);
-            }
-        }
-        if (searcher != null) {
-            try {
-                searcher.close();
-            }
-            catch (IOException e) {
-                LOG.log(Level.FINE, null, e);
-            }
-        }
-        if (directory != null) {
-            try {
-                directory.close();
-            }
-            catch (IOException e) {
-                LOG.log(Level.FINE, null, e);
-            }
-        }
-        if (analyzer != null) {
-            analyzer.close();
-        }
-    }
-
-    private void doIndex( Collection<AddOn> addons ) {
-        Directory directory = null;
-        IndexWriter writer = null;
-        Analyzer analyzer = null;
-        try {
-            if (!myIndexDir.exists() && !myIndexDir.mkdirs()) {
-                LOG.log(Level.WARNING, "Unable to create index directory"); // NOI18N
-                return;
-            }
-            analyzer = new StandardAnalyzer(Version.LUCENE_35);
-
-            directory = FSDirectory.open(myIndexDir);
-            IndexWriterConfig conf =
-                    new IndexWriterConfig(Version.LUCENE_35, analyzer);
-            conf.setOpenMode(OpenMode.CREATE);
-            writer = new IndexWriter(directory, conf);
-            writer.deleteAll();
-
-            int i = 0;
-            for (AddOn addon : addons) {
-                Collection<Document> docs = createDocument(addon, i);
-                for (Document document : docs) {
-                    writer.addDocument(document);
-                }
-                writer.commit();
-                i++;
-            }
-        }
-        catch (IOException e) {
-            LOG.log(Level.INFO, null, e);
-        }
-        finally {
-            if (writer != null) {
-                try {
-                    writer.close();
-                }
-                catch (IOException e) {
-                    LOG.log(Level.FINE, null, e);
-                }
-            }
-            if (directory != null) {
-                try {
-                    directory.close();
-                }
-                catch (IOException e) {
-                    LOG.log(Level.FINE, null, e);
-                }
-            }
-            if (analyzer != null) {
-                analyzer.close();
-            }
-        }
-    }
-
-    private Collection<Document> createDocument( AddOn addon, int id ) {
-        List<Document> result = new LinkedList<>();
-
-        List<SourceClass> classes = addon.getClasses();
-        for (SourceClass clazz : classes) {
-            result.add(createClassDocument(addon, clazz, id));
-        }
-
-        List<License> licenses = addon.getLicenses();
-        for (License license : licenses) {
-            Document document = createLicenseDocument(addon, license, id);
-            if (document != null) {
-                result.add(document);
-            }
-        }
-
-        result.add(createInfoDocument(addon, id));
-
-        return result;
-    }
-
-    private Document createInfoDocument( AddOn addon, int id ) {
-        Document doc = new Document();
-
-        String artifactId = addon.getArtifactId();
-        String groupId = addon.getGroupId();
-        String description = addon.getDescription();
-        Maturity maturity = addon.getMaturity();
-        String version = addon.getMavenVersion();
-        String rating = addon.getRating();
-        String url = addon.getUrl();
-        String lastUpdate = addon.getLastUpdate();
-
-        add(doc, new IndexedField(NAME, addon.getName()));
-        add(doc, new IndexedField(ID, String.valueOf(id)));
-        add(doc, new StoredField(ARTIFACT_ID, artifactId));
-        add(doc, new StoredField(GROUP_ID, groupId));
-        add(doc, new IndexedField(DESCRIPTION, description));
-        add(doc,
-                new IndexedField(MATURITY, maturity == null ? null : maturity
-                        .toString()));
-        add(doc, new StoredField(VERSION, version));
-        add(doc, new StoredField(RATING, rating));
-        add(doc, new StoredField(URL, url));
-        add(doc, new StoredField(LAST_UPDATE, lastUpdate));
-        add(doc, new IndexedField(DOC_TYPE, DocType.INFO.toString()));
-
-        return doc;
-    }
-
-    private Document createLicenseDocument( AddOn addon, License license, int id )
-    {
-        String name = license.getName();
-        String url = license.getUrl();
-
-        String artifactId = license.getArtifactId();
-        String groupId = license.getGroupId();
-        boolean isFree = license.isFree();
-
-        Document doc = new Document();
-
-        add(doc, new IndexedField(ID, String.valueOf(id), false));
-        add(doc, new StoredField(NAME, name));
-        add(doc, new StoredField(URL, url));
-        if (!add(doc, new StoredField(ARTIFACT_ID, artifactId))
-                && addon.getArtifactId() == null)
-        {
-            return null;
-        }
-        if (!add(doc, new StoredField(GROUP_ID, groupId))
-                && addon.getGroupId() == null)
-        {
-            return null;
-        }
-        add(doc, new IndexedField(FREE, Boolean.valueOf(isFree).toString()));
-        add(doc, new IndexedField(DOC_TYPE, DocType.LICENSE.toString()));
-
-        return doc;
-    }
-
-    private Document createClassDocument( AddOn addon, SourceClass clazz, int id )
-    {
-        String name = clazz.getName();
-        String fqn = clazz.getQualifiedName();
-        SourceType type = clazz.getType();
-        Document doc = new Document();
-
-        add(doc, new IndexedField(ID, String.valueOf(id)));
-        add(doc, new StoredField(NAME, addon.getName()));
-        add(doc, new IndexedField(CLASS_NAME, name));
-        add(doc, new IndexedField(CLASS_FQN, fqn));
-        add(doc, new IndexedField(DOC_TYPE, DocType.CLASS.toString()));
-        add(doc,
-                new IndexedField(SOURCE_TYPE, type == null ? null : type
-                        .toString()));
-        return doc;
-    }
-
-    private boolean add( Document doc, Fieldable field ) {
-        if (field instanceof StoredField) {
-            StoredField stored = (StoredField) field;
-            if (!stored.isEmpty()) {
-                doc.add(field);
-                return true;
-            }
-        }
-        else {
-            doc.add(field);
-            return true;
-        }
-        return false;
-    }
-
-    private ReentrantReadWriteLock myLock;
-
-    private File myIndexDir;
-
-    private static class StoredField extends AbstractField {
-
-        StoredField( String name, String value ) {
-            this.name = name;
-            fieldsData = value;
-
-            isStored = true;
-        }
-
-        @Override
-        public Reader readerValue() {
-            return null;
-        }
-
-        @Override
-        public String stringValue() {
-            return fieldsData.toString();
-        }
-
-        @Override
-        public TokenStream tokenStreamValue() {
-            return null;
-        }
-
-        boolean isEmpty() {
-            return fieldsData == null;
-        }
-
-    }
-
-    private static class IndexedField extends StoredField {
-
-        IndexedField( String name, String value ) {
-            super(name, value);
-
-            isIndexed = true;
-            isTokenized = true;
-        }
-
-        IndexedField( String name, String value, boolean stored ) {
-            this(name, value);
-
-            isStored = stored;
-        }
-
-    }
+    private QuerySupport myQuerySupport;
 
     private static class LuceneAddOnClass extends AddOnClass {
 
         LuceneAddOnClass( SourceType type, String name, String fqn,
-                String addonName, Object id )
+                String addonName, Object id, int seq )
         {
             super(type, name, fqn, addonName);
             myId = id;
+            mySessionId = seq;
         }
 
         public Object getId() {
             return myId;
         }
 
+        int getSessionId() {
+            return mySessionId;
+        }
+
         private final Object myId;
+
+        private final int mySessionId;
 
     }
 
     private static class LuceneSearchResult extends SearchResult {
 
-        LuceneSearchResult( Object id, String name, String rating,
-                String updateDate )
+        LuceneSearchResult( String name, String rating, String updateDate,
+                Object id, int seq )
         {
             super(name, rating, updateDate);
             myId = id;
+            mySessionId = seq;
         }
 
-        private Object getId() {
+        public Object getId() {
             return myId;
         }
 
-        private Object myId;
+        int getSessionId() {
+            return mySessionId;
+        }
+
+        private final Object myId;
+
+        private final int mySessionId;
     }
 
 }

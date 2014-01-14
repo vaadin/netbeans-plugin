@@ -54,23 +54,34 @@ public final class AddOnProvider {
         VaadinConfiguration config = VaadinConfiguration.getInstance();
         config.addPropertyChangeListener(new PropertyChangeListenerImpl());
 
-        if (config.isAddonCodeCompletionEnabled()) {
-            runUpdate(
-                    config.getDirectoryRequestStrategy().equals(
-                            RemoteDataAccessStrategy.PER_IDE_RUN), 0);
-        }
+        runUpdate(
+                config.getDirectoryRequestStrategy().equals(
+                        RemoteDataAccessStrategy.PER_IDE_RUN), 0);
     }
 
     public static AddOnProvider getInstance() {
         return INSTANCE;
     }
 
-    public Collection<SearchResult> searchAddons( SearchQuery query ) {
-        return null;
+    public Collection<? extends SearchResult> searchAddons( SearchQuery query )
+    {
+        SearchStrategy strategy = getSearchStrategy();
+        if (strategy == null) {
+            return Collections.emptyList();
+        }
+        checkUpdate();
+        return strategy.searchAddons(query);
     }
 
     public AddOn getAddOn( SearchResult result ) {
-        return null;
+        if (result == null) {
+            return null;
+        }
+        SearchStrategy strategy = getSearchStrategy();
+        if (strategy == null) {
+            return null;
+        }
+        return strategy.getAddOn(result);
     }
 
     Collection<? extends AddOnClass> searchClasses( String prefix,
@@ -230,16 +241,14 @@ public final class AddOnProvider {
     }
 
     private void enable( int delay ) {
-        if (VaadinConfiguration.getInstance().isAddonCodeCompletionEnabled()) {
-            runUpdate(false, delay);
-        }
+        runUpdate(false, delay);
     }
 
     private void runUpdate( boolean force, int delay ) {
         if (isUpdating.compareAndSet(false, true)) {
             CountDownLatch latch = new CountDownLatch(1);
-            boolean hasDirectoryTask = updateDirectoryInfo(false, delay, latch);
-            updateIndex(false, delay, hasDirectoryTask ? latch : null);
+            boolean hasDirectoryTask = updateDirectoryInfo(force, delay, latch);
+            updateIndex(force, delay, hasDirectoryTask ? latch : null);
         }
     }
 
@@ -248,7 +257,10 @@ public final class AddOnProvider {
         @Override
         public void propertyChange( PropertyChangeEvent evt ) {
             String propertyName = evt.getPropertyName();
-            if (VaadinConfiguration.CODE_COMPLETION.equals(propertyName)) {
+            if (VaadinConfiguration.CODE_COMPLETION.equals(propertyName)
+                    && VaadinConfiguration.getInstance()
+                            .isAddonCodeCompletionEnabled())
+            {
                 enable(0);
             }
         }

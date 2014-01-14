@@ -25,16 +25,20 @@ import org.openide.util.RequestProcessor;
 
 abstract class AbstractActionListener implements ActionListener, Runnable {
 
-    private static final ExecutorService REQUEST_PROCESSOR = new RequestProcessor(
-            VaadinAction.class);
+    private static final ExecutorService REQUEST_PROCESSOR =
+            new RequestProcessor(VaadinAction.class);
 
     @Override
     public void actionPerformed( ActionEvent e ) {
         if (SwingUtilities.isEventDispatchThread()) {
-            REQUEST_PROCESSOR.execute(this);
+            runOutAwt();
         }
         else {
             run();
         }
+    }
+
+    protected void runOutAwt() {
+        REQUEST_PROCESSOR.execute(this);
     }
 }

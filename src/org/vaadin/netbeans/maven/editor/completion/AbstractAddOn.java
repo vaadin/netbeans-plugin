@@ -194,17 +194,26 @@ public abstract class AbstractAddOn implements Cloneable {
             return myClass.cast(addon);
         }
 
+        public T build( T original, List<License> licenses ) {
+            AbstractAddOn addon;
+            try {
+                addon = (AbstractAddOn) original.clone();
+            }
+            catch (CloneNotSupportedException e) {
+                throw new RuntimeException(e);
+            }
+            addon.setLicenses(licenses);
+            return myClass.cast(addon);
+        }
+
         private java.lang.Class<T> myClass;
     }
 
     public static class License {
 
-        public License( boolean free, String name, String url ) {
-            if (name != null) {
-                myName = name.intern();
-            }
-            myUrl = url;
-            isFree = free;
+        public License( boolean free, String name, String url, String artifactId )
+        {
+            this(free, name, url, null, artifactId, null);
         }
 
         public License( boolean free, String name, String url, String groupId,
