@@ -69,6 +69,8 @@ class ComponentSelectPanel implements WizardDescriptor.Panel<WizardDescriptor> {
             if (!Template.EXTENSION.equals(template)) {
                 myComponent.setTitle(Bundle.superClassTitle());
             }
+            myComponent.populateExistingComponents(!Template.EXTENSION
+                    .equals(template));
         }
     }
 

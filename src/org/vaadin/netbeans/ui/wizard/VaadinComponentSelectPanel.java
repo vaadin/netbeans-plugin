@@ -27,6 +27,8 @@ import java.util.logging.Logger;
 import javax.lang.model.element.TypeElement;
 import javax.swing.AbstractListModel;
 import javax.swing.BorderFactory;
+import javax.swing.DefaultListModel;
+import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingWorker;
 import javax.swing.event.DocumentEvent;
@@ -49,8 +51,7 @@ class VaadinComponentSelectPanel extends javax.swing.JPanel {
 
     VaadinComponentSelectPanel( final ComponentSelectPanel panel ) {
         initComponents();
-
-        myComponents.setModel(new WaitModel());
+        myInfo = panel.getClassPathInfo();
 
         myComponents.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
@@ -61,10 +62,21 @@ class VaadinComponentSelectPanel extends javax.swing.JPanel {
                 panel.fireChange();
             }
         });
+    }
 
-        ComponentsInitializer worker =
-                new ComponentsInitializer(panel.getClassPathInfo());
-        worker.execute();
+    void populateExistingComponents( boolean includeBaseClass ) {
+        if (myUseAbstractComponent ^ includeBaseClass) {
+            myUseAbstractComponent = includeBaseClass;
+            ListModel<?> oldModel = myComponents.getModel();
+            if (oldModel instanceof DocumentListener) {
+                myFilter.getDocument().removeDocumentListener(
+                        (DocumentListener) oldModel);
+            }
+            myComponents.setModel(new WaitModel());
+
+            ComponentsInitializer worker = new ComponentsInitializer(myInfo);
+            worker.execute();
+        }
     }
 
     String getSelectedComponent() {
@@ -187,6 +199,9 @@ class VaadinComponentSelectPanel extends javax.swing.JPanel {
 
                     Set<TypeElement> widgets =
                             JavaUtils.getSubclasses(baseComponent, controller);
+                    if (myUseAbstractComponent) {
+                        result.add(WidgetUtils.ABSTRACT_COMPONENT);
+                    }
                     for (TypeElement widget : widgets) {
                         result.add(widget.getQualifiedName().toString());
                     }
@@ -204,6 +219,12 @@ class VaadinComponentSelectPanel extends javax.swing.JPanel {
 
                 ListModelImpl model = new ListModelImpl();
                 myComponents.setModel(model);
+
+                if (myUseAbstractComponent) {
+                    myComponents.setSelectedValue(
+                            WidgetUtils.ABSTRACT_COMPONENT, true);
+                }
+
                 myFilter.getDocument().addDocumentListener(model);
             }
             catch (InterruptedException | ExecutionException e) {
@@ -291,6 +312,10 @@ class VaadinComponentSelectPanel extends javax.swing.JPanel {
 
     private List<String> myWidgets;
 
+    private ClasspathInfo myInfo;
+
+    private boolean myUseAbstractComponent;
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel filterLabel;
 
@@ -301,6 +326,7 @@ class VaadinComponentSelectPanel extends javax.swing.JPanel {
     private javax.swing.JPanel panel;
 
     private javax.swing.JScrollPane scrollPane;
+
     // End of variables declaration//GEN-END:variables
 
 }
