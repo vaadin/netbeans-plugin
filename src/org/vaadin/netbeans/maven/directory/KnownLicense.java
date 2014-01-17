@@ -29,8 +29,8 @@ public enum KnownLicense {
     APACHE_2_0("Apache License 2.0", "resources/apache-2.0.txt"), // NOI18N
     CVAL_2_0("CVAL 2.0", "resources/cval-2.0.txt"), // NOI18N
     CVAL_3_0("CVAL 3.0", "resources/cval-3.0.txt"), // NOI18N
-    GPL_3_0("GPL 3.0 ", "resources/gpl-3.0.txt"), // NOI18N
-    AGPL_3_0("AGPL 3.0 ", "resources/agpl-3.0.txt"), // NOI18N
+    GPL_3_0("GPL 3.0", "resources/gpl-3.0.txt"), // NOI18N
+    AGPL_3_0("AGPL 3.0", "resources/agpl-3.0.txt"), // NOI18N
     EPL_1_0("EPL 1.0", "resources/epl-1.0.txt"), ; // NOI18N
 
     private static final String UTF_8 = "UTF-8"; // NOI18N
@@ -57,8 +57,11 @@ public enum KnownLicense {
     }
 
     static KnownLicense forString( String name ) {
+        if (name == null) {
+            return null;
+        }
         for (KnownLicense license : values()) {
-            if (license.getName().equalsIgnoreCase(name)) {
+            if (license.getName().equalsIgnoreCase(name.trim())) {
                 return license;
             }
         }
