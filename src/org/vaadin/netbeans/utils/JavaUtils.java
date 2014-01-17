@@ -65,7 +65,6 @@ import org.openide.loaders.DataObject;
 import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.editor.analyzer.SetServletWidgetsetFix;
 import org.vaadin.netbeans.editor.analyzer.SetWidgetsetFix;
-import org.vaadin.netbeans.ui.wizard.NewWidgetWizardIterator;
 
 /**
  * @author denis
@@ -649,8 +648,7 @@ public final class JavaUtils {
                 result.add(sourceRoot);
             }
             else {
-                Logger.getLogger(NewWidgetWizardIterator.class.getName()).log(
-                        Level.INFO,
+                Logger.getLogger(JavaUtils.class.getName()).log(Level.FINE,
                         "No FileObject found for the following URL: {0}", url);
             }
         }
