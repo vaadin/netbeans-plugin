@@ -21,11 +21,15 @@ import java.util.Date;
 import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JPanel;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
@@ -125,6 +129,9 @@ public class SearchPanel extends JPanel {
         // Fix for #13142 - Remove the "License Type" filter from Add-Ons browser dialog.
         myLicenseType.setVisible(false);
         license.setVisible(false);
+
+        InitWorker worker = new InitWorker();
+        worker.execute();
     }
 
     private void adjustColumnWidth( boolean initial ) {
@@ -164,6 +171,10 @@ public class SearchPanel extends JPanel {
     }
 
     public void updateTable() {
+        setData(doSearch());
+    }
+
+    private Collection<? extends SearchResult> doSearch() {
         MaturityWrapper maturity =
                 (MaturityWrapper) myMaturity.getSelectedItem();
         LicenseType licenseType = (LicenseType) myLicenseType.getSelectedItem();
@@ -197,8 +208,7 @@ public class SearchPanel extends JPanel {
                         mySearch.getText(), fields);
         Collection<? extends SearchResult> results =
                 AddOnProvider.getInstance().searchAddons(query);
-
-        setData(results);
+        return results;
     }
 
     private void setData( Collection<? extends SearchResult> results ) {
@@ -264,13 +274,19 @@ public class SearchPanel extends JPanel {
         myDocPane = new AddOnDocPane();
 
         maturity.setLabelFor(myMaturity);
-        org.openide.awt.Mnemonics.setLocalizedText(maturity, org.openide.util.NbBundle.getMessage(SearchPanel.class, "LBL_Maturity")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(maturity,
+                org.openide.util.NbBundle.getMessage(SearchPanel.class,
+                        "LBL_Maturity")); // NOI18N
 
         license.setLabelFor(myLicenseType);
-        org.openide.awt.Mnemonics.setLocalizedText(license, org.openide.util.NbBundle.getMessage(SearchPanel.class, "LBL_License")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(license,
+                org.openide.util.NbBundle.getMessage(SearchPanel.class,
+                        "LBL_License")); // NOI18N
 
         search.setLabelFor(mySearch);
-        org.openide.awt.Mnemonics.setLocalizedText(search, org.openide.util.NbBundle.getMessage(SearchPanel.class, "LBL_SearchText")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(search,
+                org.openide.util.NbBundle.getMessage(SearchPanel.class,
+                        "LBL_SearchText")); // NOI18N
 
         mySplitPanel.setDividerLocation(350);
 
@@ -287,62 +303,135 @@ public class SearchPanel extends JPanel {
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(mySplitPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 855, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(search)
-                            .addComponent(maturity))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(myMaturity, javax.swing.GroupLayout.PREFERRED_SIZE, 189, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(license))
-                            .addComponent(mySearch, javax.swing.GroupLayout.PREFERRED_SIZE, 552, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(myFields, 0, 205, Short.MAX_VALUE)
-                            .addComponent(myLicenseType, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(maturity)
-                    .addComponent(myMaturity, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(myLicenseType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(license))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(mySearch, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(search)
-                    .addComponent(myFields, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(mySplitPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 365, Short.MAX_VALUE)
-                .addContainerGap())
-        );
+        layout.setHorizontalGroup(layout
+                .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(
+                        layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(
+                                        layout.createParallelGroup(
+                                                javax.swing.GroupLayout.Alignment.LEADING)
+                                                .addComponent(
+                                                        mySplitPanel,
+                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                        855, Short.MAX_VALUE)
+                                                .addGroup(
+                                                        layout.createSequentialGroup()
+                                                                .addGroup(
+                                                                        layout.createParallelGroup(
+                                                                                javax.swing.GroupLayout.Alignment.LEADING)
+                                                                                .addComponent(
+                                                                                        search)
+                                                                                .addComponent(
+                                                                                        maturity))
+                                                                .addPreferredGap(
+                                                                        javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                                .addGroup(
+                                                                        layout.createParallelGroup(
+                                                                                javax.swing.GroupLayout.Alignment.LEADING)
+                                                                                .addGroup(
+                                                                                        layout.createSequentialGroup()
+                                                                                                .addComponent(
+                                                                                                        myMaturity,
+                                                                                                        javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                                                                        189,
+                                                                                                        javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                                                                .addPreferredGap(
+                                                                                                        javax.swing.LayoutStyle.ComponentPlacement.RELATED,
+                                                                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                                                                        Short.MAX_VALUE)
+                                                                                                .addComponent(
+                                                                                                        license))
+                                                                                .addComponent(
+                                                                                        mySearch,
+                                                                                        javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                                                        552,
+                                                                                        javax.swing.GroupLayout.PREFERRED_SIZE))
+                                                                .addPreferredGap(
+                                                                        javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                                .addGroup(
+                                                                        layout.createParallelGroup(
+                                                                                javax.swing.GroupLayout.Alignment.LEADING,
+                                                                                false)
+                                                                                .addComponent(
+                                                                                        myFields,
+                                                                                        0,
+                                                                                        205,
+                                                                                        Short.MAX_VALUE)
+                                                                                .addComponent(
+                                                                                        myLicenseType,
+                                                                                        0,
+                                                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                                                        Short.MAX_VALUE))))
+                                .addContainerGap()));
+        layout.setVerticalGroup(layout
+                .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(
+                        layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(
+                                        layout.createParallelGroup(
+                                                javax.swing.GroupLayout.Alignment.BASELINE)
+                                                .addComponent(maturity)
+                                                .addComponent(
+                                                        myMaturity,
+                                                        javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                        javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(
+                                                        myLicenseType,
+                                                        javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                        javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(license))
+                                .addPreferredGap(
+                                        javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addGroup(
+                                        layout.createParallelGroup(
+                                                javax.swing.GroupLayout.Alignment.BASELINE)
+                                                .addComponent(
+                                                        mySearch,
+                                                        javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                        javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(search)
+                                                .addComponent(
+                                                        myFields,
+                                                        javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                        javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(
+                                        javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(mySplitPanel,
+                                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                                        365, Short.MAX_VALUE).addContainerGap()));
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JScrollPane jScrollPane1;
+
     private javax.swing.JScrollPane jScrollPane2;
+
     private javax.swing.JLabel license;
+
     private javax.swing.JLabel maturity;
+
     private javax.swing.JTable myAddons;
+
     private javax.swing.JEditorPane myDocPane;
+
     private javax.swing.JComboBox<TextSearchFields> myFields;
+
     private javax.swing.JComboBox<LicenseType> myLicenseType;
+
     private javax.swing.JComboBox<MaturityWrapper> myMaturity;
+
     private javax.swing.JTextField mySearch;
+
     private javax.swing.JSplitPane mySplitPanel;
+
     private javax.swing.JLabel search;
+
     // End of variables declaration//GEN-END:variables
 
     private AddOn mySelected;
@@ -361,6 +450,7 @@ public class SearchPanel extends JPanel {
 
         AddonsModel() {
             this(Collections.<SearchResult> emptyList());
+            isInitial = true;
         }
 
         AddonsModel( Collection<? extends SearchResult> results ) {
@@ -393,6 +483,10 @@ public class SearchPanel extends JPanel {
             }
         }
 
+        boolean isInitial() {
+            return isInitial;
+        }
+
         SearchResult getResult( int index ) {
             return myResults[index];
         }
@@ -415,6 +509,8 @@ public class SearchPanel extends JPanel {
         }
 
         private SearchResult[] myResults;
+
+        private boolean isInitial;
     }
 
     private static class MaturityWrapper {
@@ -440,6 +536,33 @@ public class SearchPanel extends JPanel {
         }
 
         private Object myObject;
+    }
+
+    private class InitWorker extends
+            SwingWorker<Collection<? extends SearchResult>, Void>
+    {
+
+        @Override
+        protected Collection<? extends SearchResult> doInBackground()
+                throws Exception
+        {
+            return doSearch();
+        }
+
+        @Override
+        protected void done() {
+            AddonsModel model = (AddonsModel) myAddons.getModel();
+            if (!model.isInitial()) {
+                return;
+            }
+            try {
+                setData(get());
+            }
+            catch (InterruptedException | ExecutionException e) {
+                Logger.getLogger(SearchPanel.class.getName()).log(Level.INFO,
+                        null, e);
+            }
+        }
     }
 
 }
