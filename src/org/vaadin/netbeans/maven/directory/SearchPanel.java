@@ -116,7 +116,8 @@ public class SearchPanel extends JPanel {
                         AddonsModel model = (AddonsModel) myAddons.getModel();
                         int index = myAddons.getSelectedRow();
                         SearchResult result =
-                                index < 0 ? null : model.getResult(index);
+                                index < 0 ? null : model.getResult(myAddons
+                                        .convertRowIndexToModel(index));
                         mySelected =
                                 AddOnProvider.getInstance().getAddOn(result);
                         ((AddOnDocPane) myDocPane).setAddOn(mySelected);
