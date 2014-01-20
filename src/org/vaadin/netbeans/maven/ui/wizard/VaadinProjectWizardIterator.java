@@ -29,11 +29,9 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
 import javax.xml.namespace.QName;
-
 import org.netbeans.api.annotations.common.StaticResource;
 import org.netbeans.api.progress.ProgressUtils;
 import org.netbeans.api.templates.TemplateRegistration;
@@ -50,6 +48,7 @@ import org.netbeans.modules.maven.model.pom.POMQName;
 import org.netbeans.modules.maven.model.pom.Plugin;
 import org.netbeans.modules.maven.model.pom.Project;
 import org.openide.WizardDescriptor;
+import org.openide.WizardDescriptor.BackgroundInstantiatingIterator;
 import org.openide.WizardDescriptor.InstantiatingIterator;
 import org.openide.WizardDescriptor.Panel;
 import org.openide.filesystems.FileObject;
@@ -60,7 +59,7 @@ import org.openide.util.NbBundle;
  * @author denis
  */
 @NbBundle.Messages("retrieveLatestVersion=Retrieve Latest Version...")
-public class VaadinProjectWizardIterator implements InstantiatingIterator {
+public class VaadinProjectWizardIterator implements BackgroundInstantiatingIterator {
 
     private static final String NAME_SEPARATOR = " - ";// NOI18N
 
