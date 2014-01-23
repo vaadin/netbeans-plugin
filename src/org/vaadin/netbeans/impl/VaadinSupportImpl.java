@@ -472,7 +472,7 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
         Utilities.performPOMModelOperations(pom,
                 Collections.singletonList(operation));
         if (widgetset[0] == null) {
-            return null;
+            return Collections.emptyList();
         }
         else {
             StringTokenizer tokenizer = new StringTokenizer(widgetset[0], ",");
