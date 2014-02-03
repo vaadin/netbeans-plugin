@@ -78,52 +78,38 @@ class ThemeFix extends AbstractJavaFix {
             .getLogger(ThemeFix.class.getName()); // NOI18N
 
     public ThemeFix( FileObject fileObject,
-            ElementHandle<TypeElement> classHandle )
+            ElementHandle<TypeElement> classHandle, String themeName )
     {
         super(fileObject);
         myHandle = classHandle;
+        myThemeName = themeName;
+    }
+
+    public ThemeFix( FileObject fileObject,
+            ElementHandle<TypeElement> classHandle )
+    {
+        this(fileObject, classHandle, null);
     }
 
     @Override
-    @NbBundle.Messages("createTheme=Create Vaadin Theme")
+    @NbBundle.Messages({ "addTheme=Create and Use Vaadin Theme",
+            "# {0} - theme name", "createTheme=Create Vaadin Theme ''{0}''" })
     public String getText() {
-        return Bundle.createTheme();
+        if (myThemeName == null) {
+            return Bundle.addTheme();
+        }
+        else {
+            return Bundle.createTheme(myThemeName);
+        }
     }
 
     @NbBundle.Messages("noWebRoot=Unable to find Web document root directory")
     @Override
     public ChangeInfo implement() throws Exception {
-        Project project = FileOwnerQuery.getOwner(getFileObject());
-        if (project == null) {
-            return null;
-        }
-        Sources sources = ProjectUtils.getSources(project);
-        if (sources == null) {
-            return null;
-        }
-        SourceGroup[] webGroup =
-                sources.getSourceGroups(WebProjectConstants.TYPE_DOC_ROOT);
-        String theme = DEFAULT_THEME_NAME;
-        FileObject themes = null;
-        FileObject webRoot = null;
-        FileObject vaadin = null;
-        for (SourceGroup sourceGroup : webGroup) {
-            webRoot = sourceGroup.getRootFolder();
-            vaadin = webRoot.getFileObject(VAADIN);
-            if (vaadin != null) {
-                themes = vaadin.getFileObject(THEMES);
-                if (themes != null) {
-                    FileObject[] children = themes.getChildren();
-                    for (FileObject child : children) {
-                        if (child.isFolder()) {
-                            theme = child.getName();
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-        if (webRoot == null) {
+
+        ThemesFolder folder = getThemesFolder(getFileObject());
+
+        if (folder.getWebRoot() == null) {
             NotifyDescriptor descriptor =
                     new NotifyDescriptor.Message(Bundle.noWebRoot(),
                             NotifyDescriptor.ERROR_MESSAGE);
@@ -131,14 +117,37 @@ class ThemeFix extends AbstractJavaFix {
             return null;
         }
 
-        theme = requestThemeName(theme);
+        String theme = myThemeName == null ? DEFAULT_THEME_NAME : myThemeName;
+        FileObject themes = folder.getThemes();
+        if (myThemeName == null) {
+            if (themes != null) {
+                FileObject[] children = themes.getChildren();
+                for (FileObject child : children) {
+                    if (child.isFolder()) {
+                        theme = child.getName();
+                        break;
+                    }
+                }
+            }
+
+            theme = requestThemeName(theme);
+        }
         if (theme != null) {
             if (themes == null || themes.getFileObject(theme) == null) {
-                createTheme(webRoot, vaadin, themes, theme);
+                createTheme(folder.getWebRoot(), folder.getVaadinRoot(),
+                        themes, theme);
             }
-            return addThemeAnnotation(theme);
+
+            if (myThemeName == null) {
+                return addThemeAnnotation(theme);
+            }
         }
         return null;
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return LOG;
     }
 
     private ChangeInfo addThemeAnnotation( final String theme )
@@ -239,11 +248,73 @@ class ThemeFix extends AbstractJavaFix {
         }
     }
 
-    @Override
-    protected Logger getLogger() {
-        return LOG;
+    static ThemesFolder getThemesFolder( FileObject subject ) {
+        Project project = FileOwnerQuery.getOwner(subject);
+        if (project == null) {
+            return null;
+        }
+        Sources sources = ProjectUtils.getSources(project);
+        if (sources == null) {
+            return null;
+        }
+        SourceGroup[] webGroup =
+                sources.getSourceGroups(WebProjectConstants.TYPE_DOC_ROOT);
+        FileObject themes = null;
+        FileObject webRoot = null;
+        FileObject vaadin = null;
+        for (SourceGroup sourceGroup : webGroup) {
+            webRoot = sourceGroup.getRootFolder();
+            vaadin = webRoot.getFileObject(VAADIN);
+            if (vaadin != null) {
+                themes = vaadin.getFileObject(THEMES);
+                if (themes != null) {
+                    break;
+                }
+            }
+        }
+        return new ThemesFolder(webRoot, vaadin, themes);
+    }
+
+    static FileObject getThemeFolder( FileObject subject, String name ) {
+        ThemesFolder folder = getThemesFolder(subject);
+
+        FileObject themes = folder.getThemes();
+        if (themes == null) {
+            return null;
+        }
+        return themes.getFileObject(name);
+    }
+
+    static class ThemesFolder {
+
+        ThemesFolder( FileObject webRoot, FileObject vaadin, FileObject themes )
+        {
+            myWebRoot = webRoot;
+            myVaadinRoot = vaadin;
+            myThemesRoot = themes;
+        }
+
+        FileObject getWebRoot() {
+            return myWebRoot;
+        }
+
+        FileObject getVaadinRoot() {
+            return myVaadinRoot;
+        }
+
+        FileObject getThemes() {
+            return myThemesRoot;
+        }
+
+        private FileObject myWebRoot;
+
+        private FileObject myVaadinRoot;
+
+        private FileObject myThemesRoot;
     }
 
     private final ElementHandle<TypeElement> myHandle;
+
+    private final String myThemeName;
 
 }
