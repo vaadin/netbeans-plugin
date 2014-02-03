@@ -27,12 +27,15 @@ import org.openide.util.NbBundle;
  */
 public class SharedStateAnalyzer extends AbstractJavaBeanAnalyzer {
 
-    public SharedStateAnalyzer( HintContext context, Mode mode ) {
-        super(context, mode);
-    }
+    private static final String JAVA_SCRIPT_STATE =
+            "com.vaadin.shared.ui.JavaScriptComponentState"; // NOI18N
 
     static final String SHARED_STATE =
             "com.vaadin.shared.communication.SharedState"; // NOI18N
+
+    public SharedStateAnalyzer( HintContext context, Mode mode ) {
+        super(context, mode);
+    }
 
     @Override
     public void analyze() {
@@ -46,6 +49,18 @@ public class SharedStateAnalyzer extends AbstractJavaBeanAnalyzer {
             else {
                 checkJavaBean(null, (DeclaredType) getType().asType());
             }
+        }
+    }
+
+    @Override
+    protected void checkClientPackage() {
+        TypeElement jsState =
+                getInfo().getElements().getTypeElement(JAVA_SCRIPT_STATE);
+        if (jsState == null
+                || !getInfo().getTypes().isSubtype(getType().asType(),
+                        jsState.asType()))
+        {
+            super.checkClientPackage();
         }
     }
 
