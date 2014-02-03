@@ -45,25 +45,35 @@ public class RpcUsage {
     @Hint(displayName = "#DN_ServerRpcInterface",
             description = "#DESC_ServerRpcInterface", category = "vaadin",
             options = Options.QUERY, severity = Severity.HINT,
-            hintKind = Hint.Kind.ACTION)
+            hintKind = Hint.Kind.ACTION,
+            customizerProvider = UIServerRpcCustomizer.class)
     @TriggerTreeKind({ Kind.CLASS })
     public static ErrorDescription checkServerRpc( HintContext context ) {
-        RpcRegistrationAnalyzer analyzer =
-                new RpcRegistrationAnalyzer(context, false);
-        analyzer.analyze();
-        return analyzer.getNoServerRpc();
+        if (Analyzer.isEnabled(context, UIServerRpcCustomizer.SERVER_RPC_UI)) {
+            RpcRegistrationAnalyzer analyzer =
+                    new RpcRegistrationAnalyzer(context, false);
+            analyzer.analyze();
+            return analyzer.getNoServerRpc();
+        }
+        return null;
     }
 
     @Hint(displayName = "#DN_ClientRpcProxyInterface",
             description = "#DESC_ClientRpcProxyInterface", category = "vaadin",
             options = Options.QUERY, severity = Severity.HINT,
-            hintKind = Hint.Kind.ACTION)
+            hintKind = Hint.Kind.ACTION,
+            customizerProvider = UIClientProxyRpcCustomizer.class)
     @TriggerTreeKind({ Kind.CLASS })
     public static ErrorDescription checkClientRpcProxy( HintContext context ) {
-        RpcRegistrationAnalyzer analyzer =
-                new RpcRegistrationAnalyzer(context, true);
-        analyzer.analyze();
-        return analyzer.getNoClientRpcProxy();
+        if (Analyzer.isEnabled(context,
+                UIClientProxyRpcCustomizer.CLIENT_PROXY_RPC_UI))
+        {
+            RpcRegistrationAnalyzer analyzer =
+                    new RpcRegistrationAnalyzer(context, true);
+            analyzer.analyze();
+            return analyzer.getNoClientRpcProxy();
+        }
+        return null;
     }
 
     @Hint(displayName = "#DN_ServerRpcProxyInterface",

@@ -34,11 +34,17 @@ public class Component {
     @Hint(displayName = "#DN_ComponentHasNoConnector",
             description = "#DESC_ComponentHasNoConnector", category = "vaadin",
             options = Options.QUERY, severity = Severity.HINT,
-            hintKind = Hint.Kind.ACTION)
+            hintKind = Hint.Kind.ACTION,
+            customizerProvider = UIComponentConnectorCustomizer.class)
     @TriggerTreeKind(Kind.CLASS)
     public static ErrorDescription checkConnector( HintContext context ) {
-        ComponentAnalyzer analyzer = new ComponentAnalyzer(context);
-        analyzer.analyze();
-        return analyzer.getNoConnector();
+        if (Analyzer.isEnabled(context,
+                UIComponentConnectorCustomizer.CONNECTOR_UI))
+        {
+            ComponentAnalyzer analyzer = new ComponentAnalyzer(context);
+            analyzer.analyze();
+            return analyzer.getNoConnector();
+        }
+        return null;
     }
 }

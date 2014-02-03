@@ -37,6 +37,7 @@ import org.vaadin.netbeans.IsInSourceQuery;
 import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.code.WidgetUtils;
 import org.vaadin.netbeans.editor.hints.Analyzer;
+import org.vaadin.netbeans.editor.hints.UIComponentState;
 
 /**
  * @author denis
@@ -53,35 +54,41 @@ public class StateAccessorAnalyzer extends Analyzer {
         if (type == null) {
             return;
         }
-        Types types = getInfo().getTypes();
-        TypeElement abstractComponent =
-                getInfo().getElements().getTypeElement(
-                        WidgetUtils.ABSTRACT_COMPONENT);
-        if (abstractComponent != null) {
-            if (types.isSubtype(type.asType(), abstractComponent.asType())
-                    && !hasGetStateMethod())
-            {
-                TypeElement connector =
-                        WidgetUtils.getConnector(getType(), getInfo(), false);
-                addDescription(true, connector,
-                        getTypeFqn(WidgetUtils
-                                .getStateMethodReturnType(connector)));
-            }
+        if (isServerSideEnabled() && !hasGetStateMethod()) {
+            TypeElement connector =
+                    WidgetUtils.getConnector(type, getInfo(), false);
+            addDescription(true, connector,
+                    getTypeFqn(WidgetUtils.getStateMethodReturnType(connector)));
         }
         TypeElement abstractConnector =
                 getInfo().getElements().getTypeElement(
                         WidgetUtils.ABSTRACT_COMPONENT_CONNECTOR);
         if (abstractConnector != null) {
-            if (types.isSubtype(type.asType(), abstractConnector.asType())
+            if (getInfo().getTypes().isSubtype(type.asType(),
+                    abstractConnector.asType())
                     && !hasGetStateMethod())
             {
                 TypeElement serverComponent =
-                        WidgetUtils.getServerComponent(getType(), getInfo());
+                        WidgetUtils.getServerComponent(type, getInfo());
                 addDescription(false, serverComponent,
                         getTypeFqn(WidgetUtils
                                 .getStateMethodReturnType(serverComponent)));
             }
         }
+    }
+
+    private boolean isServerSideEnabled() {
+        TypeElement abstractComponent =
+                getInfo().getElements().getTypeElement(
+                        WidgetUtils.ABSTRACT_COMPONENT);
+        if (abstractComponent == null) {
+            return false;
+        }
+        Types types = getInfo().getTypes();
+        if (!types.isSubtype(getType().asType(), abstractComponent.asType())) {
+            return false;
+        }
+        return isEnabled(getContext(), UIComponentState.COMPONENT_STATE_UI);
     }
 
     @NbBundle.Messages({ "noState=Widget doesn't override getState method" })

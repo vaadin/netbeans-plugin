@@ -30,7 +30,8 @@ import com.sun.source.tree.Tree.Kind;
  */
 @Hint(displayName = "#DN_ComponentState", description = "#DESC_ComponentState",
         category = "vaadin", options = Options.QUERY, severity = Severity.HINT,
-        hintKind = Hint.Kind.ACTION)
+        hintKind = Hint.Kind.ACTION,
+        customizerProvider = UIComponentState.class)
 public class ComponentState {
 
     @TriggerTreeKind({ Kind.CLASS })

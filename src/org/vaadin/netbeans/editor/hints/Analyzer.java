@@ -21,6 +21,7 @@ import java.util.List;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.util.Types;
 
 import org.netbeans.api.java.source.CompilationInfo;
 import org.netbeans.api.project.FileOwnerQuery;
@@ -30,6 +31,7 @@ import org.netbeans.spi.editor.hints.Severity;
 import org.netbeans.spi.java.hints.HintContext;
 import org.openide.filesystems.FileObject;
 import org.vaadin.netbeans.VaadinSupport;
+import org.vaadin.netbeans.utils.JavaUtils;
 
 import com.sun.source.util.TreePath;
 
@@ -72,18 +74,7 @@ public abstract class Analyzer {
     }
 
     protected TypeElement getType() {
-        if (myContext == null) {
-            return null;
-        }
-        CompilationInfo info = myContext.getInfo();
-        TreePath path = myContext.getPath();
-        Element element = info.getTrees().getElement(path);
-        if (element instanceof TypeElement) {
-            return (TypeElement) element;
-        }
-        else {
-            return null;
-        }
+        return getType(myContext);
     }
 
     protected Severity getSeverity( Severity defaultValue ) {
@@ -92,6 +83,41 @@ public abstract class Analyzer {
 
     protected Collection<ErrorDescription> getDescriptions() {
         return myDescriptions;
+    }
+
+    protected HintContext getContext() {
+        return myContext;
+    }
+
+    public static boolean isEnabled( HintContext context,
+            String preferenceKey )
+    {
+        TypeElement type = getType(context);
+        Types types = context.getInfo().getTypes();
+        if (context.getPreferences().getBoolean(preferenceKey, false)) {
+            return true;
+        }
+        else {
+            TypeElement ui =
+                    context.getInfo().getElements()
+                            .getTypeElement(JavaUtils.VAADIN_UI_FQN);
+            return ui == null || !types.isSubtype(type.asType(), ui.asType());
+        }
+    }
+
+    private static TypeElement getType( HintContext context ) {
+        if (context == null) {
+            return null;
+        }
+        CompilationInfo info = context.getInfo();
+        TreePath path = context.getPath();
+        Element element = info.getTrees().getElement(path);
+        if (element instanceof TypeElement) {
+            return (TypeElement) element;
+        }
+        else {
+            return null;
+        }
     }
 
     private HintContext myContext;
