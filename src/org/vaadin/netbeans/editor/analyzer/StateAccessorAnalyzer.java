@@ -15,6 +15,7 @@
  */
 package org.vaadin.netbeans.editor.analyzer;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -31,11 +32,11 @@ import org.netbeans.spi.editor.hints.ErrorDescriptionFactory;
 import org.netbeans.spi.editor.hints.Fix;
 import org.netbeans.spi.editor.hints.Severity;
 import org.netbeans.spi.java.hints.HintContext;
-import org.openide.filesystems.FileObject;
 import org.openide.util.NbBundle;
+import org.vaadin.netbeans.IsInSourceQuery;
+import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.code.WidgetUtils;
 import org.vaadin.netbeans.editor.hints.Analyzer;
-import org.vaadin.netbeans.utils.JavaUtils;
 
 /**
  * @author denis
@@ -61,7 +62,7 @@ public class StateAccessorAnalyzer extends Analyzer {
                     && !hasGetStateMethod())
             {
                 TypeElement connector =
-                        WidgetUtils.getConnector(getType(), getInfo());
+                        WidgetUtils.getConnector(getType(), getInfo(), false);
                 addDescription(true, connector,
                         getTypeFqn(WidgetUtils
                                 .getStateMethodReturnType(connector)));
@@ -87,6 +88,10 @@ public class StateAccessorAnalyzer extends Analyzer {
     private void addDescription( boolean isServer, TypeElement pairClass,
             String stateFqn )
     {
+        VaadinSupport support = getSupport();
+        if (support == null) {
+            return;
+        }
         List<Integer> positions =
                 AbstractJavaFix.getElementPosition(getInfo(), getType());
 
@@ -96,22 +101,20 @@ public class StateAccessorAnalyzer extends Analyzer {
         List<Fix> fixes = new LinkedList<>();
         if (stateFqn == null) {
             if (sharedState != null) {
+                boolean pairInSource =
+                        pairClass != null
+                                && IsInSourceQuery.isInSource(pairClass,
+                                        getInfo());
                 try {
-                    Set<TypeElement> states =
-                            JavaUtils.getSubclasses(sharedState, getInfo());
-                    Set<FileObject> sourceRoots =
-                            IsInSourceQuery.getSourceRoots(getInfo());
+                    Collection<TypeElement> states =
+                            support.getDescendantStrategy()
+                                    .getSourceSubclasses(sharedState, getInfo());
                     for (TypeElement state : states) {
                         Set<Modifier> modifiers = state.getModifiers();
-                        if (IsInSourceQuery.isInSourceRoots(state, getInfo(),
-                                sourceRoots)
-                                && !modifiers.contains(Modifier.ABSTRACT)
+                        if (!modifiers.contains(Modifier.ABSTRACT)
                                 && !modifiers.contains(Modifier.PRIVATE))
                         {
-                            if (pairClass != null
-                                    && IsInSourceQuery.isInSource(pairClass,
-                                            getInfo()))
-                            {
+                            if (pairInSource) {
                                 fixes.add(new StateAccessorFix(getInfo()
                                         .getFileObject(), state
                                         .getQualifiedName().toString(),

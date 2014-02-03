@@ -22,6 +22,7 @@ import java.util.List;
 import org.netbeans.api.java.source.ClasspathInfo;
 import org.openide.execution.ExecutorTask;
 import org.openide.filesystems.FileObject;
+import org.vaadin.netbeans.model.SourceDescendantsStrategy;
 import org.vaadin.netbeans.model.ModelOperation;
 
 /**
@@ -58,5 +59,7 @@ public interface VaadinSupport {
     void setAddonWidgetsets( List<String> widgetset );
 
     FileObject getAddOnConfigFile();
+
+    SourceDescendantsStrategy getDescendantStrategy();
 
 }

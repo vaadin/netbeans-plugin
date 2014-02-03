@@ -34,9 +34,10 @@ public class RpcUsage {
             description = "#DESC_ClientRpcInterface", category = "vaadin",
             options = Options.QUERY, severity = Severity.HINT,
             hintKind = Hint.Kind.ACTION)
-    @TriggerTreeKind({ Kind.CLASS })
+    @TriggerTreeKind(Kind.CLASS)
     public static ErrorDescription checkClientRpc( HintContext context ) {
-        RpcRegistrationAnalyzer analyzer = new RpcRegistrationAnalyzer(context);
+        RpcRegistrationAnalyzer analyzer =
+                new RpcRegistrationAnalyzer(context, false);
         analyzer.analyze();
         return analyzer.getNoClientRpc();
     }
@@ -47,7 +48,8 @@ public class RpcUsage {
             hintKind = Hint.Kind.ACTION)
     @TriggerTreeKind({ Kind.CLASS })
     public static ErrorDescription checkServerRpc( HintContext context ) {
-        RpcRegistrationAnalyzer analyzer = new RpcRegistrationAnalyzer(context);
+        RpcRegistrationAnalyzer analyzer =
+                new RpcRegistrationAnalyzer(context, false);
         analyzer.analyze();
         return analyzer.getNoServerRpc();
     }
@@ -58,7 +60,8 @@ public class RpcUsage {
             hintKind = Hint.Kind.ACTION)
     @TriggerTreeKind({ Kind.CLASS })
     public static ErrorDescription checkClientRpcProxy( HintContext context ) {
-        RpcRegistrationAnalyzer analyzer = new RpcRegistrationAnalyzer(context);
+        RpcRegistrationAnalyzer analyzer =
+                new RpcRegistrationAnalyzer(context, true);
         analyzer.analyze();
         return analyzer.getNoClientRpcProxy();
     }
@@ -69,8 +72,10 @@ public class RpcUsage {
             hintKind = Hint.Kind.ACTION)
     @TriggerTreeKind({ Kind.CLASS })
     public static ErrorDescription checkServerRpcProxy( HintContext context ) {
-        RpcRegistrationAnalyzer analyzer = new RpcRegistrationAnalyzer(context);
+        RpcRegistrationAnalyzer analyzer =
+                new RpcRegistrationAnalyzer(context, true);
         analyzer.analyze();
         return analyzer.getNoServerRpcProxy();
     }
+
 }

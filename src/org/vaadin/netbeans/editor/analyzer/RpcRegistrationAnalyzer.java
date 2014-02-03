@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -28,14 +27,11 @@ import javax.lang.model.type.TypeMirror;
 
 import org.netbeans.api.java.source.CompilationInfo;
 import org.netbeans.api.java.source.ElementHandle;
-import org.netbeans.api.project.FileOwnerQuery;
-import org.netbeans.api.project.Project;
 import org.netbeans.spi.editor.hints.ErrorDescription;
 import org.netbeans.spi.editor.hints.ErrorDescriptionFactory;
 import org.netbeans.spi.editor.hints.Fix;
 import org.netbeans.spi.editor.hints.Severity;
 import org.netbeans.spi.java.hints.HintContext;
-import org.openide.filesystems.FileObject;
 import org.openide.util.NbBundle;
 import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.editor.hints.Analyzer;
@@ -61,17 +57,14 @@ public class RpcRegistrationAnalyzer extends Analyzer {
     static final String CLIENT_RPC =
             "com.vaadin.shared.communication.ClientRpc"; // NOI18N
 
-    public RpcRegistrationAnalyzer( HintContext context ) {
+    public RpcRegistrationAnalyzer( HintContext context, boolean proxy ) {
         super(context);
+        isProxyAnalyzer = proxy;
     }
 
     @Override
     public void analyze() {
-        Project project = FileOwnerQuery.getOwner(getInfo().getFileObject());
-        if (project == null) {
-            return;
-        }
-        VaadinSupport support = project.getLookup().lookup(VaadinSupport.class);
+        VaadinSupport support = getSupport();
         if (support == null || !support.isEnabled() || !support.isReady()) {
             return;
         }
@@ -116,15 +109,23 @@ public class RpcRegistrationAnalyzer extends Analyzer {
             return;
         }
         if (serverComponent) {
-            findServerRpcUsage();
-            findClientProxyRpcUsage();
+            if (isProxyAnalyzer) {
+                findClientProxyRpcUsage(support);
+            }
+            else {
+                findServerRpcUsage(support);
+            }
         }
         if (isCanceled()) {
             return;
         }
         if (clientComponent) {
-            findClientRpcUsage();
-            findServerProxyRpcUsage();
+            if (isProxyAnalyzer) {
+                findServerProxyRpcUsage(support);
+            }
+            else {
+                findClientRpcUsage(support);
+            }
         }
     }
 
@@ -146,11 +147,13 @@ public class RpcRegistrationAnalyzer extends Analyzer {
 
     @NbBundle.Messages({ "noClientRpc=Client RPC interface is not used",
             "registerClientRpc=Client RPC interface is not registered" })
-    private void findClientRpcUsage() {
+    private void findClientRpcUsage( VaadinSupport support ) {
         CompilationInfo info = getInfo();
         TypeElement type = getType();
+
         RegisterRpcScanner scanner = new RegisterRpcScanner(type, true);
         scanner.scan(info.getTrees().getPath(type), info);
+
         if (!scanner.isFound()) {
             List<Fix> fixes = new LinkedList<>();
             fixes.add(new CreateClientRpcFix(info.getFileObject(),
@@ -160,19 +163,13 @@ public class RpcRegistrationAnalyzer extends Analyzer {
                     info.getElements().getTypeElement(CLIENT_RPC);
             if (clientRpc != null) {
                 try {
-                    Set<TypeElement> subInterfaces =
-                            JavaUtils.getSubinterfaces(clientRpc, info);
-                    Set<FileObject> sourceRoots =
-                            IsInSourceQuery.getSourceRoots(info);
+                    Collection<TypeElement> subInterfaces =
+                            support.getDescendantStrategy()
+                                    .getSourceSubInterfaces(clientRpc, info);
                     for (TypeElement iface : subInterfaces) {
-                        if (IsInSourceQuery.isInSourceRoots(iface, info,
-                                sourceRoots))
-                        {
-                            fixes.add(new CreateClientRpcFix(info
-                                    .getFileObject(), ElementHandle
-                                    .create(type), iface.getQualifiedName()
-                                    .toString()));
-                        }
+                        fixes.add(new CreateClientRpcFix(info.getFileObject(),
+                                ElementHandle.create(type), iface
+                                        .getQualifiedName().toString()));
                     }
                 }
                 catch (InterruptedException ignore) {
@@ -188,11 +185,13 @@ public class RpcRegistrationAnalyzer extends Analyzer {
 
     @NbBundle.Messages({ "noServerRpc=Server RPC interface is not used",
             "registerServerRpc=Server RPC interface is not registered" })
-    private void findServerRpcUsage() {
+    private void findServerRpcUsage( VaadinSupport support ) {
         CompilationInfo info = getInfo();
         TypeElement type = getType();
+
         RegisterRpcScanner scanner = new RegisterRpcScanner(type, false);
         scanner.scan(info.getTrees().getPath(type), info);
+
         if (!scanner.isFound()) {
             List<Fix> fixes = new LinkedList<>();
             fixes.add(new CreateServerRpcFix(info.getFileObject(),
@@ -202,15 +201,13 @@ public class RpcRegistrationAnalyzer extends Analyzer {
                     info.getElements().getTypeElement(SERVER_RPC);
             if (serverRpc != null) {
                 try {
-                    Set<TypeElement> subInterfaces =
-                            JavaUtils.getSubinterfaces(serverRpc, info);
+                    Collection<TypeElement> subInterfaces =
+                            support.getDescendantStrategy()
+                                    .getSourceSubInterfaces(serverRpc, info);
                     for (TypeElement iface : subInterfaces) {
-                        if (IsInSourceQuery.isInSource(iface, info)) {
-                            fixes.add(new CreateServerRpcFix(info
-                                    .getFileObject(), ElementHandle
-                                    .create(type), iface.getQualifiedName()
-                                    .toString()));
-                        }
+                        fixes.add(new CreateServerRpcFix(info.getFileObject(),
+                                ElementHandle.create(type), iface
+                                        .getQualifiedName().toString()));
                     }
                 }
                 catch (InterruptedException ignore) {
@@ -225,7 +222,7 @@ public class RpcRegistrationAnalyzer extends Analyzer {
     }
 
     @NbBundle.Messages("noClientRpcProxy=Client RPC interface proxy is not used")
-    private void findClientProxyRpcUsage() {
+    private void findClientProxyRpcUsage( VaadinSupport support ) {
         if (isCanceled()) {
             return;
         }
@@ -241,14 +238,13 @@ public class RpcRegistrationAnalyzer extends Analyzer {
                     info.getElements().getTypeElement(CLIENT_RPC);
             if (clientRpc != null) {
                 try {
-                    Set<TypeElement> subInterfaces =
-                            JavaUtils.getSubinterfaces(clientRpc, info);
+                    Collection<TypeElement> subInterfaces =
+                            support.getDescendantStrategy()
+                                    .getSourceSubInterfaces(clientRpc, info);
                     for (TypeElement iface : subInterfaces) {
-                        if (IsInSourceQuery.isInSource(iface, info)) {
-                            fixes.add(new ClientRpcProxyFix(info
-                                    .getFileObject(), iface.getQualifiedName()
-                                    .toString(), ElementHandle.create(type)));
-                        }
+                        fixes.add(new ClientRpcProxyFix(info.getFileObject(),
+                                iface.getQualifiedName().toString(),
+                                ElementHandle.create(type)));
                     }
                 }
                 catch (InterruptedException ignore) {
@@ -261,7 +257,7 @@ public class RpcRegistrationAnalyzer extends Analyzer {
     }
 
     @NbBundle.Messages("noServerRpcProxy=Server RPC interface proxy is not used")
-    private void findServerProxyRpcUsage() {
+    private void findServerProxyRpcUsage( VaadinSupport support ) {
         if (isCanceled()) {
             return;
         }
@@ -277,14 +273,13 @@ public class RpcRegistrationAnalyzer extends Analyzer {
                     info.getElements().getTypeElement(SERVER_RPC);
             if (serverRpc != null) {
                 try {
-                    Set<TypeElement> subInterfaces =
-                            JavaUtils.getSubinterfaces(serverRpc, info);
+                    Collection<TypeElement> subInterfaces =
+                            support.getDescendantStrategy()
+                                    .getSourceSubInterfaces(serverRpc, info);
                     for (TypeElement iface : subInterfaces) {
-                        if (IsInSourceQuery.isInSource(iface, info)) {
-                            fixes.add(new ServerRpcProxyFix(info
-                                    .getFileObject(), iface.getQualifiedName()
-                                    .toString(), ElementHandle.create(type)));
-                        }
+                        fixes.add(new ServerRpcProxyFix(info.getFileObject(),
+                                iface.getQualifiedName().toString(),
+                                ElementHandle.create(type)));
                     }
                 }
                 catch (InterruptedException ignore) {
@@ -314,4 +309,6 @@ public class RpcRegistrationAnalyzer extends Analyzer {
     private ErrorDescription myNoClientRpc;
 
     private ErrorDescription myNoServerRpcProxy;
+
+    private boolean isProxyAnalyzer;
 }

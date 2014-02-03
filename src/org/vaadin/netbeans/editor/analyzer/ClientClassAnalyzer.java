@@ -16,9 +16,9 @@
 package org.vaadin.netbeans.editor.analyzer;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -114,8 +114,9 @@ public abstract class ClientClassAnalyzer extends Analyzer {
                         ErrorDescriptionFactory.createErrorDescription(
                                 getSeverity(Severity.ERROR),
                                 Bundle.absentGwtModule(),
-                                createGwtModuleFixes(), info.getFileObject(),
-                                positions.get(0), positions.get(1));
+                                createGwtModuleFixes(support),
+                                info.getFileObject(), positions.get(0),
+                                positions.get(1));
                 getDescriptions().add(myNoGwtModule);
             }
             else {
@@ -152,26 +153,21 @@ public abstract class ClientClassAnalyzer extends Analyzer {
         }
     }
 
-    private List<Fix> createGwtModuleFixes() {
+    private List<Fix> createGwtModuleFixes( VaadinSupport support ) {
         TypeElement ui =
                 getInfo().getElements().getTypeElement(JavaUtils.VAADIN_UI_FQN);
         List<Fix> fixes = new LinkedList<>();
         if (ui != null) {
             try {
-                Set<TypeElement> uis = JavaUtils.getSubclasses(ui, getInfo());
-                Set<FileObject> sourceRoots =
-                        IsInSourceQuery.getSourceRoots(getInfo());
+                Collection<TypeElement> uis =
+                        support.getDescendantStrategy().getSourceSubclasses(ui,
+                                getInfo());
                 for (TypeElement vaadinUi : uis) {
-                    if (IsInSourceQuery.isInSourceRoots(vaadinUi, getInfo(),
-                            sourceRoots))
-                    {
-                        FileObject fileObject =
-                                SourceUtils.getFile(
-                                        ElementHandle.create(vaadinUi),
-                                        getInfo().getClasspathInfo());
-                        fixes.add(new CreateGwtModuleFix(getInfo()
-                                .getFileObject(), fileObject.getParent()));
-                    }
+                    FileObject fileObject =
+                            SourceUtils.getFile(ElementHandle.create(vaadinUi),
+                                    getInfo().getClasspathInfo());
+                    fixes.add(new CreateGwtModuleFix(getInfo().getFileObject(),
+                            fileObject.getParent()));
                 }
             }
             catch (InterruptedException e) {

@@ -27,7 +27,7 @@ import java.util.logging.Logger;
 import javax.lang.model.element.TypeElement;
 import javax.swing.AbstractListModel;
 import javax.swing.BorderFactory;
-import javax.swing.DefaultListModel;
+import javax.swing.JPanel;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingWorker;
@@ -47,7 +47,7 @@ import org.vaadin.netbeans.utils.JavaUtils;
 /**
  * @author denis
  */
-class VaadinComponentSelectPanel extends javax.swing.JPanel {
+class VaadinComponentSelectPanel extends JPanel {
 
     VaadinComponentSelectPanel( final ComponentSelectPanel panel ) {
         initComponents();

@@ -17,6 +17,7 @@ package org.vaadin.netbeans.editor.analyzer;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -135,7 +136,7 @@ public class WebServletAnalyzer extends Analyzer {
                 if (!JavaUtils.hasAnnotation(getType(),
                         JavaUtils.VAADIN_SERVLET_CONFIGURATION))
                 {
-                    noUiVaadinServlet(servlet);
+                    noUiVaadinServlet(servlet, support);
                 }
             }
             else {
@@ -254,12 +255,16 @@ public class WebServletAnalyzer extends Analyzer {
     }
 
     @NbBundle.Messages("noUiProvided=Servlet class extends VaadinServlet but there is no UI class specified")
-    private void noUiVaadinServlet( AnnotationMirror servlet ) {
+    private void noUiVaadinServlet( AnnotationMirror servlet,
+            VaadinSupport support )
+    {
         CompilationInfo info = getInfo();
         try {
             TypeElement uiClass =
                     info.getElements().getTypeElement(JavaUtils.VAADIN_UI_FQN);
-            Set<TypeElement> uis = JavaUtils.getSubclasses(uiClass, info);
+            Collection<TypeElement> uis =
+                    support.getDescendantStrategy().getSourceSubclasses(
+                            uiClass, info);
             for (Iterator<TypeElement> iterator = uis.iterator(); iterator
                     .hasNext();)
             {

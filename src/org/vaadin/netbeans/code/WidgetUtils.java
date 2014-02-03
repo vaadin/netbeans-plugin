@@ -28,6 +28,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
 
+import org.netbeans.api.java.source.ClassIndex.SearchScope;
 import org.netbeans.api.java.source.ClasspathInfo;
 import org.netbeans.api.java.source.CompilationController;
 import org.netbeans.api.java.source.CompilationInfo;
@@ -66,14 +67,22 @@ public final class WidgetUtils {
     }
 
     public static TypeElement getConnector( TypeElement serverComponent,
-            CompilationInfo info )
+            CompilationInfo info, boolean onlySource )
     {
         if (serverComponent == null) {
             return null;
         }
         try {
-            List<TypeElement> connectors =
-                    JavaUtils.findAnnotatedElements(CONNECTOR, info);
+            List<TypeElement> connectors;
+            if (onlySource) {
+                connectors = JavaUtils.findAnnotatedElements(CONNECTOR, info);
+            }
+            else {
+                connectors =
+                        JavaUtils.findAnnotatedElements(CONNECTOR, info,
+                                SearchScope.DEPENDENCIES);
+            }
+
             for (TypeElement connector : connectors) {
                 TypeElement serverPair = getServerComponent(connector, info);
                 if (serverComponent.equals(serverPair)) {
@@ -281,7 +290,8 @@ public final class WidgetUtils {
     private static ConnectorInfo createConnectorInfo(
             CompilationController controller, TypeElement component )
     {
-        TypeElement connector = WidgetUtils.getConnector(component, controller);
+        TypeElement connector =
+                WidgetUtils.getConnector(component, controller, false);
         if (connector != null) {
             ElementHandle<TypeElement> connectorHandle =
                     ElementHandle.create(connector);

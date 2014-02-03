@@ -27,8 +27,6 @@ import javax.lang.model.element.TypeElement;
 
 import org.netbeans.api.java.source.CompilationInfo;
 import org.netbeans.api.java.source.ElementHandle;
-import org.netbeans.api.project.FileOwnerQuery;
-import org.netbeans.api.project.Project;
 import org.netbeans.spi.editor.hints.ErrorDescription;
 import org.netbeans.spi.editor.hints.ErrorDescriptionFactory;
 import org.netbeans.spi.editor.hints.Fix;
@@ -77,11 +75,7 @@ public class VaadinServletConfigurationAnalyzer extends Analyzer {
         }
         CompilationInfo info = getInfo();
         FileObject fileObject = info.getFileObject();
-        Project project = FileOwnerQuery.getOwner(fileObject);
-        if (project == null) {
-            return;
-        }
-        VaadinSupport support = project.getLookup().lookup(VaadinSupport.class);
+        VaadinSupport support = getSupport();
         if (support == null || !support.isEnabled()) {
             return;
         }

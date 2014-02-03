@@ -16,6 +16,7 @@
 package org.vaadin.netbeans.editor.analyzer;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,8 +37,8 @@ import org.netbeans.spi.editor.hints.ErrorDescriptionFactory;
 import org.netbeans.spi.editor.hints.Fix;
 import org.netbeans.spi.editor.hints.Severity;
 import org.netbeans.spi.java.hints.HintContext;
-import org.openide.filesystems.FileObject;
 import org.openide.util.NbBundle;
+import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.code.WidgetUtils;
 import org.vaadin.netbeans.code.generator.WidgetGenerator;
 import org.vaadin.netbeans.utils.JavaUtils;
@@ -50,7 +51,7 @@ import com.sun.source.tree.ExpressionTree;
  */
 public class ConnectorAnalyzer extends ClientClassAnalyzer {
 
-    private static final String VAADIN_PKG = "com.vaadin."; // NOI18N
+    static final String VAADIN_PKG = "com.vaadin."; // NOI18N
 
     static final String CLIENT_CONNECTOR = VAADIN_PKG
             + "server.ClientConnector"; // NOI18N
@@ -131,14 +132,12 @@ public class ConnectorAnalyzer extends ClientClassAnalyzer {
             TypeElement clientConnector =
                     getInfo().getElements().getTypeElement(CLIENT_CONNECTOR);
             if (clientConnector != null) {
-                Set<FileObject> sourceRoots =
-                        IsInSourceQuery.getSourceRoots(getInfo());
                 List<String> allSourceComponents = new LinkedList<>();
                 String probableComponentFqn = null;
                 try {
                     probableComponentFqn =
                             collectExistingComponents(clientConnector,
-                                    sourceRoots, allSourceComponents);
+                                    allSourceComponents);
                 }
                 catch (InterruptedException e) {
                     Logger.getLogger(ConnectorAnalyzer.class.getName()).log(
@@ -167,8 +166,7 @@ public class ConnectorAnalyzer extends ClientClassAnalyzer {
     }
 
     private String collectExistingComponents( TypeElement clientConnector,
-            Set<FileObject> sourceRoots, List<String> sourceComponents )
-            throws InterruptedException
+            List<String> sourceComponents ) throws InterruptedException
     {
         String connectorName = getType().getSimpleName().toString();
         int index = connectorName.indexOf(WidgetGenerator.CONNECTOR);
@@ -176,25 +174,24 @@ public class ConnectorAnalyzer extends ClientClassAnalyzer {
             connectorName = connectorName.substring(0, index);
         }
         String componentFqn = null;
-        Set<TypeElement> components =
-                JavaUtils.getSubclasses(clientConnector, getInfo());
+        VaadinSupport support = getSupport();
+        if (support == null) {
+            return null;
+        }
+        Collection<TypeElement> components =
+        //JavaUtils.getSubclasses(clientConnector, getInfo());
+                support.getDescendantStrategy().getSourceSubclasses(
+                        clientConnector, getInfo());
         for (TypeElement component : components) {
             Set<Modifier> modifiers = component.getModifiers();
             if (modifiers.contains(Modifier.ABSTRACT)) {
                 continue;
             }
             String fqn = component.getQualifiedName().toString();
-            if (fqn.startsWith(VAADIN_PKG)) {
-                continue;
-            }
-            if (IsInSourceQuery.isInSourceRoots(component, getInfo(),
-                    sourceRoots))
-            {
-                sourceComponents.add(fqn);
-                String simpleName = component.getSimpleName().toString();
-                if (simpleName.equals(connectorName)) {
-                    componentFqn = fqn;
-                }
+            sourceComponents.add(fqn);
+            String simpleName = component.getSimpleName().toString();
+            if (simpleName.equals(connectorName)) {
+                componentFqn = fqn;
             }
         }
         return componentFqn;

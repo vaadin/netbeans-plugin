@@ -61,7 +61,7 @@ public class ComponentAnalyzer extends Analyzer {
         Set<Modifier> modifiers = getType().getModifiers();
         if (isClientConnector() && !modifiers.contains(Modifier.ABSTRACT)) {
             TypeElement connector =
-                    WidgetUtils.getConnector(getType(), getInfo());
+                    WidgetUtils.getConnector(getType(), getInfo(), true);
             if (connector == null) {
                 List<Integer> positions =
                         AbstractJavaFix
@@ -88,7 +88,8 @@ public class ComponentAnalyzer extends Analyzer {
                     && element instanceof TypeElement)
             {
                 TypeElement typeElement = (TypeElement) element;
-                connector = WidgetUtils.getConnector(typeElement, getInfo());
+                connector =
+                        WidgetUtils.getConnector(typeElement, getInfo(), false);
                 if (connector != null) {
                     break;
                 }

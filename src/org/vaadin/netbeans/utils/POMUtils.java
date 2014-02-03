@@ -22,9 +22,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.text.MessageFormat;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -53,7 +53,6 @@ import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.customizer.VaadinConfiguration;
-import org.vaadin.netbeans.editor.analyzer.IsInSourceQuery;
 import org.vaadin.netbeans.model.ModelOperation;
 import org.vaadin.netbeans.model.VaadinModel;
 
@@ -419,7 +418,7 @@ public final class POMUtils {
         return CURRENT_VERSION;
     }
 
-    private static void createGwtXml( VaadinSupport support,
+    private static void createGwtXml( final VaadinSupport support,
             final Project project ) throws IOException
     {
         JavaSource javaSource = JavaSource.create(support.getClassPathInfo());
@@ -441,17 +440,14 @@ public final class POMUtils {
                 if (ui == null) {
                     return;
                 }
-                Set<TypeElement> uis = JavaUtils.getSubclasses(ui, controller);
-                Set<FileObject> sourceRoots =
-                        IsInSourceQuery.getSourceRoots(project);
+                Collection<TypeElement> uis =
+                        support.getDescendantStrategy().getSourceSubclasses(ui,
+                                controller);
                 for (TypeElement element : uis) {
                     FileObject fileObject =
                             SourceUtils.getFile(ElementHandle.create(element),
                                     controller.getClasspathInfo());
-                    if (!ui.equals(element)
-                            && IsInSourceQuery.isInSourceRoots(fileObject,
-                                    sourceRoots))
-                    {
+                    if (!ui.equals(element)) {
                         uiFolder[0] = fileObject.getParent();
                         return;
                     }

@@ -51,6 +51,7 @@ import org.netbeans.spi.java.hints.HintContext;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
+import org.vaadin.netbeans.IsInSourceQuery;
 import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.model.ModelOperation;
 import org.vaadin.netbeans.model.VaadinModel;

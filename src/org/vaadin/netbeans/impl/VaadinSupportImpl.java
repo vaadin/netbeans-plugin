@@ -24,6 +24,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -32,10 +33,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 
 import org.netbeans.api.java.classpath.ClassPath;
@@ -69,6 +72,7 @@ import org.openide.util.TaskListener;
 import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.maven.editor.completion.AddOnProvider;
 import org.vaadin.netbeans.maven.project.VaadinVersions;
+import org.vaadin.netbeans.model.SourceDescendantsStrategy;
 import org.vaadin.netbeans.model.ModelOperation;
 import org.vaadin.netbeans.utils.JavaUtils;
 import org.vaadin.netbeans.utils.POMUtils;
@@ -95,6 +99,8 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
     static final Logger LOG = Logger.getLogger(VaadinSupportImpl.class
             .getName());
 
+    private static final int MAX_SOURCE_CLASSES = 500;
+
     public VaadinSupportImpl( Project project ) {
         this(project, false);
     }
@@ -107,6 +113,10 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
         myActions = new ConcurrentHashMap<>();
         isWeb = web;
         myDownloadListener = new DownloadDepsListener();
+        myTypesCount = new AtomicInteger();
+        myStrategy =
+                new AtomicReference<SourceDescendantsStrategy>(
+                        new EmptyStrategy());
     }
 
     @Override
@@ -276,6 +286,11 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
     }
 
     @Override
+    public SourceDescendantsStrategy getDescendantStrategy() {
+        return myStrategy.get();
+    }
+
+    @Override
     protected void projectClosed() {
         removeFileSystemListener();
         NbMavenProject mvnProject =
@@ -300,6 +315,8 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
 
         initializeClassIndex(true);
 
+        setTypesCount();
+
         // init versions and add-ons related data
         AddOnProvider.getInstance();
         VaadinVersions.getInstance();
@@ -310,7 +327,8 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
     {
     }
 
-    protected void remove( CompilationController controller, TypeElement element )
+    protected void remove( CompilationController controller,
+            ElementHandle<TypeElement> element )
     {
     }
 
@@ -338,21 +356,7 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
     }
 
     protected boolean sourceRootsAffected( RootsEvent event ) {
-        Iterable<? extends URL> roots = event.getRoots();
-        boolean affected = false;
-        for (URL url : roots) {
-            try {
-                Project project = FileOwnerQuery.getOwner(url.toURI());
-                if (project != null) {
-                    affected = true;
-                    break;
-                }
-            }
-            catch (URISyntaxException e) {
-                LOG.log(Level.INFO, null, e);
-            }
-        }
-        return affected;
+        return sourceRootsAffected(event, null);
     }
 
     protected void initializeClassIndex( boolean reinitResourceListener ) {
@@ -413,6 +417,37 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
         return myProject;
     }
 
+    private void updateSubclassesStrategy() {
+        myStrategy.set(new RecursiveStrategy());
+        if (myTypesCount.get() > MAX_SOURCE_CLASSES) {
+            myStrategy.set(new RecursiveStrategy());
+        }
+        else {
+            myStrategy.set(new AllClassesStrategy());
+        }
+    }
+
+    private boolean sourceRootsAffected( RootsEvent event, Project subject ) {
+        Iterable<? extends URL> roots = event.getRoots();
+        for (URL url : roots) {
+            try {
+                Project project = FileOwnerQuery.getOwner(url.toURI());
+                if (project != null) {
+                    if (subject == null) {
+                        return true;
+                    }
+                    else if (project.equals(subject)) {
+                        return true;
+                    }
+                }
+            }
+            catch (URISyntaxException e) {
+                LOG.log(Level.INFO, null, e);
+            }
+        }
+        return false;
+    }
+
     private void addListener( SourceGroup[] sourceGroups ) {
         for (SourceGroup sourceGroup : sourceGroups) {
             FileObject root = sourceGroup.getRootFolder();
@@ -424,6 +459,15 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
         for (SourceGroup sourceGroup : sourceGroups) {
             FileObject root = sourceGroup.getRootFolder();
             removeListener(root);
+        }
+    }
+
+    private void setTypesCount() {
+        try {
+            invoke(new CountProjectClasses());
+        }
+        catch (IOException e) {
+            LOG.log(Level.INFO, null, e);
         }
     }
 
@@ -536,6 +580,28 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
         }
     }
 
+    private final class CountProjectClasses implements Runnable,
+            Task<CompilationController>
+    {
+
+        @Override
+        public void run( CompilationController controller ) throws Exception {
+            controller.toPhase(Phase.ELEMENTS_RESOLVED);
+
+            Set<TypeElement> allTypes =
+                    AllClassesStrategy.findAllTypes(controller,
+                            EnumSet.allOf(ElementKind.class));
+            myTypesCount.set(allTypes.size());
+            updateSubclassesStrategy();
+        }
+
+        @Override
+        public void run() {
+            REQUEST_PROCESSOR.post(this);
+        }
+
+    }
+
     private final class DownloadDepsListener implements PropertyChangeListener {
 
         @Override
@@ -559,7 +625,7 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
                             throws Exception
                     {
                         controller.toPhase(Phase.ELEMENTS_RESOLVED);
-                        updateModel(event, controller);
+                        updateModel(event, controller, true);
                     }
                 });
             }
@@ -580,13 +646,12 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
                         controller.toPhase(Phase.ELEMENTS_RESOLVED);
                         Iterable<? extends ElementHandle<TypeElement>> types =
                                 event.getTypes();
+                        int count = 0;
                         for (ElementHandle<TypeElement> elementHandle : types) {
-                            TypeElement element =
-                                    elementHandle.resolve(controller);
-                            if (element != null) {
-                                remove(controller, element);
-                            }
+                            count++;
+                            remove(controller, elementHandle);
                         }
+                        myTypesCount.addAndGet(-count);
                     }
                 });
             }
@@ -605,7 +670,7 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
                             throws Exception
                     {
                         controller.toPhase(Phase.ELEMENTS_RESOLVED);
-                        updateModel(event, controller);
+                        updateModel(event, controller, false);
                     }
                 });
             }
@@ -616,29 +681,38 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
 
         @Override
         public void rootsAdded( RootsEvent event ) {
-            rootsChanged(sourceRootsAffected(event));
+            rootsChanged(sourceRootsAffected(event, getProject()));
         }
 
         @Override
         public void rootsRemoved( RootsEvent event ) {
-            rootsChanged(sourceRootsAffected(event));
+            rootsChanged(sourceRootsAffected(event, getProject()));
         }
 
         private void updateModel( TypesEvent event,
-                CompilationController controller )
+                CompilationController controller, boolean added )
         {
             Iterable<? extends ElementHandle<TypeElement>> types =
                     event.getTypes();
+            int count = 0;
             for (ElementHandle<TypeElement> elementHandle : types) {
                 TypeElement element = elementHandle.resolve(controller);
                 if (element != null) {
                     VaadinSupportImpl.this.updateModel(controller, element);
+                    count++;
                 }
             }
+            if (added) {
+                myTypesCount.addAndGet(count);
+            }
+            updateSubclassesStrategy();
         }
 
         private void rootsChanged( boolean reinitResourceListener ) {
             initializeClassIndex(reinitResourceListener);
+            if (reinitResourceListener) {
+                setTypesCount();
+            }
         }
 
     }
@@ -651,7 +725,11 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
 
     private volatile ClasspathInfo myClasspathInfo;
 
-    private volatile AtomicReference<Boolean> isEnabled;
+    private final AtomicReference<Boolean> isEnabled;
+
+    private final AtomicInteger myTypesCount;
+
+    private final AtomicReference<SourceDescendantsStrategy> myStrategy;
 
     private final ResourcesListener myResourcesListener;
 

@@ -63,19 +63,20 @@ public class WebVaadinSupportImpl extends VaadinSupportImpl {
             TypeElement element )
     {
         ElementHandle<TypeElement> handle = ElementHandle.create(element);
-        AnnotationMirror annotation = JavaUtils.getAnnotation(element,
-                JavaUtils.VAADIN_SERVLET_CONFIGURATION);
+        AnnotationMirror annotation =
+                JavaUtils.getAnnotation(element,
+                        JavaUtils.VAADIN_SERVLET_CONFIGURATION);
         if (annotation != null) {
-            String widgetset = JavaUtils.getValue(annotation,
-                    JavaUtils.WIDGETSET);
+            String widgetset =
+                    JavaUtils.getValue(annotation, JavaUtils.WIDGETSET);
             if (widgetset != null) {
                 ServletConfigurationImpl impl = new ServletConfigurationImpl();
                 impl.setWidgetset(widgetset);
                 getModel().add(handle, impl);
             }
         }
-        annotation = JavaUtils.getAnnotation(element,
-                JavaUtils.SERVLET_ANNOTATION);
+        annotation =
+                JavaUtils.getAnnotation(element, JavaUtils.SERVLET_ANNOTATION);
         if (annotation != null) {
             String widgetset = JavaUtils.getWidgetsetWebInit(annotation);
             if (widgetset != null) {
@@ -87,9 +88,9 @@ public class WebVaadinSupportImpl extends VaadinSupportImpl {
     }
 
     @Override
-    protected void remove( CompilationController controller, TypeElement element )
+    protected void remove( CompilationController controller,
+            ElementHandle<TypeElement> handle )
     {
-        ElementHandle<TypeElement> handle = ElementHandle.create(element);
         getModel().remove(handle);
     }
 
@@ -97,13 +98,15 @@ public class WebVaadinSupportImpl extends VaadinSupportImpl {
     protected void initClassModel( CompilationController controller )
             throws InterruptedException
     {
-        List<TypeElement> elements = JavaUtils.findAnnotatedElements(
-                JavaUtils.VAADIN_SERVLET_CONFIGURATION, controller);
+        List<TypeElement> elements =
+                JavaUtils.findAnnotatedElements(
+                        JavaUtils.VAADIN_SERVLET_CONFIGURATION, controller);
         for (TypeElement element : elements) {
             updateModel(controller, element);
         }
-        elements = JavaUtils.findAnnotatedElements(
-                JavaUtils.SERVLET_ANNOTATION, controller);
+        elements =
+                JavaUtils.findAnnotatedElements(JavaUtils.SERVLET_ANNOTATION,
+                        controller);
         for (TypeElement element : elements) {
             updateModel(controller, element);
         }
@@ -126,10 +129,11 @@ public class WebVaadinSupportImpl extends VaadinSupportImpl {
                 if (project.equals(getProject())) {
                     continue;
                 }
-                ClasspathInfo info = ClasspathInfo.create(
-                        getClassPath(project, ClassPath.BOOT),
-                        getClassPath(project, ClassPath.COMPILE),
-                        getClassPath(project, ClassPath.SOURCE));
+                ClasspathInfo info =
+                        ClasspathInfo.create(
+                                getClassPath(project, ClassPath.BOOT),
+                                getClassPath(project, ClassPath.COMPILE),
+                                getClassPath(project, ClassPath.SOURCE));
                 myRootsListener.listenIndex(info.getClassIndex());
             }
         }
@@ -164,8 +168,8 @@ public class WebVaadinSupportImpl extends VaadinSupportImpl {
     }
 
     static List<File> getRuntimeDependecies( Project project ) {
-        NbMavenProject nbMvnProject = project.getLookup().lookup(
-                NbMavenProject.class);
+        NbMavenProject nbMvnProject =
+                project.getLookup().lookup(NbMavenProject.class);
         MavenProject mavenProject = nbMvnProject.getMavenProject();
         Set<Artifact> artifacts = mavenProject.getArtifacts();
         List<File> result = new ArrayList<>(artifacts.size());
@@ -208,7 +212,9 @@ public class WebVaadinSupportImpl extends VaadinSupportImpl {
         }
 
         void listenIndex( ClassIndex index ) {
-            myIndeces.add(index);
+            synchronized (this) {
+                myIndeces.add(index);
+            }
             index.addClassIndexListener(this);
         }
 

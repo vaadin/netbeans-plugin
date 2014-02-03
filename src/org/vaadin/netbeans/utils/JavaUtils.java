@@ -378,8 +378,8 @@ public final class JavaUtils {
     }
 
     public static List<TypeElement> findAnnotatedElements(
-            final String searchedTypeName, CompilationInfo controller )
-            throws InterruptedException
+            final String searchedTypeName, CompilationInfo controller,
+            SearchScope... scopes ) throws InterruptedException
     {
         TypeElement searchedType =
                 controller.getElements().getTypeElement(searchedTypeName);
@@ -394,11 +394,9 @@ public final class JavaUtils {
                 controller
                         .getClasspathInfo()
                         .getClassIndex()
-                        .getElements(
-                                searchedTypeHandle,
+                        .getElements(searchedTypeHandle,
                                 EnumSet.of(SearchKind.TYPE_REFERENCES),
-                                EnumSet.of(SearchScope.SOURCE,
-                                        SearchScope.DEPENDENCIES));
+                                EnumSet.of(SearchScope.SOURCE, scopes));
         if (elementHandles == null) {
             throw new InterruptedException(
                     "ClassIndex.getElements() was interrupted"); // NOI18N
