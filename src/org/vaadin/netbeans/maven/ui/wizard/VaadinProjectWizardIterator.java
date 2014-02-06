@@ -50,6 +50,7 @@ import org.netbeans.modules.maven.model.pom.POMQName;
 import org.netbeans.modules.maven.model.pom.Plugin;
 import org.netbeans.modules.maven.model.pom.Project;
 import org.openide.WizardDescriptor;
+import org.openide.WizardDescriptor.AsynchronousInstantiatingIterator;
 import org.openide.WizardDescriptor.InstantiatingIterator;
 import org.openide.WizardDescriptor.Panel;
 import org.openide.filesystems.FileObject;
@@ -60,7 +61,9 @@ import org.openide.util.NbBundle;
  * @author denis
  */
 @NbBundle.Messages("retrieveLatestVersion=Retrieve Latest Version...")
-public class VaadinProjectWizardIterator implements InstantiatingIterator {
+public class VaadinProjectWizardIterator implements
+        AsynchronousInstantiatingIterator
+{
 
     private static final String NAME_SEPARATOR = " - ";// NOI18N
 
