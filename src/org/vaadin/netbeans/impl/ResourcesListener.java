@@ -141,7 +141,7 @@ final class ResourcesListener extends FileChangeAdapter implements
     }
 
     private void removeEmptyFolders( FileObject file ) {
-        if (isTracked()) {
+        if (isTracked() || file == null) {
             return;
         }
         if (file.isFolder()) {
@@ -163,7 +163,7 @@ final class ResourcesListener extends FileChangeAdapter implements
     }
 
     private void doRemoveResource( FileObject file ) {
-        if (isTracked()) {
+        if (isTracked() || file == null) {
             return;
         }
         if (!file.isFolder() && file.getAttribute(GWT_DEBUG) != null) {
