@@ -91,6 +91,7 @@ public class CreateConnectorFix extends AbstractCreateFix {
 
     @Override
     public ChangeInfo implement() throws Exception {
+        logUiUsage();
         askUserInput();
 
         if (myConnectorName == null) {
@@ -129,6 +130,11 @@ public class CreateConnectorFix extends AbstractCreateFix {
         }
 
         return null;
+    }
+
+    @Override
+    protected String getUiLogKey() {
+        return "UI_LogGenerateConnector"; // NOI18N
     }
 
     private DataObject createWidget( String styleName ) throws IOException {

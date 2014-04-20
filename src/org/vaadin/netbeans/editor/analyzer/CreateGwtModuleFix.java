@@ -37,6 +37,7 @@ import org.openide.util.NbBundle;
 import org.vaadin.netbeans.editor.analyzer.ui.NamePanel;
 import org.vaadin.netbeans.editor.analyzer.ui.NewGwtModulePanel;
 import org.vaadin.netbeans.utils.JavaUtils;
+import org.vaadin.netbeans.utils.UIGestureUtils;
 import org.vaadin.netbeans.utils.XmlUtils;
 
 /**
@@ -78,6 +79,8 @@ public class CreateGwtModuleFix implements Fix {
 
     @Override
     public ChangeInfo implement() throws Exception {
+        logUiUsage();
+
         FileObject root = getSourceRoot();
         if (root == null) {
             return null;
@@ -111,6 +114,11 @@ public class CreateGwtModuleFix implements Fix {
         }
 
         return null;
+    }
+
+    private void logUiUsage() {
+        UIGestureUtils.logUiUsage(getClass(),
+                AbstractJavaFix.UI_FIX_LOGGER_NAME, "UI_LogCreateGwtModule"); // NOI18N
     }
 
     private void initTargetPackageFqn() {

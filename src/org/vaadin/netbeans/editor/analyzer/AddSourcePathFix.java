@@ -30,6 +30,7 @@ import org.vaadin.netbeans.model.gwt.GwtComponentFactory;
 import org.vaadin.netbeans.model.gwt.GwtModel;
 import org.vaadin.netbeans.model.gwt.Module;
 import org.vaadin.netbeans.model.gwt.Source;
+import org.vaadin.netbeans.utils.UIGestureUtils;
 
 /**
  * @author denis
@@ -50,6 +51,8 @@ public class AddSourcePathFix implements Fix {
 
     @Override
     public ChangeInfo implement() throws Exception {
+        logUiUsage();
+
         Project project = FileOwnerQuery.getOwner(myGwtXml);
         VaadinSupport support = project.getLookup().lookup(VaadinSupport.class);
         support.runModelOperation(new ModelOperation() {
@@ -78,6 +81,11 @@ public class AddSourcePathFix implements Fix {
             cookie.open();
         }
         return null;
+    }
+
+    private void logUiUsage() {
+        UIGestureUtils.logUiUsage(getClass(),
+                AbstractJavaFix.UI_FIX_LOGGER_NAME, "UI_LogAddSourcePath"); // NOI18N
     }
 
     private String myPath;

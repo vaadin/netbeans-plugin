@@ -106,7 +106,7 @@ class ThemeFix extends AbstractJavaFix {
     @NbBundle.Messages("noWebRoot=Unable to find Web document root directory")
     @Override
     public ChangeInfo implement() throws Exception {
-
+        logUiUsage();
         ThemesFolder folder = getThemesFolder(getFileObject());
 
         if (folder.getWebRoot() == null) {
@@ -143,6 +143,11 @@ class ThemeFix extends AbstractJavaFix {
             }
         }
         return null;
+    }
+
+    @Override
+    protected String getUiLogKey() {
+        return "UI_LogUseTheme"; // NOI18N
     }
 
     @Override

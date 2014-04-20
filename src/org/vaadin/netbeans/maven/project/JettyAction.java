@@ -107,6 +107,8 @@ public class JettyAction extends AbstractAction implements Popup,
 
             @Override
             public void run() {
+                VaadinAction.logUiUsage("UI_LogRunJettyAction"); // NOI18N
+
                 VaadinSupport support =
                         myProject.getLookup().lookup(VaadinSupport.class);
                 if (support != null) {
@@ -147,6 +149,8 @@ public class JettyAction extends AbstractAction implements Popup,
 
             @Override
             public void run() {
+                VaadinAction.logUiUsage("UI_LogRunJettyDevModeAction"); // NOI18N
+
                 VaadinSupport support =
                         myProject.getLookup().lookup(VaadinSupport.class);
                 if (support != null) {
@@ -213,6 +217,8 @@ public class JettyAction extends AbstractAction implements Popup,
 
             @Override
             public void run() {
+                VaadinAction.logUiUsage("UI_LogDebugJettyAction"); // NOI18N
+
                 VaadinSupport support =
                         myProject.getLookup().lookup(VaadinSupport.class);
                 if (support != null) {

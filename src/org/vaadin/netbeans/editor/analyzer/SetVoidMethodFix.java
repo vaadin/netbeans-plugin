@@ -53,6 +53,7 @@ class SetVoidMethodFix extends AbstractJavaFix {
 
     @Override
     public ChangeInfo implement() throws Exception {
+        logUiUsage();
         JavaSource javaSource = JavaSource.forFileObject(getFileObject());
         if (javaSource == null) {
             getLogger().log(Level.WARNING, "JavaSource is null for file {0}",
@@ -92,6 +93,11 @@ class SetVoidMethodFix extends AbstractJavaFix {
         ChangeInfo info = createChangeInfo(task);
         task.commit();
         return info;
+    }
+
+    @Override
+    protected String getUiLogKey() {
+        return "UI_LogSetVoidReturn"; // NOI18N
     }
 
     private ElementHandle<ExecutableElement> myHandle;

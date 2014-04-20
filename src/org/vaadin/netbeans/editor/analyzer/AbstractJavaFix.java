@@ -33,10 +33,10 @@ import org.netbeans.api.java.lexer.JavaTokenId;
 import org.netbeans.api.java.source.CompilationInfo;
 import org.netbeans.api.java.source.ElementHandle;
 import org.netbeans.api.java.source.ModificationResult;
-import org.netbeans.api.java.source.WorkingCopy;
 import org.netbeans.api.java.source.ModificationResult.Difference;
 import org.netbeans.api.java.source.TreeMaker;
 import org.netbeans.api.java.source.TreeUtilities;
+import org.netbeans.api.java.source.WorkingCopy;
 import org.netbeans.api.lexer.Token;
 import org.netbeans.api.lexer.TokenSequence;
 import org.netbeans.spi.editor.hints.ChangeInfo;
@@ -47,6 +47,7 @@ import org.netbeans.spi.editor.hints.Severity;
 import org.openide.filesystems.FileObject;
 import org.openide.text.PositionRef;
 import org.vaadin.netbeans.utils.JavaUtils;
+import org.vaadin.netbeans.utils.UIGestureUtils;
 import org.vaadin.netbeans.utils.XmlUtils;
 
 import com.sun.source.tree.AnnotationTree;
@@ -71,8 +72,17 @@ abstract class AbstractJavaFix implements Fix {
 
     static final String HTTP_SERVLET = "javax.servlet.http.HttpServlet"; // NOI18N
 
+    static final String UI_FIX_LOGGER_NAME = "org.netbeans.ui.vaadin.fix"; // NOI18N
+
     protected AbstractJavaFix( FileObject fileObject ) {
         myFileObject = fileObject;
+    }
+
+    protected abstract String getUiLogKey();
+
+    protected void logUiUsage() {
+        UIGestureUtils
+                .logUiUsage(getClass(), UI_FIX_LOGGER_NAME, getUiLogKey());
     }
 
     protected ChangeInfo createChangeInfo( ModificationResult... results )

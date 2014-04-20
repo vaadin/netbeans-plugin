@@ -60,6 +60,7 @@ import org.vaadin.netbeans.maven.editor.completion.AddOn;
 import org.vaadin.netbeans.maven.editor.completion.SourceClass;
 import org.vaadin.netbeans.maven.editor.completion.SourceClass.SourceType;
 import org.vaadin.netbeans.utils.POMUtils;
+import org.vaadin.netbeans.utils.UIGestureUtils;
 import org.vaadin.netbeans.utils.XmlUtils;
 
 /**
@@ -72,6 +73,10 @@ public class VaadinAction extends AbstractAction implements Popup,
     static final String VAADIN_DEV_MODE_GOAL = "vaadin:run"; // NOI18N
 
     static final String VAADIN_DEBUG_DEV_MODE_GOAL = "vaadin:debug"; // NOI18N
+
+    static final String UI_LOGGER_NAME = "org.netbeans.ui.vaadin.actions"; // NOI18N
+
+    static final Logger UI_LOG = Logger.getLogger(UI_LOGGER_NAME);
 
     private static final String VAADIN_SUPER_DEV_MODE_GOAL =
             "vaadin:run-codeserver"; // NOI18N
@@ -170,6 +175,8 @@ public class VaadinAction extends AbstractAction implements Popup,
 
             @Override
             public void actionPerformed( ActionEvent e ) {
+                logUiUsage("UI_LogAddonBrowserAction"); // NOI18N
+
                 final JButton add = new JButton(Bundle.add());
                 add.setEnabled(false);
 
@@ -237,6 +244,8 @@ public class VaadinAction extends AbstractAction implements Popup,
 
             @Override
             public void run() {
+                logUiUsage("UI_LogCompileThemeAction"); // NOI18N
+
                 String name =
                         ProjectUtils.getInformation(myProject).getDisplayName();
                 RunConfig config =
@@ -263,6 +272,8 @@ public class VaadinAction extends AbstractAction implements Popup,
 
             @Override
             public void run() {
+                logUiUsage("UI_LogCompileWidgetsetAction"); // NOI18N
+
                 String name =
                         ProjectUtils.getInformation(myProject).getDisplayName();
                 RunConfig config =
@@ -305,6 +316,8 @@ public class VaadinAction extends AbstractAction implements Popup,
 
             @Override
             public void run() {
+                logUiUsage("UI_LogRunDevModeAction"); // NOI18N
+
                 String name =
                         ProjectUtils.getInformation(myProject).getDisplayName();
                 RunConfig config =
@@ -336,6 +349,8 @@ public class VaadinAction extends AbstractAction implements Popup,
 
             @Override
             public void run() {
+                logUiUsage("UI_LogDebugDevModeAction"); // NOI18N
+
                 VaadinSupport support =
                         myProject.getLookup().lookup(VaadinSupport.class);
                 if (support != null) {
@@ -439,6 +454,8 @@ public class VaadinAction extends AbstractAction implements Popup,
 
             @Override
             public void run() {
+                logUiUsage("UI_LogSuperDevModeAction"); // NOI18N
+
                 VaadinSupport support =
                         myProject.getLookup().lookup(VaadinSupport.class);
                 if (support != null) {
@@ -472,6 +489,11 @@ public class VaadinAction extends AbstractAction implements Popup,
             }
         }
         return SCOPE_TEST;
+    }
+
+    protected static void logUiUsage( String key, String... params ) {
+        UIGestureUtils.logUiUsage(VaadinAction.class, UI_LOGGER_NAME, key,
+                params);
     }
 
     private static class AddonHandler extends AbstractLicenseChooser {

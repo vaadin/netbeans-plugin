@@ -53,14 +53,15 @@ class ExtendVaadinServletFix extends AbstractJavaFix {
 
     @Override
     public ChangeInfo implement() throws Exception {
+        logUiUsage();
         JavaSource javaSource = JavaSource.forFileObject(getFileObject());
         if (javaSource == null) {
             getLogger().log(Level.WARNING, "JavaSource is null for file {0}",
                     getFileObject().getPath());
             return null;
         }
-        ModificationResult task = javaSource
-                .runModificationTask(new Task<WorkingCopy>() {
+        ModificationResult task =
+                javaSource.runModificationTask(new Task<WorkingCopy>() {
 
                     @Override
                     public void run( WorkingCopy copy ) throws Exception {
@@ -76,14 +77,20 @@ class ExtendVaadinServletFix extends AbstractJavaFix {
                         }
 
                         TreeMaker treeMaker = copy.getTreeMaker();
-                        ClassTree newTree = treeMaker.setExtends(oldTree,
-                                treeMaker.QualIdent(JavaUtils.VAADIN_SERVLET));
+                        ClassTree newTree =
+                                treeMaker.setExtends(oldTree, treeMaker
+                                        .QualIdent(JavaUtils.VAADIN_SERVLET));
                         copy.rewrite(oldTree, newTree);
                     }
                 });
         ChangeInfo info = createChangeInfo(task);
         task.commit();
         return info;
+    }
+
+    @Override
+    protected String getUiLogKey() {
+        return "UI_LogDeriveServletClass"; // NOI18N
     }
 
     private ElementHandle<TypeElement> myHandle;

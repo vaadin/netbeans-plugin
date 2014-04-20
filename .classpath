@@ -52,6 +52,8 @@
 	<classpathentry kind="lib" path="build/public-package-jars/org-openide-text.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-openide-util.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-openide-util-lookup.jar"/>
+	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-uihandler.jar"/>
+	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-lib-uihandler.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jre7"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="output" path="bin"/>

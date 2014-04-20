@@ -62,23 +62,27 @@ abstract class AbstractSetWebInitParamFix extends AbstractJavaFix {
             initializers.add(createWebInitParam(treeMaker, paramName,
                     paramValue));
 
-            newTree = treeMaker.NewArray(null,
-                    Collections.<ExpressionTree> emptyList(), initializers);
+            newTree =
+                    treeMaker.NewArray(null,
+                            Collections.<ExpressionTree> emptyList(),
+                            initializers);
         }
         else if (expression instanceof NewArrayTree) {
             NewArrayTree arrayTree = (NewArrayTree) expression;
             oldTree = arrayTree;
-            List<? extends ExpressionTree> initializers = arrayTree
-                    .getInitializers();
+            List<? extends ExpressionTree> initializers =
+                    arrayTree.getInitializers();
             AssignmentTree assignment = null;
             for (ExpressionTree initializer : initializers) {
                 if (initializer instanceof AnnotationTree) {
                     AnnotationTree initParam = (AnnotationTree) initializer;
-                    String value = getAnnotationTreeAttributeValue(initParam,
-                            JavaUtils.NAME);
+                    String value =
+                            getAnnotationTreeAttributeValue(initParam,
+                                    JavaUtils.NAME);
                     if (paramName.equals(value)) {
-                        assignment = getAnnotationTreeAttribute(initParam,
-                                JavaUtils.VALUE);
+                        assignment =
+                                getAnnotationTreeAttribute(initParam,
+                                        JavaUtils.VALUE);
                     }
                 }
             }
@@ -87,8 +91,11 @@ abstract class AbstractSetWebInitParamFix extends AbstractJavaFix {
                 newTree = treeMaker.Literal(paramValue);
             }
             else {
-                newTree = treeMaker.addNewArrayInitializer(arrayTree,
-                        createWebInitParam(treeMaker, paramName, paramValue));
+                newTree =
+                        treeMaker.addNewArrayInitializer(
+                                arrayTree,
+                                createWebInitParam(treeMaker, paramName,
+                                        paramValue));
             }
         }
         return new Tree[] { oldTree, newTree };

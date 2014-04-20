@@ -56,6 +56,7 @@ import org.openide.WizardDescriptor.Panel;
 import org.openide.filesystems.FileObject;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
+import org.vaadin.netbeans.utils.UIGestureUtils;
 
 /**
  * @author denis
@@ -112,6 +113,11 @@ public class VaadinProjectWizardIterator implements
 
     private static final String UTF_8 = "UTF-8";// NOI18N
 
+    private static final String UI_LOGGER_NAME =
+            "org.netbeans.ui.vaadin.project"; // NOI18N
+
+    private static final Logger UI_LOG = Logger.getLogger(UI_LOGGER_NAME);
+
     private VaadinProjectWizardIterator( InstantiatingIterator<?> iterator ) {
         delegate = iterator;
     }
@@ -129,6 +135,7 @@ public class VaadinProjectWizardIterator implements
             "vaadinNewProjectTitle=Vaadin Web Application" })
     public static WizardDescriptor.InstantiatingIterator<?> newServletProject()
     {
+        logUiUsage("UI_LogCreateWebProject"); // NOI18N
         return newProject(APPLICATION_ARTIFACT_ID,
                 Bundle.vaadinNewProjectTitle());
     }
@@ -146,6 +153,7 @@ public class VaadinProjectWizardIterator implements
             "vaadinNewPortletTitle=Vaadin Portlet Application" })
     public static WizardDescriptor.InstantiatingIterator<?> newPortletProject()
     {
+        logUiUsage("UI_LogCreatePortletProject"); // NOI18N
         return newProject(PORTLET_ARTIFACT_ID, Bundle.vaadinNewPortletTitle());
     }
 
@@ -157,6 +165,7 @@ public class VaadinProjectWizardIterator implements
             "vaadinNewTouckitTitle=Vaadin TouchKit Application" })
     public static WizardDescriptor.InstantiatingIterator<?> newTouckitProject()
     {
+        logUiUsage("UI_LogCreateTouchkitProject"); // NOI18N
         return newProject(TOUCHKIT_ARTIFACT_ID, Bundle.vaadinNewTouckitTitle());
     }
 
@@ -167,6 +176,7 @@ public class VaadinProjectWizardIterator implements
     @NbBundle.Messages({ "VaadinAddOnProject=Vaadin Add-On Project",
             "vaadinNewAddOnTitle=Vaadin Add-On Project with Test Application" })
     public static WizardDescriptor.InstantiatingIterator<?> newAddOnProject() {
+        logUiUsage("UI_LogCreateAddOnProject"); // NOI18N
         return newProject(ADD_ON_ARTIFACT_ID, Bundle.vaadinNewAddOnTitle());
     }
 
@@ -634,6 +644,11 @@ public class VaadinProjectWizardIterator implements
             }
         }
         return result;
+    }
+
+    private static void logUiUsage( String key ) {
+        UIGestureUtils.logUiUsage(VaadinProjectWizardIterator.class,
+                UI_LOGGER_NAME, key);
     }
 
     private final InstantiatingIterator<?> delegate;

@@ -56,6 +56,7 @@ public class SetServletWidgetsetFix extends AbstractSetWebInitParamFix {
 
     @Override
     public ChangeInfo implement() throws IOException {
+        logUiUsage();
         JavaSource javaSource = JavaSource.forFileObject(getFileObject());
         if (javaSource == null) {
             getLogger().log(Level.WARNING, "JavaSource is null for file {0}",
@@ -108,6 +109,11 @@ public class SetServletWidgetsetFix extends AbstractSetWebInitParamFix {
         ChangeInfo changeInfo = createChangeInfo(task);
         task.commit();
         return changeInfo;
+    }
+
+    @Override
+    protected String getUiLogKey() {
+        return "UI_LogSetWidgetsetWebServlet"; // NOI18N
     }
 
     private final String myWidgetset;

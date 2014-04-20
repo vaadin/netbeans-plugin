@@ -384,6 +384,10 @@ public final class POMUtils {
         if (!VaadinConfiguration.getInstance().isStatisticsEnabled()) {
             return;
         }
+        UIGestureUtils.logUiUsage(POMUtils.class,
+                "org.netbeans.ui.vaadin.addon", "UI_LogDownloadAddon", // NOI18N
+                artifactId, version);
+
         String statistics =
                 MessageFormat.format(STATISTICS_URL, getPluginVersion(),
                         artifactId, version);

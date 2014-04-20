@@ -84,6 +84,11 @@ public class CreateClientRpcFix extends AbstractRpcFix {
     }
 
     @Override
+    protected String getUiLogKey() {
+        return "UI_LogCreateClientRpc"; // NOI18N
+    }
+
+    @Override
     protected String suggestInterfaceName( FileObject pkg ) {
         String name = getFileObject().getName();
         if (name.endsWith(WidgetGenerator.CONNECTOR)) {

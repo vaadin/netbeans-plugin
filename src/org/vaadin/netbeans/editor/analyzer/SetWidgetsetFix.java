@@ -58,6 +58,7 @@ public class SetWidgetsetFix extends AbstractJavaFix {
 
     @Override
     public ChangeInfo implement() throws IOException {
+        logUiUsage();
         JavaSource javaSource = JavaSource.forFileObject(getFileObject());
         if (javaSource == null) {
             getLogger().log(Level.WARNING, "JavaSource is null for file {0}",
@@ -110,6 +111,11 @@ public class SetWidgetsetFix extends AbstractJavaFix {
         ChangeInfo changeInfo = createChangeInfo(task);
         task.commit();
         return changeInfo;
+    }
+
+    @Override
+    protected String getUiLogKey() {
+        return "UI_LogSetWidgetsetForVaadinServlet"; // NOI18N
     }
 
     private String myWidgetsetFqn;

@@ -89,6 +89,11 @@ public class CreateServerRpcFix extends AbstractRpcFix {
         }
     }
 
+    @Override
+    protected String getUiLogKey() {
+        return "UI_LogCreateServerRpc"; // NOI18N
+    }
+
     @NbBundle.Messages("serverRpcTitle=Set a name for Server RPC interface")
     @Override
     protected String getInterfaceCreationDialogTitle() {

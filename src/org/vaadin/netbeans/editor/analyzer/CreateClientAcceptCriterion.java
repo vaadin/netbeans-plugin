@@ -57,6 +57,7 @@ public class CreateClientAcceptCriterion extends AbstractCreateFix {
 
     @Override
     public ChangeInfo implement() throws Exception {
+        logUiUsage();
         searchClientPackage(false);
         String clientClassName = requestClientClassName(getClientPackage());
 
@@ -83,6 +84,11 @@ public class CreateClientAcceptCriterion extends AbstractCreateFix {
             }
         }
         return null;
+    }
+
+    @Override
+    protected String getUiLogKey() {
+        return "UI_LogClientAcceptCriterion"; // NOI18N
     }
 
     @NbBundle.Messages("acceptCriterionDialogTitle=Set Up Client AcceptCriterion")

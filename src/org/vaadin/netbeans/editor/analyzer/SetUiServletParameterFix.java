@@ -57,14 +57,15 @@ class SetUiServletParameterFix extends AbstractSetWebInitParamFix {
 
     @Override
     public ChangeInfo implement() throws Exception {
+        logUiUsage();
         JavaSource javaSource = JavaSource.forFileObject(getFileObject());
         if (javaSource == null) {
             getLogger().log(Level.WARNING, "JavaSource is null for file {0}",
                     getFileObject().getPath());
             return null;
         }
-        ModificationResult task = javaSource
-                .runModificationTask(new Task<WorkingCopy>() {
+        ModificationResult task =
+                javaSource.runModificationTask(new Task<WorkingCopy>() {
 
                     @Override
                     public void run( WorkingCopy copy ) throws Exception {
@@ -75,8 +76,9 @@ class SetUiServletParameterFix extends AbstractSetWebInitParamFix {
                             return;
                         }
 
-                        AnnotationMirror servlet = JavaUtils.getAnnotation(
-                                clazz, JavaUtils.SERVLET_ANNOTATION);
+                        AnnotationMirror servlet =
+                                JavaUtils.getAnnotation(clazz,
+                                        JavaUtils.SERVLET_ANNOTATION);
                         if (servlet == null) {
                             return;
                         }
@@ -86,21 +88,25 @@ class SetUiServletParameterFix extends AbstractSetWebInitParamFix {
                         Tree oldTree = null;
                         Tree newTree = null;
                         if (tree instanceof AnnotationTree) {
-                            AnnotationTree annotationTree = (AnnotationTree) tree;
-                            ExpressionTree expressionTree = getAnnotationTreeAttribute(
-                                    annotationTree, JavaUtils.INIT_PARAMS);
+                            AnnotationTree annotationTree =
+                                    (AnnotationTree) tree;
+                            ExpressionTree expressionTree =
+                                    getAnnotationTreeAttribute(annotationTree,
+                                            JavaUtils.INIT_PARAMS);
                             if (expressionTree instanceof AssignmentTree) {
-                                Tree[] trees = getWebInitChangedTree(
-                                        expressionTree, treeMaker,
-                                        JavaUtils.UI, myClassFqn);
+                                Tree[] trees =
+                                        getWebInitChangedTree(expressionTree,
+                                                treeMaker, JavaUtils.UI,
+                                                myClassFqn);
                                 oldTree = trees[0];
                                 newTree = trees[1];
                             }
                             else if (expressionTree == null) {
                                 oldTree = tree;
-                                newTree = treeMaker.addAnnotationAttrValue(
-                                        annotationTree,
-                                        createUiWebInit(treeMaker));
+                                newTree =
+                                        treeMaker.addAnnotationAttrValue(
+                                                annotationTree,
+                                                createUiWebInit(treeMaker));
                             }
                         }
                         if (oldTree != null && newTree != null) {
@@ -112,6 +118,11 @@ class SetUiServletParameterFix extends AbstractSetWebInitParamFix {
         ChangeInfo info = createChangeInfo(task);
         task.commit();
         return info;
+    }
+
+    @Override
+    protected String getUiLogKey() {
+        return "UI_LogSetUIWebServlet"; // NOI18N
     }
 
     private ExpressionTree createUiWebInit( TreeMaker treeMaker ) {

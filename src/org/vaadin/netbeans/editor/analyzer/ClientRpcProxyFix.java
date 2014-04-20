@@ -70,6 +70,11 @@ class ClientRpcProxyFix extends AbstractRpcFix {
     }
 
     @Override
+    protected String getUiLogKey() {
+        return "UI_LogGenClientRpcProxyInterface"; // NOI18N
+    }
+
+    @Override
     protected String suggestInterfaceName( FileObject pkg ) {
         return suggestInterfaceName(pkg, getFileObject().getName(), CLIENT_RPC);
     }

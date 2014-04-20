@@ -78,6 +78,7 @@ public class ConnectFix extends AbstractJavaFix {
 
     @Override
     public ChangeInfo implement() throws Exception {
+        logUiUsage();
         String selectedComponent = myComponentFqn;
         if (selectedComponent == null) {
             selectedComponent = selectComponent();
@@ -141,6 +142,11 @@ public class ConnectFix extends AbstractJavaFix {
         ChangeInfo changeInfo = createChangeInfo(task);
         task.commit();
         return changeInfo;
+    }
+
+    @Override
+    protected String getUiLogKey() {
+        return "UI_LogConnectToComponent"; // NOI18N
     }
 
     private String selectComponent() {

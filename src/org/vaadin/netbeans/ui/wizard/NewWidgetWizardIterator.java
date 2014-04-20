@@ -39,6 +39,7 @@ import org.vaadin.netbeans.code.generator.FullFledgedWidgetGenerator;
 import org.vaadin.netbeans.code.generator.WidgetGenerator;
 import org.vaadin.netbeans.ui.wizard.WidgetTypePanel.Template;
 import org.vaadin.netbeans.utils.JavaUtils;
+import org.vaadin.netbeans.utils.UIGestureUtils;
 
 /**
  * @author denis
@@ -51,6 +52,9 @@ public class NewWidgetWizardIterator implements
 
     private static final Map<Template, WidgetGenerator> TEMPLATE_GENERATORS =
             new EnumMap<>(WidgetTypePanel.Template.class);
+
+    private static final String UI_LOGGER_NAME =
+            "org.netbeans.ui.vaadin.wizard"; // NOI18N
 
     static {
         TEMPLATE_GENERATORS.put(Template.FULL_FLEDGED,
@@ -137,11 +141,29 @@ public class NewWidgetWizardIterator implements
         handle.start();
 
         Template template = myWidgetPanel.getSelectedTemplate();
+        logUiUsage(template);
         WidgetGenerator generator = TEMPLATE_GENERATORS.get(template);
         Set<FileObject> files = generator.generate(myWizard, handle);
 
         handle.finish();
         return files;
+    }
+
+    private void logUiUsage( Template template ) {
+        String msg = null;
+        switch (template) {
+            case CONNECTOR_ONLY:
+                msg = "UI_LogConnectorOnly"; // NOI18N
+                break;
+            case EXTENSION:
+                msg = "UI_LogExtension"; // NOI18N
+                break;
+            case FULL_FLEDGED:
+                msg = "UI_LogFullFledged"; // NOI18N
+                break;
+        }
+        UIGestureUtils.logUiUsage(NewWidgetWizardIterator.class,
+                UI_LOGGER_NAME, msg);
     }
 
     private void setSteps() {

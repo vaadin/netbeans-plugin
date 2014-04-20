@@ -92,7 +92,13 @@ class StateAccessorFix extends AbstractCreateFix {
 
     @Override
     public ChangeInfo implement() throws Exception {
+        logUiUsage();
         return doImplement(getStateFqn());
+    }
+
+    @Override
+    protected String getUiLogKey() {
+        return "UI_LogGenStateAccessor"; // NOI18N
     }
 
     protected ChangeInfo doImplement( String stateFqn ) throws IOException {

@@ -75,6 +75,7 @@ abstract class AbstractRpcFix extends AbstractCreateFix {
 
     @Override
     public ChangeInfo implement() throws Exception {
+        logUiUsage();
         searchClientPackage(false);
         if (getClientPackage() == null) {
             createClientPackage();

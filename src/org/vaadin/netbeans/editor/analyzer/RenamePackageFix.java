@@ -31,6 +31,7 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
+import org.vaadin.netbeans.utils.UIGestureUtils;
 
 /**
  * @author denis
@@ -51,6 +52,8 @@ public class RenamePackageFix implements Fix {
 
     @Override
     public ChangeInfo implement() throws Exception {
+        logUiUsage();
+
         DataObject dataObject = DataObject.find(myPkg);
         if (dataObject != null) {
             ExplorerContext context = new ExplorerContext();
@@ -75,6 +78,11 @@ public class RenamePackageFix implements Fix {
             action.actionPerformed(RefactoringActionsFactory.DEFAULT_EVENT);
         }
         return null;
+    }
+
+    private void logUiUsage() {
+        UIGestureUtils.logUiUsage(getClass(),
+                AbstractJavaFix.UI_FIX_LOGGER_NAME, "UI_LogRenamePackage"); // NOI18N
     }
 
     private final FileObject myPkg;

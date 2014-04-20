@@ -41,6 +41,7 @@ import org.openide.util.Mutex;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.vaadin.netbeans.utils.JavaUtils;
+import org.vaadin.netbeans.utils.UIGestureUtils;
 
 /**
  * @author denis
@@ -71,6 +72,8 @@ public class MoveClientClassFix implements Fix {
 
     @Override
     public ChangeInfo implement() throws Exception {
+        logUiUsage();
+
         FileObject target = myTargetPackage;
         if (target == null) {
             target = createPackage();
@@ -99,6 +102,11 @@ public class MoveClientClassFix implements Fix {
             });
         }
         return null;
+    }
+
+    private void logUiUsage() {
+        UIGestureUtils.logUiUsage(getClass(),
+                AbstractJavaFix.UI_FIX_LOGGER_NAME, "UI_LogMoveClientClass"); // NOI18N
     }
 
     private Node[] getSourceNodes() throws DataObjectNotFoundException {
