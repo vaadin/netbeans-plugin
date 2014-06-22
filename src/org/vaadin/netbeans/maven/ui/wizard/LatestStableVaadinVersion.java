@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 Vaadin Ltd.
+ * Copyright 2000-2014 Vaadin Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,15 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.vaadin.netbeans.maven.project;
+package org.vaadin.netbeans.maven.ui.wizard;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.vaadin.netbeans.retriever.CachedResource;
@@ -30,41 +28,44 @@ import org.vaadin.netbeans.versions.AbstractVaadinVersions;
 /**
  * @author denis
  */
-@CachedResource(url = VaadinVersions.VERSIONS_URL,
-        resourcePath = VaadinVersions.RESOURCE_VERSIONS)
-public final class VaadinVersions extends AbstractVaadinVersions {
+@CachedResource(url = LatestStableVaadinVersion.VERSION_URL,
+        resourcePath = LatestStableVaadinVersion.RESOURCE_VERSIONS)
+public final class LatestStableVaadinVersion extends AbstractVaadinVersions {
 
-    private static final String VERSIONS = "versions"; // NOI18N
+    private static final String VERSION = "stable-version"; // NOI18N
 
-    static final String RESOURCE_VERSIONS = VERSIONS + ".txt"; // NOI18N
+    static final String RESOURCE_VERSIONS = VERSION + ".txt"; // NOI18N
 
-    private static final VaadinVersions INSTANCE = new VaadinVersions();
+    private static final LatestStableVaadinVersion INSTANCE =
+            new LatestStableVaadinVersion();
 
-    static final String VERSIONS_URL = "http://vaadin.com/download/VERSIONS_7"; // NOI18N
+    static final String VERSION_URL = "http://vaadin.com/download/LATEST7"; // NOI18N
 
-    private VaadinVersions() {
-        myVersions = new AtomicReference<>();
-        initCache(VaadinVersions.class.getResourceAsStream(RESOURCE_VERSIONS));
+    private LatestStableVaadinVersion() {
+        myVersion = new AtomicReference<>();
+        initCache(LatestStableVaadinVersion.class
+                .getResourceAsStream(RESOURCE_VERSIONS));
 
         init();
     }
 
-    public static VaadinVersions getInstance() {
+    public static LatestStableVaadinVersion getInstance() {
         return INSTANCE;
     }
 
-    List<String> getVersions() {
-        return myVersions.get();
+    String getLatestStableVersion() {
+        requestVersions(false, 5000);
+        return myVersion.get();
     }
 
     @Override
     protected String getCachedFileName() {
-        return VERSIONS;
+        return VERSION;
     }
 
     @Override
     protected String getUrl() {
-        return VERSIONS_URL;
+        return VERSION_URL;
     }
 
     @Override
@@ -76,18 +77,13 @@ public final class VaadinVersions extends AbstractVaadinVersions {
     protected void readVersions( InputStream stream ) throws IOException {
         BufferedReader reader =
                 new BufferedReader(new InputStreamReader(stream, UTF_8));
-        List<String> result = new LinkedList<>();
-        String line;
-        while ((line = reader.readLine()) != null) {
+        String line = reader.readLine();
+        if (line != null) {
             line = line.trim();
-            String[] versions = line.split(",");
-            if (versions.length > 0) {
-                result.add(versions[0]);
-            }
         }
-        myVersions.set(result);
+        myVersion.set(line);
     }
 
-    private final AtomicReference<List<String>> myVersions;
+    private final AtomicReference<String> myVersion;
 
 }

@@ -137,7 +137,8 @@ public class VaadinProjectWizardIterator implements
     {
         logUiUsage("UI_LogCreateWebProject"); // NOI18N
         return newProject(APPLICATION_ARTIFACT_ID,
-                Bundle.vaadinNewProjectTitle());
+                Bundle.vaadinNewProjectTitle(), LatestStableVaadinVersion
+                        .getInstance().getLatestStableVersion());
     }
 
     /**
@@ -546,9 +547,22 @@ public class VaadinProjectWizardIterator implements
     private static WizardDescriptor.InstantiatingIterator<?> newProject(
             final String artifactId, String title )
     {
+        return newProject(artifactId, title, null);
+    }
+
+    private static WizardDescriptor.InstantiatingIterator<?> newProject(
+            final String artifactId, String title, String version )
+    {
+        String mavenVersion;
+        if (version == null) {
+            mavenVersion = "LATEST";
+        }
+        else {
+            mavenVersion = version;
+        }
         InstantiatingIterator<?> iterator =
                 ArchetypeWizards.definedArchetype(GROUP_ID, artifactId,
-                        "LATEST", REPOSITORY, title); //NOI18N
+                        mavenVersion, REPOSITORY, title); //NOI18N
         return new VaadinProjectWizardIterator(iterator);
     }
 
