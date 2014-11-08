@@ -48,6 +48,7 @@ import org.vaadin.netbeans.utils.JavaUtils;
 
 import com.sun.source.tree.AnnotationTree;
 import com.sun.source.tree.ClassTree;
+import org.vaadin.netbeans.maven.project.VaadinVersions;
 
 /**
  * @author denis
@@ -66,6 +67,9 @@ class ThemeFix extends AbstractJavaFix {
             "Templates/Vaadin/addons.scss";// NOI18N
 
     private static final String THEME_TEMPLATE = "Templates/Vaadin/theme.scss";// NOI18N
+
+    private static final String VALO_THEME_TEMPLATE =
+            "Templates/Vaadin/valo-theme.scss";// NOI18N
 
     private static final String STYLES_TEMPLATE =
             "Templates/Vaadin/styles.scss";// NOI18N
@@ -243,14 +247,25 @@ class ThemeFix extends AbstractJavaFix {
                     null, map);
             JavaUtils.createDataObjectFromTemplate(STYLES_TEMPLATE, theme,
                     null, map);
-            JavaUtils.createDataObjectFromTemplate(THEME_TEMPLATE, theme,
-                    themeName, map);
+            if (supportsValoTheme(theme)) {
+                JavaUtils.createDataObjectFromTemplate(VALO_THEME_TEMPLATE,
+                        theme, themeName, map);
+            }
+            else {
+                JavaUtils.createDataObjectFromTemplate(THEME_TEMPLATE, theme,
+                        themeName, map);
+            }
             JavaUtils.createDataObjectFromTemplate(FAVORITE_ICON, theme, null,
                     null);
         }
         catch (IOException e) {
             getLogger().log(Level.INFO, null, e);
         }
+    }
+
+    private boolean supportsValoTheme( FileObject file ) {
+        return VaadinVersions.getInstance().isVersionEqualOrHigher(
+                FileOwnerQuery.getOwner(file), 7, 3);
     }
 
     static ThemesFolder getThemesFolder( FileObject subject ) {

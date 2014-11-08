@@ -153,7 +153,7 @@ public class VaadinOptionsPanel extends VersionPanel {
                 boolean versionSet = false;
                 for (POMExtensibilityElement prop : props) {
                     if (prop.getQName().getLocalPart()
-                            .equals(VAADIN_PLUGIN_VERSION))
+                            .equals(VaadinVersions.VAADIN_PLUGIN_VERSION))
                     {
                         String newVersion = myVersion;
                         if (newVersion.equals(prop.getElementText())) {
@@ -181,8 +181,8 @@ public class VaadinOptionsPanel extends VersionPanel {
                 String value )
         {
             QName qname =
-                    POMQName.createQName(VAADIN_PLUGIN_VERSION, model
-                            .getPOMQNames().isNSAware());
+                    POMQName.createQName(VaadinVersions.VAADIN_PLUGIN_VERSION,
+                            model.getPOMQNames().isNSAware());
             POMExtensibilityElement version =
                     model.getFactory().createPOMExtensibilityElement(qname);
             version.setElementText(value);

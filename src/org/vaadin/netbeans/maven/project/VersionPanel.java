@@ -15,8 +15,6 @@
  */
 package org.vaadin.netbeans.maven.project;
 
-import java.io.File;
-import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -26,15 +24,7 @@ import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.SwingWorker;
 
-import org.apache.maven.project.MavenProject;
 import org.netbeans.api.project.Project;
-import org.netbeans.modules.maven.api.NbMavenProject;
-import org.netbeans.modules.maven.model.ModelOperation;
-import org.netbeans.modules.maven.model.Utilities;
-import org.netbeans.modules.maven.model.pom.POMModel;
-import org.netbeans.modules.maven.model.pom.Properties;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 import org.openide.util.Lookup;
 
 /**
@@ -44,8 +34,6 @@ abstract class VersionPanel extends JPanel {
 
     private static final Logger LOG = Logger.getLogger(VaadinOptionsPanel.class
             .getName());
-
-    protected static final String VAADIN_PLUGIN_VERSION = "vaadin.version"; // NOI18N
 
     protected void initVersions( Lookup context, JComboBox<String> comboBox ) {
         DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
@@ -57,28 +45,8 @@ abstract class VersionPanel extends JPanel {
     }
 
     protected String getCurrentVersion( Lookup context ) {
-        Project project = context.lookup(Project.class);
-        NbMavenProject mvnProject =
-                project.getLookup().lookup(NbMavenProject.class);
-        MavenProject mavenProject = mvnProject.getMavenProject();
-        File file = mavenProject.getFile();
-        FileObject pom = FileUtil.toFileObject(FileUtil.normalizeFile(file));
-
-        final String[] version = new String[1];
-        ModelOperation<POMModel> operation = new ModelOperation<POMModel>() {
-
-            @Override
-            public void performOperation( POMModel model ) {
-                Properties properties = model.getProject().getProperties();
-                if (properties != null) {
-                    version[0] = properties.getProperty(VAADIN_PLUGIN_VERSION);
-                }
-            }
-        };
-        Utilities.performPOMModelOperations(pom,
-                Collections.singletonList(operation));
-
-        return version[0];
+        return VaadinVersions.getInstance().getCurrentVersion(
+                context.lookup(Project.class));
     }
 
     private void setCurrentVersion( final Lookup context,

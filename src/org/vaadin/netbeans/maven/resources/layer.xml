@@ -126,6 +126,11 @@
                 <attr name="position" intvalue="0"/>
                 <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
             </file>
+
+            <file name="valo-theme.scss"  url="nbres:/org/vaadin/netbeans/resources/valo-theme.scss.template">
+                <attr name="position" intvalue="0"/>
+                <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
+            </file>
             
             <file name="styles.scss"  url="nbres:/org/vaadin/netbeans/resources/styles.scss.template">
                 <attr name="position" intvalue="0"/>
