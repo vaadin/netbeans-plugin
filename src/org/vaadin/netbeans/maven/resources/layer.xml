@@ -49,6 +49,15 @@
                 <attr name="position" intvalue="250"/>
             </folder>
         </folder>
+        <folder name="Project">
+        	<folder name="Samples">
+            	<folder name="Vaadin">
+                	<attr name="SystemFileSystem.localizingBundle" stringvalue="org.vaadin.netbeans.maven.Bundle"/>
+                	<attr name="position" intvalue="600"/>
+            	</folder>
+            </folder>	
+        </folder>
+        
         <folder name="Vaadin">
         	<attr name="position" intvalue="620"/>
 		<attr name="SystemFileSystem.localizingBundle" stringvalue="org.vaadin.netbeans.resources.Bundle"/>

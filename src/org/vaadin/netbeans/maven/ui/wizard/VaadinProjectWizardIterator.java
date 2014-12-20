@@ -76,10 +76,10 @@ public class VaadinProjectWizardIterator implements
     private static final String APPLICATION_ARTIFACT_ID =
             "vaadin-archetype-application";// NOI18N
 
-    private static final String PORTLET_ARTIFACT_ID =
-            "vaadin-archetype-portlet"; // NOI18N
-
     private static final String ADD_ON_ARTIFACT_ID = "vaadin-archetype-widget";// NOI18N
+
+    private static final String EXAMPLE_ARTIFACT_ID =
+            "vaadin-archetype-application-example"; // NOI18N
 
     private static final String TOUCHKIT_ARTIFACT_ID =
             "vaadin-archetype-touchkit";// NOI18N
@@ -93,13 +93,8 @@ public class VaadinProjectWizardIterator implements
 
     private static final String APPLICATION_VERSION = "7.0.7";// NOI18N
 
-    private static final String PORTLET_VERSION = "1.0.0";// NOI18N
-
     public static final int APPLICATION_MIN_VERSION = Integer
             .parseInt(APPLICATION_VERSION.substring(0, 1));
-
-    private static final int PORTLET_MIN_VERSION = Integer
-            .parseInt(PORTLET_VERSION.substring(0, 1));
 
     private static final String JETTY_ARTIFACT_ID = "jetty-maven-plugin";
 
@@ -141,23 +136,6 @@ public class VaadinProjectWizardIterator implements
                         .getInstance().getLatestStableVersion());
     }
 
-    /**
-     * Portlet archetype is not available for 7.+ Vaadin versions
-     * 
-     * @TemplateRegistration(folder = "Project/Vaadin", displayName =
-     *                              "#VaadinNewPortletProject", description =
-     *                              "../resources/VaadinPortletProjectDescription.html"
-     *                              , iconBase = PROJECT_ICON, position = 300)
-     */
-    @NbBundle.Messages({
-            "VaadinNewPortletProject=Vaadin Portlet Application Project",
-            "vaadinNewPortletTitle=Vaadin Portlet Application" })
-    public static WizardDescriptor.InstantiatingIterator<?> newPortletProject()
-    {
-        logUiUsage("UI_LogCreatePortletProject"); // NOI18N
-        return newProject(PORTLET_ARTIFACT_ID, Bundle.vaadinNewPortletTitle());
-    }
-
     @TemplateRegistration(folder = "Project/Vaadin",
             displayName = "#VaadinTouchkitProject",
             description = "../resources/VaadinTouchkitProjectDescription.html",
@@ -179,6 +157,33 @@ public class VaadinProjectWizardIterator implements
     public static WizardDescriptor.InstantiatingIterator<?> newAddOnProject() {
         logUiUsage("UI_LogCreateAddOnProject"); // NOI18N
         return newProject(ADD_ON_ARTIFACT_ID, Bundle.vaadinNewAddOnTitle());
+    }
+
+    @TemplateRegistration(folder = "Project/Vaadin",
+            displayName = "#VaadinExampleProject",
+            description = "../resources/VaadinExampleProjectDescription.html",
+            iconBase = PROJECT_ICON, position = 200)
+    @NbBundle.Messages({ "VaadinExampleProject=Vaadin Example Project",
+            "vaadinExampleTitle=Vaadin Example Application" })
+    public static WizardDescriptor.InstantiatingIterator<?> newExampleProject()
+    {
+        logUiUsage("UI_LogCreateExampleProject"); // NOI18N
+        return newProject(EXAMPLE_ARTIFACT_ID, Bundle.vaadinExampleTitle());
+    }
+
+    @TemplateRegistration(folder = "Project/Samples/Vaadin",
+            displayName = "#VaadinSampleProject",
+            description = "../resources/VaadinSampleProjectDescription.html",
+            iconBase = PROJECT_ICON, position = 200)
+    @NbBundle.Messages({ "VaadinSampleProject=Vaadin CRUD Sample Project",
+            "vaadinSampleTitle=Vaadin CRUD Application" })
+    /** 
+     * This template is exactly the same as 'newExampleProject' but is inside 
+     * Samples category and slightly different description.
+     */
+    public static WizardDescriptor.InstantiatingIterator<?> newSampleProject() {
+        logUiUsage("UI_LogCreateSampleProject"); // NOI18N
+        return newProject(EXAMPLE_ARTIFACT_ID, Bundle.vaadinSampleTitle());
     }
 
     @Override
