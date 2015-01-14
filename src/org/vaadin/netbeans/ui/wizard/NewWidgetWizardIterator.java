@@ -75,7 +75,8 @@ public class NewWidgetWizardIterator implements
         myWizard = wizard;
         Project project = Templates.getProject(wizard);
 
-        SourceGroup[] sourceGroups = JavaUtils.getJavaSourceGroups(project);
+        SourceGroup[] sourceGroups =
+                JavaUtils.getJavaSourceGroups(project, true);
         myWidgetPanel = new WidgetTypePanel();
         WizardDescriptor.Panel<WizardDescriptor> firstPanel =
                 new FinishableWizardPanel(JavaTemplates.createPackageChooser(

@@ -57,6 +57,7 @@ import org.netbeans.api.java.source.Task;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
+import org.netbeans.api.project.SourceGroupModifier;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.filesystems.URLMapper;
@@ -342,7 +343,24 @@ public final class JavaUtils {
     }
 
     public static SourceGroup[] getJavaSourceGroups( Project project ) {
-        return getSourceGroups(project, JavaProjectConstants.SOURCES_TYPE_JAVA);
+        return getJavaSourceGroups(project, false);
+    }
+
+    public static SourceGroup[] getJavaSourceGroups( Project project,
+            boolean create )
+    {
+        SourceGroup[] sourceGroups =
+                getSourceGroups(project, JavaProjectConstants.SOURCES_TYPE_JAVA);
+        if (create && sourceGroups.length == 0) {
+            SourceGroupModifier.createSourceGroup(project,
+                    JavaProjectConstants.SOURCES_TYPE_JAVA,
+                    JavaProjectConstants.SOURCES_HINT_MAIN);
+            return getSourceGroups(project,
+                    JavaProjectConstants.SOURCES_TYPE_JAVA);
+        }
+        else {
+            return sourceGroups;
+        }
     }
 
     public static SourceGroup[] getResourcesSourceGroups( Project project ) {
