@@ -54,6 +54,7 @@ import org.openide.WizardDescriptor.AsynchronousInstantiatingIterator;
 import org.openide.WizardDescriptor.InstantiatingIterator;
 import org.openide.WizardDescriptor.Panel;
 import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.vaadin.netbeans.utils.UIGestureUtils;
@@ -264,6 +265,12 @@ public class VaadinProjectWizardIterator implements
                     }
                     else {
                         poms.add(pom);
+                    }
+
+                    if ("jar".equals(packaging[0])) {
+                        // Create source dir if JAR project has no java sources folder 
+                        FileUtil.createFolder((FileObject) project,
+                                "src/main/java");
                     }
                 }
             }

@@ -59,7 +59,7 @@ public class JettyAction extends AbstractAction implements Popup,
     }
 
     public JettyAction( Lookup lookup ) {
-        myProject = VaadinAction.getProject(lookup);
+        myProject = VaadinWebProjectAction.getProject(lookup);
         if (myProject == null
                 || !VaadinConfiguration.getInstance().isJettyEnabled())
         {
@@ -107,7 +107,7 @@ public class JettyAction extends AbstractAction implements Popup,
 
             @Override
             public void run() {
-                VaadinAction.logUiUsage("UI_LogRunJettyAction"); // NOI18N
+                VaadinWebProjectAction.logUiUsage("UI_LogRunJettyAction"); // NOI18N
 
                 VaadinSupport support =
                         myProject.getLookup().lookup(VaadinSupport.class);
@@ -149,7 +149,7 @@ public class JettyAction extends AbstractAction implements Popup,
 
             @Override
             public void run() {
-                VaadinAction.logUiUsage("UI_LogRunJettyDevModeAction"); // NOI18N
+                VaadinWebProjectAction.logUiUsage("UI_LogRunJettyDevModeAction"); // NOI18N
 
                 VaadinSupport support =
                         myProject.getLookup().lookup(VaadinSupport.class);
@@ -196,7 +196,7 @@ public class JettyAction extends AbstractAction implements Popup,
                                             .getInformation(myProject)
                                             .getDisplayName()),
                                     Collections
-                                            .singletonList(VaadinAction.VAADIN_DEV_MODE_GOAL));
+                                            .singletonList(VaadinWebProjectAction.VAADIN_DEV_MODE_GOAL));
                     task = RunUtils.executeMaven(config);
                     if (support != null) {
                         support.addAction(VaadinSupport.Action.DEV_MODE, task);
@@ -217,7 +217,7 @@ public class JettyAction extends AbstractAction implements Popup,
 
             @Override
             public void run() {
-                VaadinAction.logUiUsage("UI_LogDebugJettyAction"); // NOI18N
+                VaadinWebProjectAction.logUiUsage("UI_LogDebugJettyAction"); // NOI18N
 
                 VaadinSupport support =
                         myProject.getLookup().lookup(VaadinSupport.class);

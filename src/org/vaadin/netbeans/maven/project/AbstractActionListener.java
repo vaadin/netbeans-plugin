@@ -26,7 +26,7 @@ import org.openide.util.RequestProcessor;
 abstract class AbstractActionListener implements ActionListener, Runnable {
 
     private static final ExecutorService REQUEST_PROCESSOR =
-            new RequestProcessor(VaadinAction.class);
+            new RequestProcessor(VaadinWebProjectAction.class);
 
     @Override
     public void actionPerformed( ActionEvent e ) {

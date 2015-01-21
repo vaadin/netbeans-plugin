@@ -348,7 +348,11 @@ public final class POMUtils {
             String artifactId, String version, String scope )
     {
         VaadinSupport support = project.getLookup().lookup(VaadinSupport.class);
-        if (support != null && support.isWeb()) {
+        Project widgetProject = support.getWidgetsetProject();
+        support =
+                widgetProject == null ? null : widgetProject.getLookup()
+                        .lookup(VaadinSupport.class);
+        if (support != null) {
             final boolean[] hasGwtXml = new boolean[1];
             try {
                 support.runModelOperation(new ModelOperation() {
@@ -369,14 +373,17 @@ public final class POMUtils {
                         null, e);
             }
         }
-        NbMavenProject mavenProject =
-                project.getLookup().lookup(NbMavenProject.class);
-        File file = mavenProject.getMavenProject().getFile();
-        FileObject pom = FileUtil.toFileObject(FileUtil.normalizeFile(file));
-        ModelUtils.addDependency(pom, groupId, artifactId, version, null,
-                scope, null, false);
-        mavenProject.downloadDependencyAndJavadocSource(false);
-        sendUsageStatistics(artifactId, version);
+        if (widgetProject != null) {
+            NbMavenProject mavenProject =
+                    widgetProject.getLookup().lookup(NbMavenProject.class);
+            File file = mavenProject.getMavenProject().getFile();
+            FileObject pom =
+                    FileUtil.toFileObject(FileUtil.normalizeFile(file));
+            ModelUtils.addDependency(pom, groupId, artifactId, version, null,
+                    scope, null, false);
+            mavenProject.downloadDependencyAndJavadocSource(false);
+            sendUsageStatistics(artifactId, version);
+        }
     }
 
     private static void sendUsageStatistics( String artifactId, String version )

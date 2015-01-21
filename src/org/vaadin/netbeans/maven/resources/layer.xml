@@ -15,11 +15,11 @@
         </folder>
      </folder>
      <folder name="Projects">
-	<folder name="Vaadin">
-	    <file name="org.vaadin.netbeans.maven.project.VaadinAction.instance">
-	        <attr name="misplaced.action.allowed" boolvalue="true" />
-	    </file>
-	</folder>
+		<folder name="Vaadin">
+		    <file name="org.vaadin.netbeans.maven.project.VaadinAction.instance">
+		        <attr name="misplaced.action.allowed" boolvalue="true" />
+		    </file>
+		</folder>
         <folder name="Jetty">
             <file name="org.vaadin.netbeans.maven.project.JettyAction.instance">
                 <attr name="misplaced.action.allowed" boolvalue="true" />

@@ -16,12 +16,15 @@
 package org.vaadin.netbeans.impl;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.TypeElement;
@@ -39,11 +42,19 @@ import org.netbeans.api.java.source.TypesEvent;
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
 import org.netbeans.modules.maven.api.NbMavenProject;
+import org.netbeans.modules.maven.model.pom.POMExtensibilityElement;
+import org.netbeans.modules.maven.model.pom.POMModel;
 import org.netbeans.spi.project.ProjectServiceProvider;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
+import org.openide.filesystems.FileObject;
+import org.openide.util.Exceptions;
 import org.openide.util.Utilities;
 import org.vaadin.netbeans.VaadinSupport;
+import static org.vaadin.netbeans.impl.VaadinSupportImpl.LOG;
+import org.vaadin.netbeans.model.ModelOperation;
+import org.vaadin.netbeans.model.VaadinModel;
 import org.vaadin.netbeans.utils.JavaUtils;
+import org.vaadin.netbeans.utils.POMUtils;
 
 /**
  * @author denis
@@ -53,9 +64,33 @@ import org.vaadin.netbeans.utils.JavaUtils;
         projectType = "org-netbeans-modules-maven/war")
 public class WebVaadinSupportImpl extends VaadinSupportImpl {
 
+    private static final String VAADIN_CLIENT_COMPILER =
+            "vaadin-client-compiler"; // NOI18N
+
     public WebVaadinSupportImpl( Project project ) {
         super(project, true);
         myRootsListener = new ClassIndexListenerImpl();
+    }
+
+    @Override
+    public Project getWidgetsetProject() {
+        if (hasGwtModel(getProject(), this)) {
+            return getProject();
+        }
+        for (File file : getRuntimeDependecies(getProject())) {
+            Project dependency = FileOwnerQuery.getOwner(Utilities.toURI(file));
+            if (dependency != null) {
+                VaadinSupport support =
+                        dependency.getLookup().lookup(VaadinSupport.class);
+                if (support != null && support.isEnabled() && !support.isWeb()
+                        && hasClientCompilerDependency(dependency)
+                        && hasGwtModel(dependency, support))
+                {
+                    return dependency;
+                }
+            }
+        }
+        return getProject();
     }
 
     @Override
@@ -167,11 +202,46 @@ public class WebVaadinSupportImpl extends VaadinSupportImpl {
         }
     }
 
-    static List<File> getRuntimeDependecies( Project project ) {
+    private boolean hasClientCompilerDependency( Project project ) {
+        for (Artifact artifact : getDependecies(project)) {
+            if (VAADIN_CLIENT_COMPILER.equals(artifact.getArtifactId())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean hasGwtModel( final Project project, VaadinSupport support )
+    {
+        final boolean[] result = new boolean[1];
+        try {
+            support.runModelOperation(new ModelOperation() {
+
+                @Override
+                public void run( VaadinModel model ) {
+                    FileObject gwtXml = model.getGwtXml();
+                    if (gwtXml == null) {
+                        return;
+                    }
+                    result[0] = project.equals(FileOwnerQuery.getOwner(gwtXml));
+                }
+            });
+        }
+        catch (IOException e) {
+            LOG.log(Level.INFO, null, e);
+        }
+        return result[0];
+    }
+
+    private static Set<Artifact> getDependecies( Project project ) {
         NbMavenProject nbMvnProject =
                 project.getLookup().lookup(NbMavenProject.class);
         MavenProject mavenProject = nbMvnProject.getMavenProject();
-        Set<Artifact> artifacts = mavenProject.getArtifacts();
+        return mavenProject.getArtifacts();
+    }
+
+    static List<File> getRuntimeDependecies( Project project ) {
+        Set<Artifact> artifacts = getDependecies(project);
         List<File> result = new ArrayList<>(artifacts.size());
         for (Artifact artifact : artifacts) {
             if (Artifact.SCOPE_COMPILE.equals(artifact.getScope())

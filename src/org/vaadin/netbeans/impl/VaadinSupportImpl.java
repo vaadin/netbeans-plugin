@@ -290,6 +290,10 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
         return myStrategy.get();
     }
 
+    public Project getWidgetsetProject() {
+        return getProject();
+    }
+
     @Override
     protected void projectClosed() {
         removeFileSystemListener();
