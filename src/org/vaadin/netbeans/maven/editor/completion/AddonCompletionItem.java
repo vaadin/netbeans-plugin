@@ -205,7 +205,7 @@ class AddonCompletionItem extends AbstractLicenseChooser implements
                         NbEditorUtilities.getFileObject(document);
                 Project project = FileOwnerQuery.getOwner(fileObject);
 
-                POMUtils.addDependency(project, license.getGroupId(),
+                POMUtils.addClientSideDependency(project, license.getGroupId(),
                         license.getArtifactId(), license.getVersion(), scope);
             }
         });

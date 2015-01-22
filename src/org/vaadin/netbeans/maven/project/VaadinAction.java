@@ -262,9 +262,9 @@ public class VaadinAction extends AbstractAction implements ContextAwareAction {
         @Override
         public void run() {
             if (myLicense != null) {
-                POMUtils.addDependency(myProject, myLicense.getGroupId(),
-                        myLicense.getArtifactId(), myLicense.getVersion(),
-                        getScope(myAddOn));
+                POMUtils.addClientSideDependency(myProject,
+                        myLicense.getGroupId(), myLicense.getArtifactId(),
+                        myLicense.getVersion(), getScope(myAddOn));
             }
         }
 

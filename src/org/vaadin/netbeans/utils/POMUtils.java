@@ -23,6 +23,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.text.MessageFormat;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -31,6 +32,7 @@ import java.util.logging.Logger;
 import javax.lang.model.element.TypeElement;
 import javax.swing.JCheckBox;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.xml.namespace.QName;
 
 import org.netbeans.api.java.source.CompilationController;
@@ -40,8 +42,11 @@ import org.netbeans.api.java.source.JavaSource.Phase;
 import org.netbeans.api.java.source.SourceUtils;
 import org.netbeans.api.java.source.Task;
 import org.netbeans.api.project.Project;
+import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.modules.maven.api.ModelUtils;
 import org.netbeans.modules.maven.api.NbMavenProject;
+import org.netbeans.modules.maven.api.execute.RunConfig;
+import org.netbeans.modules.maven.api.execute.RunUtils;
 import org.netbeans.modules.maven.model.pom.Build;
 import org.netbeans.modules.maven.model.pom.Configuration;
 import org.netbeans.modules.maven.model.pom.POMComponent;
@@ -49,8 +54,11 @@ import org.netbeans.modules.maven.model.pom.POMExtensibilityElement;
 import org.netbeans.modules.maven.model.pom.POMModel;
 import org.netbeans.modules.maven.model.pom.POMQName;
 import org.netbeans.modules.maven.model.pom.Plugin;
+import org.openide.execution.ExecutorTask;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
+import org.openide.util.NbBundle;
+import org.openide.util.TaskListener;
 import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.customizer.VaadinConfiguration;
 import org.vaadin.netbeans.model.ModelOperation;
@@ -60,6 +68,10 @@ import org.vaadin.netbeans.model.VaadinModel;
  * @author denis
  */
 public final class POMUtils {
+
+    private static final String SKIP_TESTS = "skipTests"; // NOI18N
+
+    public static final String GWT_COMPILER_SKIP = "gwt.compiler.skip";// NOI18N
 
     public static final String VAADIN_GROUP_ID = "com.vaadin"; // NOI18N
 
@@ -85,6 +97,8 @@ public final class POMUtils {
                     + "pluginver={0}&addon={1}&addonver={2}"; // NOI18N
 
     private static final String CURRENT_VERSION = "1.1"; // NOI18N
+
+    private static final String INSTALL_GOAL = "install";
 
     private POMUtils() {
     }
@@ -344,14 +358,30 @@ public final class POMUtils {
         return element;
     }
 
-    public static void addDependency( Project project, String groupId,
-            String artifactId, String version, String scope )
+    public static void addClientSideDependency( Project project,
+            String groupId, String artifactId, String version, String scope )
     {
         VaadinSupport support = project.getLookup().lookup(VaadinSupport.class);
         Project widgetProject = support.getWidgetsetProject();
-        support =
-                widgetProject == null ? null : widgetProject.getLookup()
-                        .lookup(VaadinSupport.class);
+        if (widgetProject == null) {
+            return;
+        }
+        support = widgetProject.getLookup().lookup(VaadinSupport.class);
+        addDependency(widgetProject, groupId, artifactId, version, scope);
+
+        if (!project.equals(widgetProject)) {
+            refreshTransitiveDependencies(project, widgetProject);
+        }
+    }
+
+    public static void addDependency( Project project, String groupId,
+            String artifactId, String version, String scope )
+    {
+        if (SwingUtilities.isEventDispatchThread()) {
+            throw new RuntimeException("Method is called inside AWT thread.");
+        }
+
+        VaadinSupport support = project.getLookup().lookup(VaadinSupport.class);
         if (support != null) {
             final boolean[] hasGwtXml = new boolean[1];
             try {
@@ -373,17 +403,38 @@ public final class POMUtils {
                         null, e);
             }
         }
-        if (widgetProject != null) {
-            NbMavenProject mavenProject =
-                    widgetProject.getLookup().lookup(NbMavenProject.class);
-            File file = mavenProject.getMavenProject().getFile();
-            FileObject pom =
-                    FileUtil.toFileObject(FileUtil.normalizeFile(file));
-            ModelUtils.addDependency(pom, groupId, artifactId, version, null,
-                    scope, null, false);
-            mavenProject.downloadDependencyAndJavadocSource(false);
-            sendUsageStatistics(artifactId, version);
+        NbMavenProject mavenProject =
+                project.getLookup().lookup(NbMavenProject.class);
+        File file = mavenProject.getMavenProject().getFile();
+        FileObject pom = FileUtil.toFileObject(FileUtil.normalizeFile(file));
+        ModelUtils.addDependency(pom, groupId, artifactId, version, null,
+                scope, null, false);
+        mavenProject.downloadDependencyAndJavadocSource(true);
+        sendUsageStatistics(artifactId, version);
+    }
+
+    @NbBundle.Messages({ "# {0} - project name",
+            "installProject=Install Project {0}" })
+    private static void refreshTransitiveDependencies( Project target,
+            Project changed )
+    {
+        if (SwingUtilities.isEventDispatchThread()) {
+            throw new RuntimeException("Method is called inside AWT thread.");
         }
+        RunConfig config =
+                RunUtils.createRunConfig(
+                        FileUtil.toFile(changed.getProjectDirectory()),
+                        changed,
+                        Bundle.installProject(ProjectUtils.getInformation(
+                                changed).getDisplayName()),
+                        Collections.singletonList(INSTALL_GOAL));
+        config.setProperty(GWT_COMPILER_SKIP, Boolean.TRUE.toString());
+        config.setProperty(SKIP_TESTS, Boolean.TRUE.toString());
+        ExecutorTask task = RunUtils.executeMaven(config);
+
+        InstallGoalListener listener = new InstallGoalListener(target, task);
+        task.addTaskListener(listener);
+        listener.refreshProject();
     }
 
     private static void sendUsageStatistics( String artifactId, String version )
@@ -470,4 +521,26 @@ public final class POMUtils {
         }
     }
 
+    private static class InstallGoalListener implements TaskListener {
+
+        private InstallGoalListener( Project project, ExecutorTask task ) {
+            myProject = project;
+            myTask = task;
+        }
+
+        @Override
+        public void taskFinished( org.openide.util.Task task ) {
+            NbMavenProject.fireMavenProjectReload(myProject);
+        }
+
+        public void refreshProject() {
+            if (myTask.isFinished()) {
+                NbMavenProject.fireMavenProjectReload(myProject);
+            }
+        }
+
+        private final Project myProject;
+
+        private final ExecutorTask myTask;
+    }
 }

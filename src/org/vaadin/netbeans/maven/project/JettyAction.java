@@ -40,6 +40,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter.Popup;
 import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.customizer.VaadinConfiguration;
+import org.vaadin.netbeans.utils.POMUtils;
 
 /**
  * @author denis
@@ -47,8 +48,6 @@ import org.vaadin.netbeans.customizer.VaadinConfiguration;
 public class JettyAction extends AbstractAction implements Popup,
         ContextAwareAction
 {
-
-    private static final String GWT_COMPILER_SKIP = "gwt.compiler.skip";// NOI18N
 
     private static final String PACKAGE_GOAL = "package"; // NOI18N
 
@@ -169,7 +168,8 @@ public class JettyAction extends AbstractAction implements Popup,
                                 .getProjectDirectory()), myProject, Bundle
                                 .runAppInJetty(name), goals);
 
-                config.setProperty(GWT_COMPILER_SKIP, Boolean.TRUE.toString());
+                config.setProperty(POMUtils.GWT_COMPILER_SKIP,
+                        Boolean.TRUE.toString());
 
                 ExecutorTask task = RunUtils.executeMaven(config);
                 boolean runDevMode = true;
