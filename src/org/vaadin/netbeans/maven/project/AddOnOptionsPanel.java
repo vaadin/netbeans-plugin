@@ -506,11 +506,11 @@ public class AddOnOptionsPanel extends VersionPanel {
                     (String) myVaadinVersion.getModel().getSelectedItem();
             if (version != null) {
                 POMExtensibilityElement versionElement =
-                        values.get(VaadinVersions.VAADIN_PLUGIN_VERSION);
+                        values.get(POMUtils.VAADIN_PLUGIN_VERSION);
                 if (versionElement == null) {
                     versionElement =
                             POMUtils.createElement(model,
-                                    VaadinVersions.VAADIN_PLUGIN_VERSION,
+                                    POMUtils.VAADIN_PLUGIN_VERSION,
                                     version.toString());
                     properties.addExtensibilityElement(versionElement);
                 }

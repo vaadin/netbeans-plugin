@@ -26,6 +26,7 @@ import javax.swing.SwingWorker;
 
 import org.netbeans.api.project.Project;
 import org.openide.util.Lookup;
+import org.vaadin.netbeans.VaadinSupport;
 
 /**
  * @author denis
@@ -45,8 +46,8 @@ abstract class VersionPanel extends JPanel {
     }
 
     protected String getCurrentVersion( Lookup context ) {
-        return VaadinVersions.getInstance().getCurrentVersion(
-                context.lookup(Project.class));
+        return context.lookup(Project.class).getLookup()
+                .lookup(VaadinSupport.class).getVaadinVersion();
     }
 
     private void setCurrentVersion( final Lookup context,

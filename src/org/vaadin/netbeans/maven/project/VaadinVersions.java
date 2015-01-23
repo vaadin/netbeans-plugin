@@ -20,23 +20,14 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.apache.maven.project.MavenProject;
 import org.netbeans.api.project.Project;
-import org.netbeans.modules.maven.api.NbMavenProject;
-import org.netbeans.modules.maven.model.ModelOperation;
-import org.netbeans.modules.maven.model.Utilities;
-import org.netbeans.modules.maven.model.pom.POMModel;
-import org.netbeans.modules.maven.model.pom.Properties;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
-import org.openide.util.Lookup;
+import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.retriever.CachedResource;
 import org.vaadin.netbeans.versions.AbstractVaadinVersions;
 
@@ -46,8 +37,6 @@ import org.vaadin.netbeans.versions.AbstractVaadinVersions;
 @CachedResource(url = VaadinVersions.VERSIONS_URL,
         resourcePath = VaadinVersions.RESOURCE_VERSIONS)
 public final class VaadinVersions extends AbstractVaadinVersions {
-
-    public static final String VAADIN_PLUGIN_VERSION = "vaadin.version"; // NOI18N
 
     private static final String VERSIONS = "versions"; // NOI18N
 
@@ -68,34 +57,12 @@ public final class VaadinVersions extends AbstractVaadinVersions {
         return INSTANCE;
     }
 
-    public String getCurrentVersion( Project project ) {
-        NbMavenProject mvnProject =
-                project.getLookup().lookup(NbMavenProject.class);
-        MavenProject mavenProject = mvnProject.getMavenProject();
-        File file = mavenProject.getFile();
-        FileObject pom = FileUtil.toFileObject(FileUtil.normalizeFile(file));
-
-        final String[] version = new String[1];
-        ModelOperation<POMModel> operation = new ModelOperation<POMModel>() {
-
-            @Override
-            public void performOperation( POMModel model ) {
-                Properties properties = model.getProject().getProperties();
-                if (properties != null) {
-                    version[0] = properties.getProperty(VAADIN_PLUGIN_VERSION);
-                }
-            }
-        };
-        Utilities.performPOMModelOperations(pom,
-                Collections.singletonList(operation));
-
-        return version[0];
-    }
-
     public boolean isVersionEqualOrHigher( Project project,
             int... versionSpecification )
     {
-        String version = getCurrentVersion(project);
+        String version =
+                project.getLookup().lookup(VaadinSupport.class)
+                        .getVaadinVersion();
         String[] parts = version.split("\\.");
         try {
             for (int i = 0; i < versionSpecification.length; i++) {

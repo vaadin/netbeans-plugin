@@ -75,4 +75,6 @@ public interface VaadinSupport {
      */
     boolean isWidgetsetActionsAware();
 
+    String getVaadinVersion();
+
 }

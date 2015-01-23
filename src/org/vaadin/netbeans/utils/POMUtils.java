@@ -55,6 +55,7 @@ import org.netbeans.modules.maven.model.pom.POMModel;
 import org.netbeans.modules.maven.model.pom.POMQName;
 import org.netbeans.modules.maven.model.pom.Plugin;
 import org.openide.execution.ExecutorTask;
+import org.netbeans.modules.maven.model.pom.Properties;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
@@ -99,6 +100,8 @@ public final class POMUtils {
     private static final String CURRENT_VERSION = "1.1"; // NOI18N
 
     private static final String INSTALL_GOAL = "install";
+
+    public static final String VAADIN_PLUGIN_VERSION = "vaadin.version"; // NOI18N
 
     private POMUtils() {
     }
@@ -356,6 +359,14 @@ public final class POMUtils {
             element.setElementText(value);
         }
         return element;
+    }
+
+    public static String getVaadinVersion( POMModel model ) {
+        Properties properties = model.getProject().getProperties();
+        if (properties != null) {
+            return properties.getProperty(VAADIN_PLUGIN_VERSION);
+        }
+        return null;
     }
 
     public static void addClientSideDependency( Project project,

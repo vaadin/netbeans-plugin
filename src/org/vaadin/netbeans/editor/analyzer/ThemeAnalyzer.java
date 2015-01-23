@@ -91,7 +91,7 @@ public class ThemeAnalyzer extends Analyzer {
                 if (value == null) {
                     return;
                 }
-                if (checkBundledTheme(value)) {
+                if (checkBundledTheme(getSupport(), value)) {
                     return;
                 }
                 if (ThemeFix.getThemeFolder(getInfo().getFileObject(), value) == null)
@@ -122,8 +122,16 @@ public class ThemeAnalyzer extends Analyzer {
         }
     }
 
-    private boolean checkBundledTheme( String theme ) {
-        VaadinSupport support = getSupport();
+    public ErrorDescription getNoThemeAnnotation() {
+        return myNoThemeAnnotation;
+    }
+
+    public ErrorDescription getNoSpecifiedTheme() {
+        return myNoSpecifiedTheme;
+    }
+
+    public static boolean checkBundledTheme( VaadinSupport support, String theme )
+    {
         if (support == null) {
             return false;
         }
@@ -140,14 +148,6 @@ public class ThemeAnalyzer extends Analyzer {
             }
         }
         return false;
-    }
-
-    public ErrorDescription getNoThemeAnnotation() {
-        return myNoThemeAnnotation;
-    }
-
-    public ErrorDescription getNoSpecifiedTheme() {
-        return myNoSpecifiedTheme;
     }
 
     private ErrorDescription myNoThemeAnnotation;

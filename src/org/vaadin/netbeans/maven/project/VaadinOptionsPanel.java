@@ -28,6 +28,7 @@ import org.netbeans.modules.maven.model.pom.POMModel;
 import org.netbeans.modules.maven.model.pom.POMQName;
 import org.netbeans.modules.maven.model.pom.Properties;
 import org.openide.util.Lookup;
+import org.vaadin.netbeans.utils.POMUtils;
 
 /**
  * @author denis
@@ -153,7 +154,7 @@ public class VaadinOptionsPanel extends VersionPanel {
                 boolean versionSet = false;
                 for (POMExtensibilityElement prop : props) {
                     if (prop.getQName().getLocalPart()
-                            .equals(VaadinVersions.VAADIN_PLUGIN_VERSION))
+                            .equals(POMUtils.VAADIN_PLUGIN_VERSION))
                     {
                         String newVersion = myVersion;
                         if (newVersion.equals(prop.getElementText())) {
@@ -181,8 +182,8 @@ public class VaadinOptionsPanel extends VersionPanel {
                 String value )
         {
             QName qname =
-                    POMQName.createQName(VaadinVersions.VAADIN_PLUGIN_VERSION,
-                            model.getPOMQNames().isNSAware());
+                    POMQName.createQName(POMUtils.VAADIN_PLUGIN_VERSION, model
+                            .getPOMQNames().isNSAware());
             POMExtensibilityElement version =
                     model.getFactory().createPOMExtensibilityElement(qname);
             version.setElementText(value);

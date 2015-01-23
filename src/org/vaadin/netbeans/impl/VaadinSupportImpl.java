@@ -290,6 +290,27 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
     }
 
     @Override
+    public String getVaadinVersion() {
+        NbMavenProject mvnProject =
+                getProject().getLookup().lookup(NbMavenProject.class);
+        MavenProject mavenProject = mvnProject.getMavenProject();
+        FileObject pom =
+                FileUtil.toFileObject(FileUtil.normalizeFile(mavenProject
+                        .getFile()));
+        String version = getVaadinVersion(pom);
+        if (version == null) {
+            version =
+                    getVaadinVersion(FileUtil.toFileObject(FileUtil
+                            .normalizeFile(mavenProject.getParentFile())));
+        }
+        if (version == null) {
+            LOG.severe("Unknown project structure: cannot get version "
+                    + "neither from the project nor from parents");
+        }
+        return version;
+    }
+
+    @Override
     public ClasspathInfo getClassPathInfo() {
         return myClasspathInfo;
     }
@@ -499,6 +520,22 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
             throws IOException
     {
         return invoke(task, !isReady());
+    }
+
+    private String getVaadinVersion( FileObject pom ) {
+        final String[] version = new String[1];
+        org.netbeans.modules.maven.model.ModelOperation<POMModel> operation =
+                new org.netbeans.modules.maven.model.ModelOperation<POMModel>()
+                {
+
+                    @Override
+                    public void performOperation( POMModel model ) {
+                        version[0] = POMUtils.getVaadinVersion(model);
+                    }
+                };
+        Utilities.performPOMModelOperations(pom,
+                Collections.singletonList(operation));
+        return version[0];
     }
 
     protected static ClassPath getClassPath( Project project, String type ) {

@@ -48,6 +48,7 @@ import org.vaadin.netbeans.utils.JavaUtils;
 
 import com.sun.source.tree.AnnotationTree;
 import com.sun.source.tree.ClassTree;
+import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.maven.project.VaadinVersions;
 
 /**
@@ -60,6 +61,8 @@ class ThemeFix extends AbstractJavaFix {
     private static final String THEMES = "themes"; // NOI18N
 
     private static final String DEFAULT_THEME_NAME = "newTheme"; // NOI18N
+
+    private static final String VALO = "valo"; // NOI18N
 
     private static final String THEME_FQN = "com.vaadin.annotations.Theme"; // NOI18N
 
@@ -264,8 +267,15 @@ class ThemeFix extends AbstractJavaFix {
     }
 
     private boolean supportsValoTheme( FileObject file ) {
-        return VaadinVersions.getInstance().isVersionEqualOrHigher(
-                FileOwnerQuery.getOwner(file), 7, 3);
+        Project project = FileOwnerQuery.getOwner(file);
+        VaadinSupport support = project.getLookup().lookup(VaadinSupport.class);
+        if (support.getVaadinVersion() == null) {
+            return ThemeAnalyzer.checkBundledTheme(support, VALO);
+        }
+        else {
+            return VaadinVersions.getInstance().isVersionEqualOrHigher(project,
+                    7, 3);
+        }
     }
 
     static ThemesFolder getThemesFolder( FileObject subject ) {
