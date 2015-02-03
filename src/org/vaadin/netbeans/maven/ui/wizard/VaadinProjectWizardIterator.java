@@ -49,6 +49,7 @@ import org.netbeans.modules.maven.model.pom.POMModel;
 import org.netbeans.modules.maven.model.pom.POMQName;
 import org.netbeans.modules.maven.model.pom.Plugin;
 import org.netbeans.modules.maven.model.pom.Project;
+import org.netbeans.modules.maven.model.pom.Properties;
 import org.openide.WizardDescriptor;
 import org.openide.WizardDescriptor.AsynchronousInstantiatingIterator;
 import org.openide.WizardDescriptor.InstantiatingIterator;
@@ -77,6 +78,9 @@ public class VaadinProjectWizardIterator implements
     private static final String APPLICATION_ARTIFACT_ID =
             "vaadin-archetype-application";// NOI18N
 
+    private static final String MULTIMODULE_APPLICATION_ARTIFACT_ID =
+            "vaadin-archetype-application-multimodule";// NOI18N
+
     private static final String ADD_ON_ARTIFACT_ID = "vaadin-archetype-widget";// NOI18N
 
     private static final String EXAMPLE_ARTIFACT_ID =
@@ -91,11 +95,6 @@ public class VaadinProjectWizardIterator implements
 
     private static final String REPOSITORY =
             "http://repo.maven.apache.org/maven2/";// NOI18N
-
-    private static final String APPLICATION_VERSION = "7.0.7";// NOI18N
-
-    public static final int APPLICATION_MIN_VERSION = Integer
-            .parseInt(APPLICATION_VERSION.substring(0, 1));
 
     private static final String JETTY_ARTIFACT_ID = "jetty-maven-plugin";
 
@@ -112,8 +111,6 @@ public class VaadinProjectWizardIterator implements
     private static final String UI_LOGGER_NAME =
             "org.netbeans.ui.vaadin.project"; // NOI18N
 
-    private static final Logger UI_LOG = Logger.getLogger(UI_LOGGER_NAME);
-
     private VaadinProjectWizardIterator( InstantiatingIterator<?> iterator ) {
         delegate = iterator;
     }
@@ -121,6 +118,21 @@ public class VaadinProjectWizardIterator implements
     @StaticResource
     public static final String PROJECT_ICON =
             "org/vaadin/netbeans/maven/ui/resources/vaadin.png"; // NOI18N
+
+    @TemplateRegistration(folder = "Project/Vaadin",
+            displayName = "#VaadinMultiModuleProject",
+            description = "../resources/VaadinMultiProjectDescription.html",
+            iconBase = PROJECT_ICON, position = 200)
+    @NbBundle.Messages({
+            "VaadinMultiModuleProject=Vaadin Multi Module Project",
+            "vaadinMultiProjectTitle=Vaadin Multi Module Application" })
+    public static WizardDescriptor.InstantiatingIterator<?> newMultiModuleProject()
+    {
+        logUiUsage("UI_LogCreateMultiProject"); // NOI18N
+        return newProject(MULTIMODULE_APPLICATION_ARTIFACT_ID,
+                Bundle.vaadinMultiProjectTitle(), LatestStableVaadinVersion
+                        .getInstance().getLatestStableVersion());
+    }
 
     @TemplateRegistration(folder = "Project/Vaadin",
             displayName = "#VaadinNewServletProject",
@@ -152,7 +164,7 @@ public class VaadinProjectWizardIterator implements
     @TemplateRegistration(folder = "Project/Vaadin",
             displayName = "#VaadinAddOnProject",
             description = "../resources/VaadinAddOnProjectDescription.html",
-            iconBase = PROJECT_ICON, position = 200)
+            iconBase = PROJECT_ICON, position = 300)
     @NbBundle.Messages({ "VaadinAddOnProject=Vaadin Add-On Project",
             "vaadinNewAddOnTitle=Vaadin Add-On Project with Test Application" })
     public static WizardDescriptor.InstantiatingIterator<?> newAddOnProject() {
@@ -163,7 +175,7 @@ public class VaadinProjectWizardIterator implements
     @TemplateRegistration(folder = "Project/Vaadin",
             displayName = "#VaadinExampleProject",
             description = "../resources/VaadinExampleProjectDescription.html",
-            iconBase = PROJECT_ICON, position = 200)
+            iconBase = PROJECT_ICON, position = 500)
     @NbBundle.Messages({ "VaadinExampleProject=Vaadin Example Project",
             "vaadinExampleTitle=Vaadin Example Application" })
     public static WizardDescriptor.InstantiatingIterator<?> newExampleProject()
@@ -175,7 +187,7 @@ public class VaadinProjectWizardIterator implements
     @TemplateRegistration(folder = "Project/Samples/Vaadin",
             displayName = "#VaadinSampleProject",
             description = "../resources/VaadinSampleProjectDescription.html",
-            iconBase = PROJECT_ICON, position = 200)
+            iconBase = PROJECT_ICON, position = 100)
     @NbBundle.Messages({ "VaadinSampleProject=Vaadin CRUD Sample Project",
             "vaadinSampleTitle=Vaadin CRUD Application" })
     /** 
@@ -197,7 +209,6 @@ public class VaadinProjectWizardIterator implements
         return delegate.current();
     }
 
-    @Override
     public boolean hasNext() {
         return delegate.hasNext();
     }
@@ -237,98 +248,104 @@ public class VaadinProjectWizardIterator implements
     public Set<?> instantiate() throws IOException {
         Set<?> result = delegate.instantiate();
         if (!result.isEmpty()) {
-            FileObject warPom = null;
-            List<FileObject> poms = new LinkedList<>();
-            for (Object project : result) {
-                if (project instanceof FileObject) {
-                    FileObject pom =
-                            ((FileObject) project).getFileObject("pom.xml"); //NOI18N
-                    if (pom == null) {
-                        continue;
-                    }
-                    final String[] packaging = new String[1];
-                    ModelOperation<POMModel> operation =
-                            new ModelOperation<POMModel>() {
-
-                                @Override
-                                public void performOperation( POMModel model ) {
-                                    Project project = model.getProject();
-                                    if (project != null) {
-                                        packaging[0] = project.getPackaging();
-                                    }
-                                }
-                            };
-                    Utilities.performPOMModelOperations(pom,
-                            Collections.singletonList(operation));
-                    if ("war".equals(packaging[0])) { //NOI18N
-                        warPom = pom;
-                    }
-                    else {
-                        poms.add(pom);
-                    }
-
-                    if ("jar".equals(packaging[0])) {
-                        // Create source dir if JAR project has no java sources folder 
-                        FileUtil.createFolder((FileObject) project,
-                                "src/main/java");
-                    }
-                }
-            }
+            List<FileObject> allPoms = new LinkedList<>();
+            FileObject warPom = getWarPom(result, allPoms);
             if (warPom == null) {
                 LOG.warning("Instantiated set doesn't contain WAR project folder");
             }
             else {
-                final boolean prefixName = !poms.isEmpty();
+                final boolean prefixName = !allPoms.isEmpty();
                 final String name = wizard.getProperty("name").toString();// NOI18N
-                ModelOperation<POMModel> operation =
-                        new ModelOperation<POMModel>() {
-
-                            @Override
-                            public void performOperation( POMModel model ) {
-                                Project project = model.getProject();
-
-                                if (prefixName) {
-                                    project.setName(name + NAME_SEPARATOR
-                                            + project.getName());
-                                }
-                                else {
-                                    project.setName(name);
-                                }
-
-                                try {
-                                    String uri = URLEncoder.encode(name, UTF_8);
-                                    setJettyContextPath(uri, model);
-                                    setScanInterval(5, model);
-                                    setRunTarget(uri, model);
-                                }
-                                catch (UnsupportedEncodingException ignore) {
-                                    LOG.log(Level.FINE, null, ignore);
-                                }
-                            }
-                        };
-                Utilities.performPOMModelOperations(warPom,
-                        Collections.singletonList(operation));
-
-                // modify name for other projects
-                operation = new ModelOperation<POMModel>() {
-
-                    @Override
-                    public void performOperation( POMModel model ) {
-                        Project project = model.getProject();
-                        project.setName(name + NAME_SEPARATOR
-                                + project.getName());
-                    }
-                };
-                for (FileObject pom : poms) {
-                    Utilities.performPOMModelOperations(pom,
-                            Collections.singletonList(operation));
-                }
+                updateWarProjectName(warPom, prefixName, name);
+                updateProjectNames(allPoms, name);
             }
         }
         else {
             LOG.warning("Instantiated set is empty"); // NOI18N
         }
         return result;
+    }
+
+    private void updateProjectNames( List<FileObject> allPoms, final String name )
+    {
+        // modify name for other projects
+        ModelOperation<POMModel> operation = new ModelOperation<POMModel>() {
+
+            @Override
+            public void performOperation( POMModel model ) {
+                Project project = model.getProject();
+                project.setName(name + NAME_SEPARATOR + project.getName());
+            }
+        };
+        for (FileObject pom : allPoms) {
+            Utilities.performPOMModelOperations(pom,
+                    Collections.singletonList(operation));
+        }
+    }
+
+    private void updateWarProjectName( FileObject warPom,
+            final boolean prefixName, final String name )
+    {
+        ModelOperation<POMModel> operation = new ModelOperation<POMModel>() {
+
+            @Override
+            public void performOperation( POMModel model ) {
+                Project project = model.getProject();
+
+                if (prefixName) {
+                    project.setName(name + NAME_SEPARATOR + project.getName());
+                }
+                else {
+                    project.setName(name);
+                }
+
+                try {
+                    String uri = URLEncoder.encode(name, UTF_8);
+                    setJettyContextPath(uri, model);
+                    setScanInterval(5, model);
+                    setRunTarget(uri, model);
+                }
+                catch (UnsupportedEncodingException ignore) {
+                    LOG.log(Level.FINE, null, ignore);
+                }
+            }
+        };
+        Utilities.performPOMModelOperations(warPom,
+                Collections.singletonList(operation));
+    }
+
+    private FileObject getWarPom( Set<?> result, List<FileObject> poms ) {
+        FileObject warPom = null;
+        for (Object project : result) {
+            if (project instanceof FileObject) {
+                FileObject pom =
+                        ((FileObject) project).getFileObject("pom.xml"); //NOI18N
+                if (pom == null) {
+                    continue;
+                }
+                final String[] packaging = new String[1];
+                ModelOperation<POMModel> operation =
+                        new ModelOperation<POMModel>() {
+
+                            @Override
+                            public void performOperation( POMModel model ) {
+                                Project project = model.getProject();
+                                if (project != null) {
+                                    packaging[0] = project.getPackaging();
+                                }
+                            }
+                        };
+                Utilities.performPOMModelOperations(pom,
+                        Collections.singletonList(operation));
+                if ("war".equals(packaging[0])) { //NOI18N
+                    warPom = pom;
+                }
+                else {
+                    poms.add(pom);
+                }
+            }
+        }
+        return warPom;
     }
 
     private void setRunTarget( String name, POMModel model ) {
@@ -563,18 +580,19 @@ public class VaadinProjectWizardIterator implements
     }
 
     private static WizardDescriptor.InstantiatingIterator<?> newProject(
-            final String artifactId, String title, String version )
+            final String archetypeArtifactId, String title,
+            String archetypeVersion )
     {
-        String mavenVersion;
-        if (version == null) {
-            mavenVersion = "LATEST";
+        String archVersion;
+        if (archetypeVersion == null) {
+            archVersion = "LATEST";
         }
         else {
-            mavenVersion = version;
+            archVersion = archetypeVersion;
         }
         InstantiatingIterator<?> iterator =
-                ArchetypeWizards.definedArchetype(GROUP_ID, artifactId,
-                        mavenVersion, REPOSITORY, title); //NOI18N
+                ArchetypeWizards.definedArchetype(GROUP_ID,
+                        archetypeArtifactId, archVersion, REPOSITORY, title); //NOI18N
         return new VaadinProjectWizardIterator(iterator);
     }
 
