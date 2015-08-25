@@ -59,8 +59,8 @@ public class VaadinWebProjectAction extends VaadinAction implements Popup {
 
     private static final String COMPILE_THEME = "vaadin:compile-theme"; // NOI18N
 
-    private static final Logger LOG = Logger.getLogger(VaadinWebProjectAction.class
-            .getName());
+    private static final Logger LOG = Logger
+            .getLogger(VaadinWebProjectAction.class.getName());
 
     public VaadinWebProjectAction( Lookup lookup, Project project ) {
         super(lookup, project);
@@ -92,32 +92,6 @@ public class VaadinWebProjectAction extends VaadinAction implements Popup {
             return menu;
         }
         return null;
-    }
-
-    @NbBundle.Messages({ "compileTheme=Compile Theme", "# {0} - project name",
-            "compileThemeTask={0}: Compile Theme" })
-    private JMenuItem createCompileThemeItem() {
-        JMenuItem item = new JMenuItem(Bundle.compileTheme());
-        ActionListener listener =
-                new GoalActionListener(getProject(),
-                        "UI_LogCompileThemeAction",
-                        Bundle.compileThemeTask(getProjectName()),
-                        COMPILE_THEME, VaadinSupport.Action.COMPILE_THEME);// NOI18N
-        item.addActionListener(listener);
-        return item;
-    }
-
-    @NbBundle.Messages({ "compileWidgetset=Compile Widgetset and Theme",
-            "# {0} - project name", "compile={0}: Compile Widgetset" })
-    private JMenuItem createCompileItem() {
-        JMenuItem item = new JMenuItem(Bundle.compileWidgetset());
-        ActionListener listener =
-                new GoalActionListener(getProject(),
-                        "UI_LogCompileWidgetsetAction",
-                        Bundle.compile(getProjectName()), COMPILE,
-                        VaadinSupport.Action.COMPILE);// NOI18N
-        item.addActionListener(listener);
-        return item;
     }
 
     @NbBundle.Messages("vaadinProperties=Vaadin Properties")

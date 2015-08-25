@@ -59,7 +59,7 @@ public class JettyAction extends AbstractAction implements Popup,
     }
 
     public JettyAction( Lookup lookup ) {
-        myProject = VaadinWebProjectAction.getProject(lookup);
+        myProject = VaadinAction.getProject(lookup);
         if (myProject == null
                 || !VaadinConfiguration.getInstance().isJettyEnabled())
         {
@@ -107,7 +107,7 @@ public class JettyAction extends AbstractAction implements Popup,
 
             @Override
             public void run() {
-                VaadinWebProjectAction.logUiUsage("UI_LogRunJettyAction"); // NOI18N
+                VaadinAction.logUiUsage("UI_LogRunJettyAction"); // NOI18N
 
                 VaadinSupport support =
                         myProject.getLookup().lookup(VaadinSupport.class);
@@ -149,8 +149,7 @@ public class JettyAction extends AbstractAction implements Popup,
 
             @Override
             public void run() {
-                VaadinWebProjectAction.logUiUsage("UI_LogRunJettyDevModeAction"); // NOI18N
-
+                VaadinAction.logUiUsage("UI_LogRunJettyDevModeAction"); // NOI18N
                 VaadinSupport support =
                         myProject.getLookup().lookup(VaadinSupport.class);
                 if (support != null) {
@@ -217,8 +216,7 @@ public class JettyAction extends AbstractAction implements Popup,
 
             @Override
             public void run() {
-                VaadinWebProjectAction.logUiUsage("UI_LogDebugJettyAction"); // NOI18N
-
+                VaadinAction.logUiUsage("UI_LogDebugJettyAction"); // NOI18N
                 VaadinSupport support =
                         myProject.getLookup().lookup(VaadinSupport.class);
                 if (support != null) {

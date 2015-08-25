@@ -63,6 +63,16 @@ public interface VaadinSupport {
 
     SourceDescendantsStrategy getDescendantStrategy();
 
+    /**
+     * Returns project which is used to keep all clients side (widgets) realted
+     * functionality.
+     */
     Project getWidgetsetProject();
+
+    /**
+     * Returns {@code true} if project provides client side
+     * widgets specfic actions (such as compile widgetsets, etc.).
+     */
+    boolean isWidgetsetActionsAware();
 
 }

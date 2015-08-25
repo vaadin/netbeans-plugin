@@ -18,6 +18,7 @@ package org.vaadin.netbeans.maven.project;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import javax.swing.AbstractAction;
@@ -29,10 +30,15 @@ import javax.swing.event.ChangeListener;
 
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
+import org.netbeans.api.project.ProjectUtils;
+import org.netbeans.modules.maven.api.execute.RunConfig;
+import org.netbeans.modules.maven.api.execute.RunUtils;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.awt.DynamicMenuContent;
+import org.openide.execution.ExecutorTask;
 import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataObject;
 import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
@@ -59,6 +65,10 @@ public class VaadinAction extends AbstractAction implements ContextAwareAction {
     private static final String SCOPE_TEST = "test"; // NOI18N
 
     private static final String SCOPE_COMPILE = "compile"; // NOI18N
+
+    private static final String COMPILE = "vaadin:compile"; // NOI18N
+
+    private static final String COMPILE_THEME = "vaadin:compile-theme"; // NOI18N
 
     public VaadinAction() {
         this(null, null);
@@ -108,6 +118,64 @@ public class VaadinAction extends AbstractAction implements ContextAwareAction {
     protected JMenuItem createAddonsBrowserItem() {
         JMenuItem item = new JMenuItem(Bundle.browseAddonsAction());
         item.addActionListener(new AddOnBrowserActionListener(getProject()));
+        return item;
+    }
+
+    @NbBundle.Messages({ "compileTheme=Compile Theme", "# {0} - project name",
+            "compileThemeTask={0}: Compile Theme" })
+    protected JMenuItem createCompileThemeItem() {
+        JMenuItem item = new JMenuItem(Bundle.compileTheme());
+        item.addActionListener(new AbstractActionListener() {
+
+            @Override
+            public void run() {
+                logUiUsage("UI_LogCompileThemeAction"); // NOI18N
+
+                String name =
+                        ProjectUtils.getInformation(getProject())
+                                .getDisplayName();
+                RunConfig config =
+                        RunUtils.createRunConfig(FileUtil.toFile(getProject()
+                                .getProjectDirectory()), getProject(), Bundle
+                                .compileThemeTask(name), Collections
+                                .singletonList(COMPILE_THEME));
+                ExecutorTask task = RunUtils.executeMaven(config);
+                VaadinSupport support =
+                        getProject().getLookup().lookup(VaadinSupport.class);
+                if (support != null) {
+                    support.addAction(VaadinSupport.Action.COMPILE_THEME, task);
+                }
+            }
+        });
+        return item;
+    }
+
+    @NbBundle.Messages({ "compileWidgetset=Compile Widgetset and Theme",
+            "# {0} - project name", "compile={0}: Compile Widgetset" })
+    protected JMenuItem createCompileItem() {
+        JMenuItem item = new JMenuItem(Bundle.compileWidgetset());
+        item.addActionListener(new AbstractActionListener() {
+
+            @Override
+            public void run() {
+                logUiUsage("UI_LogCompileWidgetsetAction"); // NOI18N
+
+                String name =
+                        ProjectUtils.getInformation(getProject())
+                                .getDisplayName();
+                RunConfig config =
+                        RunUtils.createRunConfig(FileUtil.toFile(getProject()
+                                .getProjectDirectory()), getProject(), Bundle
+                                .compile(name), Collections
+                                .singletonList(COMPILE));
+                ExecutorTask task = RunUtils.executeMaven(config);
+                VaadinSupport support =
+                        getProject().getLookup().lookup(VaadinSupport.class);
+                if (support != null) {
+                    support.addAction(VaadinSupport.Action.COMPILE, task);
+                }
+            }
+        });
         return item;
     }
 
@@ -231,7 +299,7 @@ public class VaadinAction extends AbstractAction implements ContextAwareAction {
     }
 
     protected static void logUiUsage( String key, String... params ) {
-        UIGestureUtils.logUiUsage(VaadinWebProjectAction.class, UI_LOGGER_NAME, key,
+        UIGestureUtils.logUiUsage(VaadinAction.class, UI_LOGGER_NAME, key,
                 params);
     }
 

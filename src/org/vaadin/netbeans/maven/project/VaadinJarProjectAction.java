@@ -21,6 +21,7 @@ import javax.swing.JMenuItem;
 import org.netbeans.api.project.Project;
 import org.openide.util.Lookup;
 import org.openide.util.actions.Presenter.Popup;
+import org.vaadin.netbeans.VaadinSupport;
 
 /**
  * @author denis
@@ -35,6 +36,15 @@ public class VaadinJarProjectAction extends VaadinAction implements Popup {
     public JMenuItem getPopupPresenter() {
         if (isEnabled()) {
             JMenu menu = new JMenu(Bundle.vaadin());
+
+            if (getProject().getLookup().lookup(VaadinSupport.class)
+                    .isWidgetsetActionsAware())
+            {
+                menu.add(createCompileItem());
+                menu.add(createCompileThemeItem());
+
+                menu.addSeparator();
+            }
 
             menu.add(createAddonsBrowserItem());
 

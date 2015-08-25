@@ -19,7 +19,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -42,19 +41,14 @@ import org.netbeans.api.java.source.TypesEvent;
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
 import org.netbeans.modules.maven.api.NbMavenProject;
-import org.netbeans.modules.maven.model.pom.POMExtensibilityElement;
-import org.netbeans.modules.maven.model.pom.POMModel;
 import org.netbeans.spi.project.ProjectServiceProvider;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
 import org.openide.filesystems.FileObject;
-import org.openide.util.Exceptions;
 import org.openide.util.Utilities;
 import org.vaadin.netbeans.VaadinSupport;
-import static org.vaadin.netbeans.impl.VaadinSupportImpl.LOG;
 import org.vaadin.netbeans.model.ModelOperation;
 import org.vaadin.netbeans.model.VaadinModel;
 import org.vaadin.netbeans.utils.JavaUtils;
-import org.vaadin.netbeans.utils.POMUtils;
 
 /**
  * @author denis
@@ -63,9 +57,6 @@ import org.vaadin.netbeans.utils.POMUtils;
         ProjectOpenedHook.class },
         projectType = "org-netbeans-modules-maven/war")
 public class WebVaadinSupportImpl extends VaadinSupportImpl {
-
-    private static final String VAADIN_CLIENT_COMPILER =
-            "vaadin-client-compiler"; // NOI18N
 
     public WebVaadinSupportImpl( Project project ) {
         super(project, true);
@@ -202,15 +193,6 @@ public class WebVaadinSupportImpl extends VaadinSupportImpl {
         }
     }
 
-    private boolean hasClientCompilerDependency( Project project ) {
-        for (Artifact artifact : getDependecies(project)) {
-            if (VAADIN_CLIENT_COMPILER.equals(artifact.getArtifactId())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private boolean hasGwtModel( final Project project, VaadinSupport support )
     {
         final boolean[] result = new boolean[1];
@@ -233,7 +215,7 @@ public class WebVaadinSupportImpl extends VaadinSupportImpl {
         return result[0];
     }
 
-    private static Set<Artifact> getDependecies( Project project ) {
+    private static Set<Artifact> getDependencies( Project project ) {
         NbMavenProject nbMvnProject =
                 project.getLookup().lookup(NbMavenProject.class);
         MavenProject mavenProject = nbMvnProject.getMavenProject();
@@ -241,7 +223,7 @@ public class WebVaadinSupportImpl extends VaadinSupportImpl {
     }
 
     static List<File> getRuntimeDependecies( Project project ) {
-        Set<Artifact> artifacts = getDependecies(project);
+        Set<Artifact> artifacts = getDependencies(project);
         List<File> result = new ArrayList<>(artifacts.size());
         for (Artifact artifact : artifacts) {
             if (Artifact.SCOPE_COMPILE.equals(artifact.getScope())

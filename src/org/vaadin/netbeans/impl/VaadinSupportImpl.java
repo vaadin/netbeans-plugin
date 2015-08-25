@@ -41,6 +41,8 @@ import java.util.logging.Logger;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.project.MavenProject;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.source.ClassIndexListener;
 import org.netbeans.api.java.source.ClasspathInfo;
@@ -100,6 +102,9 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
             .getName());
 
     private static final int MAX_SOURCE_CLASSES = 500;
+
+    private static final String VAADIN_CLIENT_COMPILER =
+            "vaadin-client-compiler"; // NOI18N
 
     public VaadinSupportImpl( Project project ) {
         this(project, false);
@@ -195,6 +200,10 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
     @Override
     public boolean isWeb() {
         return isWeb;
+    }
+
+    public boolean isWidgetsetActionsAware() {
+        return hasClientCompilerDependency(getProject());
     }
 
     @Override
@@ -372,6 +381,17 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
         }
     }
 
+    protected boolean hasClientCompilerDependency( Project project ) {
+        for (Artifact artifact : getDependecies(project)) {
+            if (POMUtils.VAADIN_GROUP_ID.equals(artifact.getGroupId())
+                    && VAADIN_CLIENT_COMPILER.equals(artifact.getArtifactId()))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     void addListener( FileObject fileObject ) {
         if (fileObject.isFolder()) {
             fileObject.addFileChangeListener(myResourcesListener);
@@ -533,6 +553,13 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
             }
             return result;
         }
+    }
+
+    static Set<Artifact> getDependecies( Project project ) {
+        NbMavenProject nbMvnProject =
+                project.getLookup().lookup(NbMavenProject.class);
+        MavenProject mavenProject = nbMvnProject.getMavenProject();
+        return mavenProject.getArtifacts();
     }
 
     private final class InitTask implements Task<CompilationController> {
