@@ -17,16 +17,22 @@ package org.vaadin.netbeans.impl;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.logging.Level;
 
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.TypeElement;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.project.MavenProject;
@@ -40,6 +46,7 @@ import org.netbeans.api.java.source.RootsEvent;
 import org.netbeans.api.java.source.TypesEvent;
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
+import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.modules.maven.api.NbMavenProject;
 import org.netbeans.spi.project.ProjectServiceProvider;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
@@ -160,7 +167,7 @@ public class WebVaadinSupportImpl extends VaadinSupportImpl {
                                 getClassPath(project, ClassPath.BOOT),
                                 getClassPath(project, ClassPath.COMPILE),
                                 getClassPath(project, ClassPath.SOURCE));
-                myRootsListener.listenIndex(info.getClassIndex());
+                myRootsListener.listenIndex(project, info.getClassIndex());
             }
         }
     }
@@ -235,10 +242,12 @@ public class WebVaadinSupportImpl extends VaadinSupportImpl {
         return result;
     }
 
-    private final class ClassIndexListenerImpl implements ClassIndexListener {
+    private final class ClassIndexListenerImpl implements ClassIndexListener,
+            ChangeListener
+    {
 
         ClassIndexListenerImpl() {
-            myIndeces = new LinkedList<>();
+            myIndeces = new WeakHashMap<>();
         }
 
         @Override
@@ -263,21 +272,30 @@ public class WebVaadinSupportImpl extends VaadinSupportImpl {
         public void typesRemoved( TypesEvent event ) {
         }
 
-        void listenIndex( ClassIndex index ) {
+        @Override
+        public void stateChanged( ChangeEvent e ) {
+            initializeClassIndex(true);
+        }
+
+        void listenIndex( Project project, ClassIndex index ) {
             synchronized (this) {
-                myIndeces.add(index);
+                myIndeces.put(project, index);
             }
             index.addClassIndexListener(this);
+            ProjectUtils.getSources(project).addChangeListener(this);
         }
 
         synchronized void clean() {
-            for (ClassIndex index : myIndeces) {
+            for (Entry<Project, ClassIndex> entry : myIndeces.entrySet()) {
+                Project project = entry.getKey();
+                ClassIndex index = entry.getValue();
                 index.removeClassIndexListener(this);
+                ProjectUtils.getSources(project).removeChangeListener(this);
             }
             myIndeces.clear();
         }
 
-        private final Collection<ClassIndex> myIndeces;
+        private final Map<Project, ClassIndex> myIndeces;
 
     }
 

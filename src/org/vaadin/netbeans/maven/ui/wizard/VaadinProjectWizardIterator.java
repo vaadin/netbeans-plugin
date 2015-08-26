@@ -15,6 +15,7 @@
  */
 package org.vaadin.netbeans.maven.ui.wizard;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
@@ -36,7 +37,9 @@ import javax.xml.namespace.QName;
 
 import org.netbeans.api.annotations.common.StaticResource;
 import org.netbeans.api.progress.ProgressUtils;
+import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.templates.TemplateRegistration;
+import org.netbeans.modules.maven.api.NbMavenProject;
 import org.netbeans.modules.maven.api.archetype.Archetype;
 import org.netbeans.modules.maven.api.archetype.ArchetypeProvider;
 import org.netbeans.modules.maven.api.archetype.ArchetypeWizards;
@@ -58,6 +61,7 @@ import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
+import org.vaadin.netbeans.utils.JavaUtils;
 import org.vaadin.netbeans.utils.UIGestureUtils;
 
 /**
@@ -257,6 +261,11 @@ public class VaadinProjectWizardIterator implements
                 final boolean prefixName = !allPoms.isEmpty();
                 final String name = wizard.getProperty("name").toString();// NOI18N
                 updateWarProjectName(warPom, prefixName, name);
+                for (FileObject pom : allPoms) {
+                    if ("jar".equals(getPackaging(pom))) {
+                        ensureSourcesExist(FileOwnerQuery.getOwner(pom));
+                    }
+                }
                 updateProjectNames(allPoms, name);
             }
         }
@@ -264,6 +273,11 @@ public class VaadinProjectWizardIterator implements
             LOG.warning("Instantiated set is empty"); // NOI18N
         }
         return result;
+    }
+
+    private void ensureSourcesExist( org.netbeans.api.project.Project project )
+    {
+        JavaUtils.getJavaSourceGroups(project, true);
     }
 
     private void updateProjectNames( List<FileObject> allPoms, final String name )
@@ -318,34 +332,50 @@ public class VaadinProjectWizardIterator implements
         FileObject warPom = null;
         for (Object project : result) {
             if (project instanceof FileObject) {
-                FileObject pom =
-                        ((FileObject) project).getFileObject("pom.xml"); //NOI18N
-                if (pom == null) {
-                    continue;
-                }
-                final String[] packaging = new String[1];
-                ModelOperation<POMModel> operation =
-                        new ModelOperation<POMModel>() {
-
-                            @Override
-                            public void performOperation( POMModel model ) {
-                                Project project = model.getProject();
-                                if (project != null) {
-                                    packaging[0] = project.getPackaging();
-                                }
-                            }
-                        };
-                Utilities.performPOMModelOperations(pom,
-                        Collections.singletonList(operation));
-                if ("war".equals(packaging[0])) { //NOI18N
-                    warPom = pom;
+                FileObject projectFolder = (FileObject) project;
+                if ("war".equals(getProjectPackaging(projectFolder))) { //NOI18N
+                    warPom = getPom(projectFolder);
                 }
                 else {
-                    poms.add(pom);
+                    poms.add(getPom(projectFolder));
                 }
             }
         }
         return warPom;
+    }
+
+    private String getProjectPackaging( FileObject projectFolder ) {
+        FileObject pom = getPom(projectFolder);
+        if (pom == null) {
+            return null;
+        }
+        return getPackaging(pom);
+    }
+
+    private String getPackaging( FileObject pom ) {
+        final String[] packaging = new String[1];
+        ModelOperation<POMModel> operation = new ModelOperation<POMModel>() {
+
+            @Override
+            public void performOperation( POMModel model ) {
+                Project project = model.getProject();
+                if (project != null) {
+                    packaging[0] = project.getPackaging();
+                }
+            }
+        };
+        Utilities.performPOMModelOperations(pom,
+                Collections.singletonList(operation));
+        return packaging[0];
+    }
+
+    private FileObject getPom( FileObject projectFolder ) {
+        org.netbeans.api.project.Project project =
+                FileOwnerQuery.getOwner(projectFolder);
+        NbMavenProject mvnProject =
+                project.getLookup().lookup(NbMavenProject.class);
+        File file = mvnProject.getMavenProject().getFile();
+        return FileUtil.toFileObject(FileUtil.normalizeFile(file));
     }
 
     private void setRunTarget( String name, POMModel model ) {

@@ -40,6 +40,8 @@ import java.util.logging.Logger;
 
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.project.MavenProject;
@@ -56,6 +58,7 @@ import org.netbeans.api.java.source.Task;
 import org.netbeans.api.java.source.TypesEvent;
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
+import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.modules.maven.api.NbMavenProject;
 import org.netbeans.modules.maven.model.Utilities;
@@ -122,6 +125,7 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
         myStrategy =
                 new AtomicReference<SourceDescendantsStrategy>(
                         new EmptyStrategy());
+        myIndexListener = new ClassIndexListenerImpl();
     }
 
     @Override
@@ -202,6 +206,7 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
         return isWeb;
     }
 
+    @Override
     public boolean isWidgetsetActionsAware() {
         return hasClientCompilerDependency(getProject());
     }
@@ -254,13 +259,17 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
         }
         Boolean enabled = isEnabled.get();
         if (enabled == null) {
-
             ClassPath classPath =
                     myClasspathInfo.getClassPath(PathKind.COMPILE);
+            // if projectOpened() still in progress. Fix for #12555
+            ClasspathInfo info = getClassPathInfo();
+            if (info == null) {
+                return false;
+            }
             if (classPath.findResource(VAADIN_REQUEST_FQN + ".class") != null) { // NOI18N 
                 return true;
             }
-            classPath = myClasspathInfo.getClassPath(PathKind.SOURCE);
+            classPath = info.getClassPath(PathKind.SOURCE);
             return classPath.findResource(VAADIN_REQUEST_FQN + ".java") != null;
         }
         return enabled;
@@ -321,6 +330,7 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
         return myStrategy.get();
     }
 
+    @Override
     public Project getWidgetsetProject() {
         return getProject();
     }
@@ -338,16 +348,11 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
 
     @Override
     protected void projectOpened() {
-        myClasspathInfo =
-                ClasspathInfo.create(
-                        getClassPath(getProject(), ClassPath.BOOT),
-                        getClassPath(getProject(), ClassPath.COMPILE),
-                        getClassPath(getProject(), ClassPath.SOURCE));
-
         NbMavenProject mvnProject =
                 getProject().getLookup().lookup(NbMavenProject.class);
         mvnProject.addPropertyChangeListener(myDownloadListener);
 
+        ProjectUtils.getSources(myProject).addChangeListener(myIndexListener);
         initializeClassIndex(true);
 
         setTypesCount();
@@ -355,6 +360,12 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
         // init versions and add-ons related data
         AddOnProvider.getInstance();
         VaadinVersions.getInstance();
+    }
+
+    protected ClasspathInfo createClasspathInfo() {
+        return ClasspathInfo.create(getClassPath(getProject(), ClassPath.BOOT),
+                getClassPath(getProject(), ClassPath.COMPILE),
+                getClassPath(getProject(), ClassPath.SOURCE));
     }
 
     protected void updateModel( CompilationController controller,
@@ -396,6 +407,15 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
 
     protected void initializeClassIndex( boolean reinitResourceListener ) {
         try {
+            ClasspathInfo info = createClasspathInfo();
+            info.getClassIndex().addClassIndexListener(myIndexListener);
+            synchronized (myIndexListener) {
+                if (myClasspathInfo != null) {
+                    myClasspathInfo.getClassIndex().removeClassIndexListener(
+                            myIndexListener);
+                }
+                myClasspathInfo = info;
+            }
             invoke(new InitTask(reinitResourceListener));
         }
         catch (IOException e) {
@@ -438,7 +458,7 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
             boolean waitScan ) throws IOException
     {
         // myClasspathInfo could be null in the process of project closing
-        ClasspathInfo info = myClasspathInfo;
+        ClasspathInfo info = getClassPathInfo();
         if (info == null) {
             return null;
         }
@@ -638,10 +658,6 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
                 });
             }
 
-            if (!isReady()) {
-                controller.getClasspathInfo().getClassIndex()
-                        .addClassIndexListener(new ClassIndexListenerImpl());
-            }
             myModel.cleanup(true);
 
             initClassModel(controller);
@@ -682,7 +698,9 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
 
     }
 
-    private final class ClassIndexListenerImpl implements ClassIndexListener {
+    private final class ClassIndexListenerImpl implements ClassIndexListener,
+            ChangeListener
+    {
 
         @Override
         public void typesAdded( final TypesEvent event ) {
@@ -749,6 +767,14 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
         }
 
         @Override
+        public void stateChanged( ChangeEvent e ) {
+            ClasspathInfo newInfo = createClasspathInfo();
+            if (!getClassPathInfo().equals(newInfo)) {
+                rootsChanged(true);
+            }
+        }
+
+        @Override
         public void rootsAdded( RootsEvent event ) {
             rootsChanged(sourceRootsAffected(event, getProject()));
         }
@@ -807,5 +833,7 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
     private final PropertyChangeListener myDownloadListener;
 
     private final boolean isWeb;
+
+    private final ClassIndexListenerImpl myIndexListener;
 
 }
