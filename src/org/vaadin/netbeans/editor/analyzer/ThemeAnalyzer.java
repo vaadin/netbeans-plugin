@@ -136,6 +136,10 @@ public class ThemeAnalyzer extends Analyzer {
             return false;
         }
         ClasspathInfo classPathInfo = support.getClassPathInfo();
+        if (classPathInfo == null) {
+            // can happen when the project is closing
+            return false;
+        }
         ClassPath classPath = classPathInfo.getClassPath(PathKind.COMPILE);
         List<FileObject> themesFolders =
                 classPath.findAllResources(VAADIN_THEMES);

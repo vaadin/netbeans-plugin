@@ -117,6 +117,10 @@ public final class JavaUtils {
             return false;
         }
         ClasspathInfo info = support.getClassPathInfo();
+        if (info == null) {
+            // can happen when the project is closing
+            return false;
+        }
         JavaSource javaSource = JavaSource.create(info);
 
         final boolean[] annotationBased = new boolean[1];
