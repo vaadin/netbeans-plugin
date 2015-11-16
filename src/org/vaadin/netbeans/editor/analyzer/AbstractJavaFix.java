@@ -94,10 +94,8 @@ abstract class AbstractJavaFix implements Fix {
                     result.getDifferences(getFileObject());
             if (differences != null) {
                 for (Difference difference : differences) {
-                    PositionRef start = difference.getStartPosition();
-                    PositionRef end = difference.getEndPosition();
-                    changeInfo.add(getFileObject(), start.getPosition(),
-                            end.getPosition());
+                    changeInfo.add(getFileObject(), difference.getStartPosition(),
+                            difference.getEndPosition());
                 }
             }
         }
