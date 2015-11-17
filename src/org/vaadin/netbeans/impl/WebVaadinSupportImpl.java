@@ -17,11 +17,8 @@ package org.vaadin.netbeans.impl;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -61,87 +58,91 @@ import org.vaadin.netbeans.utils.JavaUtils;
  * @author denis
  */
 @ProjectServiceProvider(service = { VaadinSupport.class,
-        ProjectOpenedHook.class },
-        projectType = "org-netbeans-modules-maven/war")
+        ProjectOpenedHook.class }, projectType = "org-netbeans-modules-maven")
 public class WebVaadinSupportImpl extends VaadinSupportImpl {
 
-    public WebVaadinSupportImpl( Project project ) {
-        super(project, true);
+    public WebVaadinSupportImpl(Project project) {
+        super(project);
         myRootsListener = new ClassIndexListenerImpl();
     }
 
     @Override
     public Project getWidgetsetProject() {
-        if (hasGwtModel(getProject(), this)) {
+        if (isWeb()) {
+            if (hasGwtModel(getProject(), this)) {
+                return getProject();
+            }
+            for (File file : getRuntimeDependecies(getProject())) {
+                Project dependency = FileOwnerQuery
+                        .getOwner(Utilities.toURI(file));
+                if (dependency != null) {
+                    VaadinSupport support = dependency.getLookup()
+                            .lookup(VaadinSupport.class);
+                    if (support != null && support.isEnabled()
+                            && !support.isWeb()
+                            && hasClientCompilerDependency(dependency)
+                            && hasGwtModel(dependency, support)) {
+                        return dependency;
+                    }
+                }
+            }
             return getProject();
+        } else {
+            return super.getWidgetsetProject();
         }
-        for (File file : getRuntimeDependecies(getProject())) {
-            Project dependency = FileOwnerQuery.getOwner(Utilities.toURI(file));
-            if (dependency != null) {
-                VaadinSupport support =
-                        dependency.getLookup().lookup(VaadinSupport.class);
-                if (support != null && support.isEnabled() && !support.isWeb()
-                        && hasClientCompilerDependency(dependency)
-                        && hasGwtModel(dependency, support))
-                {
-                    return dependency;
+    }
+
+    @Override
+    protected void updateModel(CompilationController controller,
+            TypeElement element) {
+        if (isWeb()) {
+            ElementHandle<TypeElement> handle = ElementHandle.create(element);
+            AnnotationMirror annotation = JavaUtils.getAnnotation(element,
+                    JavaUtils.VAADIN_SERVLET_CONFIGURATION);
+            if (annotation != null) {
+                String widgetset = JavaUtils.getValue(annotation,
+                        JavaUtils.WIDGETSET);
+                if (widgetset != null) {
+                    ServletConfigurationImpl impl = new ServletConfigurationImpl();
+                    impl.setWidgetset(widgetset);
+                    getModel().add(handle, impl);
+                }
+            }
+            annotation = JavaUtils.getAnnotation(element,
+                    JavaUtils.SERVLET_ANNOTATION);
+            if (annotation != null) {
+                String widgetset = JavaUtils.getWidgetsetWebInit(annotation);
+                if (widgetset != null) {
+                    ServletConfigurationImpl impl = new ServletConfigurationImpl();
+                    impl.setWidgetset(widgetset);
+                    getModel().add(handle, impl);
                 }
             }
         }
-        return getProject();
     }
 
     @Override
-    protected void updateModel( CompilationController controller,
-            TypeElement element )
-    {
-        ElementHandle<TypeElement> handle = ElementHandle.create(element);
-        AnnotationMirror annotation =
-                JavaUtils.getAnnotation(element,
-                        JavaUtils.VAADIN_SERVLET_CONFIGURATION);
-        if (annotation != null) {
-            String widgetset =
-                    JavaUtils.getValue(annotation, JavaUtils.WIDGETSET);
-            if (widgetset != null) {
-                ServletConfigurationImpl impl = new ServletConfigurationImpl();
-                impl.setWidgetset(widgetset);
-                getModel().add(handle, impl);
+    protected void remove(CompilationController controller,
+            ElementHandle<TypeElement> handle) {
+        if (isWeb()) {
+            getModel().remove(handle);
+        }
+    }
+
+    @Override
+    protected void initClassModel(CompilationController controller)
+            throws InterruptedException {
+        if (isWeb()) {
+            List<TypeElement> elements = JavaUtils.findAnnotatedElements(
+                    JavaUtils.VAADIN_SERVLET_CONFIGURATION, controller);
+            for (TypeElement element : elements) {
+                updateModel(controller, element);
             }
-        }
-        annotation =
-                JavaUtils.getAnnotation(element, JavaUtils.SERVLET_ANNOTATION);
-        if (annotation != null) {
-            String widgetset = JavaUtils.getWidgetsetWebInit(annotation);
-            if (widgetset != null) {
-                ServletConfigurationImpl impl = new ServletConfigurationImpl();
-                impl.setWidgetset(widgetset);
-                getModel().add(handle, impl);
+            elements = JavaUtils.findAnnotatedElements(
+                    JavaUtils.SERVLET_ANNOTATION, controller);
+            for (TypeElement element : elements) {
+                updateModel(controller, element);
             }
-        }
-    }
-
-    @Override
-    protected void remove( CompilationController controller,
-            ElementHandle<TypeElement> handle )
-    {
-        getModel().remove(handle);
-    }
-
-    @Override
-    protected void initClassModel( CompilationController controller )
-            throws InterruptedException
-    {
-        List<TypeElement> elements =
-                JavaUtils.findAnnotatedElements(
-                        JavaUtils.VAADIN_SERVLET_CONFIGURATION, controller);
-        for (TypeElement element : elements) {
-            updateModel(controller, element);
-        }
-        elements =
-                JavaUtils.findAnnotatedElements(JavaUtils.SERVLET_ANNOTATION,
-                        controller);
-        for (TypeElement element : elements) {
-            updateModel(controller, element);
         }
     }
 
@@ -162,17 +163,16 @@ public class WebVaadinSupportImpl extends VaadinSupportImpl {
                 if (project.equals(getProject())) {
                     continue;
                 }
-                ClasspathInfo info =
-                        ClasspathInfo.create(
-                                getClassPath(project, ClassPath.BOOT),
-                                getClassPath(project, ClassPath.COMPILE),
-                                getClassPath(project, ClassPath.SOURCE));
+                ClasspathInfo info = ClasspathInfo.create(
+                        getClassPath(project, ClassPath.BOOT),
+                        getClassPath(project, ClassPath.COMPILE),
+                        getClassPath(project, ClassPath.SOURCE));
                 myRootsListener.listenIndex(project, info.getClassIndex());
             }
         }
     }
 
-    private void removeListener( Project project, Set<Project> projects ) {
+    private void removeListener(Project project, Set<Project> projects) {
         if (projects.contains(project)) {
             return;
         }
@@ -186,7 +186,7 @@ public class WebVaadinSupportImpl extends VaadinSupportImpl {
         }
     }
 
-    private void addListener( Project project, Set<Project> projects ) {
+    private void addListener(Project project, Set<Project> projects) {
         if (projects.contains(project)) {
             return;
         }
@@ -200,14 +200,13 @@ public class WebVaadinSupportImpl extends VaadinSupportImpl {
         }
     }
 
-    private boolean hasGwtModel( final Project project, VaadinSupport support )
-    {
+    private boolean hasGwtModel(final Project project, VaadinSupport support) {
         final boolean[] result = new boolean[1];
         try {
             support.runModelOperation(new ModelOperation() {
 
                 @Override
-                public void run( VaadinModel model ) {
+                public void run(VaadinModel model) {
                     FileObject gwtXml = model.getGwtXml();
                     if (gwtXml == null) {
                         return;
@@ -215,69 +214,66 @@ public class WebVaadinSupportImpl extends VaadinSupportImpl {
                     result[0] = project.equals(FileOwnerQuery.getOwner(gwtXml));
                 }
             });
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             LOG.log(Level.INFO, null, e);
         }
         return result[0];
     }
 
-    private static Set<Artifact> getDependencies( Project project ) {
-        NbMavenProject nbMvnProject =
-                project.getLookup().lookup(NbMavenProject.class);
+    private static Set<Artifact> getDependencies(Project project) {
+        NbMavenProject nbMvnProject = project.getLookup()
+                .lookup(NbMavenProject.class);
         MavenProject mavenProject = nbMvnProject.getMavenProject();
         return mavenProject.getArtifacts();
     }
 
-    static List<File> getRuntimeDependecies( Project project ) {
+    static List<File> getRuntimeDependecies(Project project) {
         Set<Artifact> artifacts = getDependencies(project);
         List<File> result = new ArrayList<>(artifacts.size());
         for (Artifact artifact : artifacts) {
             if (Artifact.SCOPE_COMPILE.equals(artifact.getScope())
-                    || Artifact.SCOPE_RUNTIME.equals(artifact.getScope()))
-            {
+                    || Artifact.SCOPE_RUNTIME.equals(artifact.getScope())) {
                 result.add(artifact.getFile());
             }
         }
         return result;
     }
 
-    private final class ClassIndexListenerImpl implements ClassIndexListener,
-            ChangeListener
-    {
+    private final class ClassIndexListenerImpl
+            implements ClassIndexListener, ChangeListener {
 
         ClassIndexListenerImpl() {
             myIndeces = new WeakHashMap<>();
         }
 
         @Override
-        public void rootsAdded( RootsEvent event ) {
+        public void rootsAdded(RootsEvent event) {
             initializeClassIndex(sourceRootsAffected(event));
         }
 
         @Override
-        public void rootsRemoved( RootsEvent event ) {
+        public void rootsRemoved(RootsEvent event) {
             initializeClassIndex(sourceRootsAffected(event));
         }
 
         @Override
-        public void typesAdded( TypesEvent event ) {
+        public void typesAdded(TypesEvent event) {
         }
 
         @Override
-        public void typesChanged( TypesEvent event ) {
+        public void typesChanged(TypesEvent event) {
         }
 
         @Override
-        public void typesRemoved( TypesEvent event ) {
+        public void typesRemoved(TypesEvent event) {
         }
 
         @Override
-        public void stateChanged( ChangeEvent e ) {
+        public void stateChanged(ChangeEvent e) {
             initializeClassIndex(true);
         }
 
-        void listenIndex( Project project, ClassIndex index ) {
+        void listenIndex(Project project, ClassIndex index) {
             synchronized (this) {
                 myIndeces.put(project, index);
             }

@@ -67,7 +67,6 @@ import org.netbeans.modules.maven.model.pom.POMExtensibilityElement;
 import org.netbeans.modules.maven.model.pom.POMModel;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
 import org.netbeans.spi.java.classpath.support.ClassPathSupport;
-import org.netbeans.spi.project.ProjectServiceProvider;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
 import org.openide.execution.ExecutorTask;
 import org.openide.filesystems.FileObject;
@@ -77,54 +76,42 @@ import org.openide.util.TaskListener;
 import org.vaadin.netbeans.VaadinSupport;
 import org.vaadin.netbeans.maven.editor.completion.AddOnProvider;
 import org.vaadin.netbeans.maven.project.VaadinVersions;
-import org.vaadin.netbeans.model.SourceDescendantsStrategy;
 import org.vaadin.netbeans.model.ModelOperation;
+import org.vaadin.netbeans.model.SourceDescendantsStrategy;
 import org.vaadin.netbeans.utils.JavaUtils;
 import org.vaadin.netbeans.utils.POMUtils;
 
 /**
  * @author denis
  */
-@ProjectServiceProvider(service = { VaadinSupport.class,
-        ProjectOpenedHook.class },
-        projectType = "org-netbeans-modules-maven/jar")
-public class VaadinSupportImpl extends ProjectOpenedHook implements
-        VaadinSupport
-{
+abstract class VaadinSupportImpl extends ProjectOpenedHook
+        implements VaadinSupport {
 
     static RequestProcessor REQUEST_PROCESSOR = new RequestProcessor(
             VaadinSupportImpl.class);
 
-    private static final String VAADIN_CHECK_CLASS =
-            "com.vaadin.server.VaadinRequest";//NOI18N
+    private static final String VAADIN_CHECK_CLASS = "com.vaadin.server.VaadinRequest";// NOI18N
 
     private static final String VAADIN_REQUEST_FQN = VAADIN_CHECK_CLASS
             .replace('.', '/');
 
-    static final Logger LOG = Logger.getLogger(VaadinSupportImpl.class
-            .getName());
+    static final Logger LOG = Logger
+            .getLogger(VaadinSupportImpl.class.getName());
 
     private static final int MAX_SOURCE_CLASSES = 500;
 
-    private static final String VAADIN_CLIENT_COMPILER =
-            "vaadin-client-compiler"; // NOI18N
+    private static final String VAADIN_CLIENT_COMPILER = "vaadin-client-compiler"; // NOI18N
 
-    public VaadinSupportImpl( Project project ) {
-        this(project, false);
-    }
-
-    protected VaadinSupportImpl( Project project, boolean web ) {
+    protected VaadinSupportImpl(Project project) {
         myProject = project;
-        myModel = new VaadinModelImpl(project, web);
         isEnabled = new AtomicReference<>();
         myResourcesListener = new ResourcesListener(this);
         myActions = new ConcurrentHashMap<>();
-        isWeb = web;
-        myDownloadListener = new DownloadDepsListener();
+        myModel = new VaadinModelImpl(project);
+        myDownloadListener = new ReloadProjectListener();
         myTypesCount = new AtomicInteger();
-        myStrategy =
-                new AtomicReference<SourceDescendantsStrategy>(
-                        new EmptyStrategy());
+        myStrategy = new AtomicReference<SourceDescendantsStrategy>(
+                new EmptyStrategy());
         myIndexListener = new ClassIndexListenerImpl();
     }
 
@@ -137,14 +124,13 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
     public List<String> getAddonWidgetsets() {
         if (isWeb()) {
             return null;
-        }
-        else {
+        } else {
             return getPomWidgetsets(getAddOnConfigFile());
         }
     }
 
     @Override
-    public void setAddonWidgetsets( List<String> widgetsets ) {
+    public void setAddonWidgetsets(List<String> widgetsets) {
         if (!isWeb()) {
             String widgetsetValue = null;
             if (widgetsets != null) {
@@ -157,37 +143,31 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
                 }
                 if (builder.length() > 0) {
                     widgetsetValue = builder.substring(0, builder.length() - 1);
-                }
-                else {
+                } else {
                     widgetsetValue = builder.toString();
                 }
             }
             final String widgetset = widgetsetValue;
-            org.netbeans.modules.maven.model.ModelOperation<POMModel> operation =
-                    new org.netbeans.modules.maven.model.ModelOperation<POMModel>()
-                    {
+            org.netbeans.modules.maven.model.ModelOperation<POMModel> operation = new org.netbeans.modules.maven.model.ModelOperation<POMModel>() {
 
-                        @Override
-                        public void performOperation( POMModel model ) {
-                            POMExtensibilityElement widgetsets =
-                                    POMUtils.getWidgetsets(model);
-                            if (widgetsets == null) {
-                                if (widgetset != null) {
-                                    POMUtils.createWidgetset(model, widgetset);
-                                }
-                            }
-                            else {
-                                if (widgetset == null) {
-                                    POMComponent parent =
-                                            widgetsets.getParent();
-                                    parent.removeExtensibilityElement(widgetsets);
-                                }
-                                else {
-                                    POMUtils.setWidgetset(widgetsets, widgetset);
-                                }
-                            }
+                @Override
+                public void performOperation(POMModel model) {
+                    POMExtensibilityElement widgetsets = POMUtils
+                            .getWidgetsets(model);
+                    if (widgetsets == null) {
+                        if (widgetset != null) {
+                            POMUtils.createWidgetset(model, widgetset);
                         }
-                    };
+                    } else {
+                        if (widgetset == null) {
+                            POMComponent parent = widgetsets.getParent();
+                            parent.removeExtensibilityElement(widgetsets);
+                        } else {
+                            POMUtils.setWidgetset(widgetsets, widgetset);
+                        }
+                    }
+                }
+            };
             Utilities.performPOMModelOperations(getAddOnConfigFile(),
                     Collections.singletonList(operation));
         }
@@ -203,7 +183,7 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
 
     @Override
     public boolean isWeb() {
-        return isWeb;
+        return NbMavenProject.TYPE_WAR.equals(getPackagingType());
     }
 
     @Override
@@ -212,11 +192,11 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
     }
 
     @Override
-    public void addAction( final Action action, ExecutorTask task ) {
+    public void addAction(final Action action, ExecutorTask task) {
         TaskListener listener = new TaskListener() {
 
             @Override
-            public void taskFinished( org.openide.util.Task task ) {
+            public void taskFinished(org.openide.util.Task task) {
                 task.removeTaskListener(this);
                 Set<ExecutorTask> set = myActions.get(action);
                 if (set != null) {
@@ -243,7 +223,7 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
     }
 
     @Override
-    public Collection<ExecutorTask> getTasks( Action action ) {
+    public Collection<ExecutorTask> getTasks(Action action) {
         Set<ExecutorTask> set = myActions.get(action);
         if (set == null) {
             return Collections.emptyList();
@@ -253,20 +233,24 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
 
     @Override
     public boolean isEnabled() {
-        // if projectOpened() still in progress or project is closing. Fix for #12555,#18662
+        if (!isWeb() && !NbMavenProject.TYPE_JAR.equals(getPackagingType())) {
+            return false;
+        }
+        // if projectOpened() still in progress or project is closing. Fix for
+        // #12555,#18662
         if (myClasspathInfo == null) {
             return false;
         }
         Boolean enabled = isEnabled.get();
         if (enabled == null) {
-            ClassPath classPath =
-                    myClasspathInfo.getClassPath(PathKind.COMPILE);
+            ClassPath classPath = myClasspathInfo
+                    .getClassPath(PathKind.COMPILE);
             // if projectOpened() still in progress. Fix for #12555
             ClasspathInfo info = getClassPathInfo();
             if (info == null) {
                 return false;
             }
-            if (classPath.findResource(VAADIN_REQUEST_FQN + ".class") != null) { // NOI18N 
+            if (classPath.findResource(VAADIN_REQUEST_FQN + ".class") != null) { // NOI18N
                 return true;
             }
             classPath = info.getClassPath(PathKind.SOURCE);
@@ -276,15 +260,12 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
     }
 
     @Override
-    public void runModelOperation( final ModelOperation operation )
-            throws IOException
-    {
+    public void runModelOperation(final ModelOperation operation)
+            throws IOException {
         Future<Void> future = invoke(new Task<CompilationController>() {
 
             @Override
-            public void run( CompilationController controller )
-                    throws Exception
-            {
+            public void run(CompilationController controller) throws Exception {
                 controller.toPhase(Phase.ELEMENTS_RESOLVED);
                 operation.run(myModel);
             }
@@ -292,8 +273,7 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
         if (future != null) {
             try {
                 future.get();
-            }
-            catch (InterruptedException | ExecutionException e) {
+            } catch (InterruptedException | ExecutionException e) {
                 LOG.log(Level.INFO, null, e);
             }
         }
@@ -301,17 +281,15 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
 
     @Override
     public String getVaadinVersion() {
-        NbMavenProject mvnProject =
-                getProject().getLookup().lookup(NbMavenProject.class);
+        NbMavenProject mvnProject = getProject().getLookup()
+                .lookup(NbMavenProject.class);
         MavenProject mavenProject = mvnProject.getMavenProject();
-        FileObject pom =
-                FileUtil.toFileObject(FileUtil.normalizeFile(mavenProject
-                        .getFile()));
+        FileObject pom = FileUtil
+                .toFileObject(FileUtil.normalizeFile(mavenProject.getFile()));
         String version = getVaadinVersion(pom);
         if (version == null) {
-            version =
-                    getVaadinVersion(FileUtil.toFileObject(FileUtil
-                            .normalizeFile(mavenProject.getParentFile())));
+            version = getVaadinVersion(FileUtil.toFileObject(
+                    FileUtil.normalizeFile(mavenProject.getParentFile())));
         }
         if (version == null) {
             LOG.severe("Unknown project structure: cannot get version "
@@ -338,8 +316,8 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
     @Override
     protected void projectClosed() {
         removeFileSystemListener();
-        NbMavenProject mvnProject =
-                getProject().getLookup().lookup(NbMavenProject.class);
+        NbMavenProject mvnProject = getProject().getLookup()
+                .lookup(NbMavenProject.class);
         mvnProject.removePropertyChangeListener(myDownloadListener);
 
         myClasspathInfo = null;
@@ -348,8 +326,8 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
 
     @Override
     protected void projectOpened() {
-        NbMavenProject mvnProject =
-                getProject().getLookup().lookup(NbMavenProject.class);
+        NbMavenProject mvnProject = getProject().getLookup()
+                .lookup(NbMavenProject.class);
         mvnProject.addPropertyChangeListener(myDownloadListener);
 
         ProjectUtils.getSources(myProject).addChangeListener(myIndexListener);
@@ -368,19 +346,16 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
                 getClassPath(getProject(), ClassPath.SOURCE));
     }
 
-    protected void updateModel( CompilationController controller,
-            TypeElement element )
-    {
+    protected void updateModel(CompilationController controller,
+            TypeElement element) {
     }
 
-    protected void remove( CompilationController controller,
-            ElementHandle<TypeElement> element )
-    {
+    protected void remove(CompilationController controller,
+            ElementHandle<TypeElement> element) {
     }
 
-    protected void initClassModel( CompilationController controller )
-            throws InterruptedException
-    {
+    protected void initClassModel(CompilationController controller)
+            throws InterruptedException {
     }
 
     protected void removeFileSystemListener() {
@@ -391,50 +366,49 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
         doAddListener(getProject());
     }
 
-    protected void doRemoveListener( Project project ) {
+    protected void doRemoveListener(Project project) {
         removeListener(JavaUtils.getJavaSourceGroups(project));
         removeListener(JavaUtils.getResourcesSourceGroups(project));
     }
 
-    protected void doAddListener( Project project ) {
+    protected void doAddListener(Project project) {
         addListener(JavaUtils.getJavaSourceGroups(project));
         addListener(JavaUtils.getResourcesSourceGroups(project));
     }
 
-    protected boolean sourceRootsAffected( RootsEvent event ) {
+    protected boolean sourceRootsAffected(RootsEvent event) {
         return sourceRootsAffected(event, null);
     }
 
-    protected void initializeClassIndex( boolean reinitResourceListener ) {
+    protected void initializeClassIndex(boolean reinitResourceListener) {
         try {
             ClasspathInfo info = createClasspathInfo();
             info.getClassIndex().addClassIndexListener(myIndexListener);
             synchronized (myIndexListener) {
                 if (myClasspathInfo != null) {
-                    myClasspathInfo.getClassIndex().removeClassIndexListener(
-                            myIndexListener);
+                    myClasspathInfo.getClassIndex()
+                            .removeClassIndexListener(myIndexListener);
                 }
                 myClasspathInfo = info;
             }
             invoke(new InitTask(reinitResourceListener));
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             LOG.log(Level.INFO, null, e);
         }
     }
 
-    protected boolean hasClientCompilerDependency( Project project ) {
+    protected boolean hasClientCompilerDependency(Project project) {
         for (Artifact artifact : getDependecies(project)) {
             if (POMUtils.VAADIN_GROUP_ID.equals(artifact.getGroupId())
-                    && VAADIN_CLIENT_COMPILER.equals(artifact.getArtifactId()))
-            {
+                    && VAADIN_CLIENT_COMPILER
+                            .equals(artifact.getArtifactId())) {
                 return true;
             }
         }
         return false;
     }
 
-    void addListener( FileObject fileObject ) {
+    void addListener(FileObject fileObject) {
         if (fileObject.isFolder()) {
             fileObject.addFileChangeListener(myResourcesListener);
             FileObject[] children = fileObject.getChildren();
@@ -444,7 +418,7 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
         }
     }
 
-    void removeListener( FileObject fileObject ) {
+    void removeListener(FileObject fileObject) {
         if (fileObject.isFolder()) {
             fileObject.removeFileChangeListener(myResourcesListener);
             FileObject[] children = fileObject.getChildren();
@@ -454,9 +428,8 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
         }
     }
 
-    Future<Void> invoke( final Task<CompilationController> task,
-            boolean waitScan ) throws IOException
-    {
+    Future<Void> invoke(final Task<CompilationController> task,
+            boolean waitScan) throws IOException {
         // myClasspathInfo could be null in the process of project closing
         ClasspathInfo info = getClassPathInfo();
         if (info == null) {
@@ -468,8 +441,7 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
         }
         if (waitScan) {
             return javaSource.runWhenScanFinished(task, true);
-        }
-        else {
+        } else {
             javaSource.runUserActionTask(task, true);
             return null;
         }
@@ -483,17 +455,22 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
         return myProject;
     }
 
+    private String getPackagingType() {
+        NbMavenProject mvnProject = getProject().getLookup()
+                .lookup(NbMavenProject.class);
+        return mvnProject.getPackagingType();
+    }
+
     private void updateSubclassesStrategy() {
         myStrategy.set(new RecursiveStrategy());
         if (myTypesCount.get() > MAX_SOURCE_CLASSES) {
             myStrategy.set(new RecursiveStrategy());
-        }
-        else {
+        } else {
             myStrategy.set(new AllClassesStrategy());
         }
     }
 
-    private boolean sourceRootsAffected( RootsEvent event, Project subject ) {
+    private boolean sourceRootsAffected(RootsEvent event, Project subject) {
         Iterable<? extends URL> roots = event.getRoots();
         for (URL url : roots) {
             try {
@@ -501,27 +478,25 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
                 if (project != null) {
                     if (subject == null) {
                         return true;
-                    }
-                    else if (project.equals(subject)) {
+                    } else if (project.equals(subject)) {
                         return true;
                     }
                 }
-            }
-            catch (URISyntaxException e) {
+            } catch (URISyntaxException e) {
                 LOG.log(Level.INFO, null, e);
             }
         }
         return false;
     }
 
-    private void addListener( SourceGroup[] sourceGroups ) {
+    private void addListener(SourceGroup[] sourceGroups) {
         for (SourceGroup sourceGroup : sourceGroups) {
             FileObject root = sourceGroup.getRootFolder();
             addListener(root);
         }
     }
 
-    private void removeListener( SourceGroup[] sourceGroups ) {
+    private void removeListener(SourceGroup[] sourceGroups) {
         for (SourceGroup sourceGroup : sourceGroups) {
             FileObject root = sourceGroup.getRootFolder();
             removeListener(root);
@@ -531,37 +506,33 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
     private void setTypesCount() {
         try {
             invoke(new CountProjectClasses());
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             LOG.log(Level.INFO, null, e);
         }
     }
 
-    private Future<Void> invoke( final Task<CompilationController> task )
-            throws IOException
-    {
+    private Future<Void> invoke(final Task<CompilationController> task)
+            throws IOException {
         return invoke(task, !isReady());
     }
 
-    private String getVaadinVersion( FileObject pom ) {
+    private String getVaadinVersion(FileObject pom) {
         final String[] version = new String[1];
-        org.netbeans.modules.maven.model.ModelOperation<POMModel> operation =
-                new org.netbeans.modules.maven.model.ModelOperation<POMModel>()
-                {
+        org.netbeans.modules.maven.model.ModelOperation<POMModel> operation = new org.netbeans.modules.maven.model.ModelOperation<POMModel>() {
 
-                    @Override
-                    public void performOperation( POMModel model ) {
-                        version[0] = POMUtils.getVaadinVersion(model);
-                    }
-                };
+            @Override
+            public void performOperation(POMModel model) {
+                version[0] = POMUtils.getVaadinVersion(model);
+            }
+        };
         Utilities.performPOMModelOperations(pom,
                 Collections.singletonList(operation));
         return version[0];
     }
 
-    protected static ClassPath getClassPath( Project project, String type ) {
-        ClassPathProvider provider =
-                project.getLookup().lookup(ClassPathProvider.class);
+    protected static ClassPath getClassPath(Project project, String type) {
+        ClassPathProvider provider = project.getLookup()
+                .lookup(ClassPathProvider.class);
         SourceGroup[] sourceGroups = JavaUtils.getJavaSourceGroups(project);
         List<ClassPath> classPaths = new ArrayList<>(sourceGroups.length);
         for (SourceGroup sourceGroup : sourceGroups) {
@@ -569,38 +540,35 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
             ClassPath path = provider.findClassPath(rootFolder, type);
             classPaths.add(path);
         }
-        return ClassPathSupport.createProxyClassPath(classPaths
-                .toArray(new ClassPath[classPaths.size()]));
+        return ClassPathSupport.createProxyClassPath(
+                classPaths.toArray(new ClassPath[classPaths.size()]));
     }
 
-    static FileObject getPom( Project project ) {
-        NbMavenProject mvnProject =
-                project.getLookup().lookup(NbMavenProject.class);
+    static FileObject getPom(Project project) {
+        NbMavenProject mvnProject = project.getLookup()
+                .lookup(NbMavenProject.class);
         File file = mvnProject.getMavenProject().getFile();
         return FileUtil.toFileObject(FileUtil.normalizeFile(file));
     }
 
-    static List<String> getPomWidgetsets( FileObject pom ) {
+    static List<String> getPomWidgetsets(FileObject pom) {
         final String[] widgetset = new String[1];
-        org.netbeans.modules.maven.model.ModelOperation<POMModel> operation =
-                new org.netbeans.modules.maven.model.ModelOperation<POMModel>()
-                {
+        org.netbeans.modules.maven.model.ModelOperation<POMModel> operation = new org.netbeans.modules.maven.model.ModelOperation<POMModel>() {
 
-                    @Override
-                    public void performOperation( POMModel model ) {
-                        POMExtensibilityElement widgetsets =
-                                POMUtils.getWidgetsets(model);
-                        if (widgetsets != null) {
-                            widgetset[0] = widgetsets.getElementText().trim();
-                        }
-                    }
-                };
+            @Override
+            public void performOperation(POMModel model) {
+                POMExtensibilityElement widgetsets = POMUtils
+                        .getWidgetsets(model);
+                if (widgetsets != null) {
+                    widgetset[0] = widgetsets.getElementText().trim();
+                }
+            }
+        };
         Utilities.performPOMModelOperations(pom,
                 Collections.singletonList(operation));
         if (widgetset[0] == null) {
             return Collections.emptyList();
-        }
-        else {
+        } else {
             StringTokenizer tokenizer = new StringTokenizer(widgetset[0], ",");
             List<String> result = new LinkedList<>();
             while (tokenizer.hasMoreTokens()) {
@@ -613,9 +581,9 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
         }
     }
 
-    static Set<Artifact> getDependecies( Project project ) {
-        NbMavenProject nbMvnProject =
-                project.getLookup().lookup(NbMavenProject.class);
+    static Set<Artifact> getDependecies(Project project) {
+        NbMavenProject nbMvnProject = project.getLookup()
+                .lookup(NbMavenProject.class);
         MavenProject mavenProject = nbMvnProject.getMavenProject();
         return mavenProject.getArtifacts();
     }
@@ -624,16 +592,16 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
 
         private final boolean initResourceListener;
 
-        private InitTask( boolean reinitResourceListener ) {
+        private InitTask(boolean reinitResourceListener) {
             initResourceListener = reinitResourceListener;
         }
 
         @Override
-        public void run( CompilationController controller ) throws Exception {
+        public void run(CompilationController controller) throws Exception {
             controller.toPhase(Phase.ELEMENTS_RESOLVED);
 
-            if (controller.getElements().getTypeElement(VAADIN_CHECK_CLASS) == null)
-            {
+            if (controller.getElements()
+                    .getTypeElement(VAADIN_CHECK_CLASS) == null) {
                 isEnabled.set(false);
                 myModel.cleanup(false);
                 REQUEST_PROCESSOR.execute(new Runnable() {
@@ -665,17 +633,15 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
         }
     }
 
-    private final class CountProjectClasses implements Runnable,
-            Task<CompilationController>
-    {
+    private final class CountProjectClasses
+            implements Runnable, Task<CompilationController> {
 
         @Override
-        public void run( CompilationController controller ) throws Exception {
+        public void run(CompilationController controller) throws Exception {
             controller.toPhase(Phase.ELEMENTS_RESOLVED);
 
-            Set<TypeElement> allTypes =
-                    AllClassesStrategy.findAllTypes(controller,
-                            EnumSet.allOf(ElementKind.class));
+            Set<TypeElement> allTypes = AllClassesStrategy
+                    .findAllTypes(controller, EnumSet.allOf(ElementKind.class));
             myTypesCount.set(allTypes.size());
             updateSubclassesStrategy();
         }
@@ -687,10 +653,10 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
 
     }
 
-    private final class DownloadDepsListener implements PropertyChangeListener {
+    private final class ReloadProjectListener implements PropertyChangeListener {
 
         @Override
-        public void propertyChange( PropertyChangeEvent evt ) {
+        public void propertyChange(PropertyChangeEvent evt) {
             if (NbMavenProject.PROP_PROJECT.equals(evt.getPropertyName())) {
                 initializeClassIndex(false);
             }
@@ -698,41 +664,37 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
 
     }
 
-    private final class ClassIndexListenerImpl implements ClassIndexListener,
-            ChangeListener
-    {
+    private final class ClassIndexListenerImpl
+            implements ClassIndexListener, ChangeListener {
 
         @Override
-        public void typesAdded( final TypesEvent event ) {
+        public void typesAdded(final TypesEvent event) {
             try {
                 invoke(new Task<CompilationController>() {
 
                     @Override
-                    public void run( CompilationController controller )
-                            throws Exception
-                    {
+                    public void run(CompilationController controller)
+                            throws Exception {
                         controller.toPhase(Phase.ELEMENTS_RESOLVED);
                         updateModel(event, controller, true);
                     }
                 });
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 LOG.log(Level.INFO, null, e);
             }
         }
 
         @Override
-        public void typesRemoved( final TypesEvent event ) {
+        public void typesRemoved(final TypesEvent event) {
             try {
                 invoke(new Task<CompilationController>() {
 
                     @Override
-                    public void run( CompilationController controller )
-                            throws Exception
-                    {
+                    public void run(CompilationController controller)
+                            throws Exception {
                         controller.toPhase(Phase.ELEMENTS_RESOLVED);
-                        Iterable<? extends ElementHandle<TypeElement>> types =
-                                event.getTypes();
+                        Iterable<? extends ElementHandle<TypeElement>> types = event
+                                .getTypes();
                         int count = 0;
                         for (ElementHandle<TypeElement> elementHandle : types) {
                             count++;
@@ -741,54 +703,50 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
                         myTypesCount.addAndGet(-count);
                     }
                 });
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 LOG.log(Level.INFO, null, e);
             }
         }
 
         @Override
-        public void typesChanged( final TypesEvent event ) {
+        public void typesChanged(final TypesEvent event) {
             try {
                 invoke(new Task<CompilationController>() {
 
                     @Override
-                    public void run( CompilationController controller )
-                            throws Exception
-                    {
+                    public void run(CompilationController controller)
+                            throws Exception {
                         controller.toPhase(Phase.ELEMENTS_RESOLVED);
                         updateModel(event, controller, false);
                     }
                 });
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 LOG.log(Level.INFO, null, e);
             }
         }
 
         @Override
-        public void stateChanged( ChangeEvent e ) {
+        public void stateChanged(ChangeEvent e) {
             ClasspathInfo newInfo = createClasspathInfo();
-            if (!getClassPathInfo().equals(newInfo)) {
+            if (!newInfo.equals(getClassPathInfo())) {
                 rootsChanged(true);
             }
         }
 
         @Override
-        public void rootsAdded( RootsEvent event ) {
+        public void rootsAdded(RootsEvent event) {
             rootsChanged(sourceRootsAffected(event, getProject()));
         }
 
         @Override
-        public void rootsRemoved( RootsEvent event ) {
+        public void rootsRemoved(RootsEvent event) {
             rootsChanged(sourceRootsAffected(event, getProject()));
         }
 
-        private void updateModel( TypesEvent event,
-                CompilationController controller, boolean added )
-        {
-            Iterable<? extends ElementHandle<TypeElement>> types =
-                    event.getTypes();
+        private void updateModel(TypesEvent event,
+                CompilationController controller, boolean added) {
+            Iterable<? extends ElementHandle<TypeElement>> types = event
+                    .getTypes();
             int count = 0;
             for (ElementHandle<TypeElement> elementHandle : types) {
                 TypeElement element = elementHandle.resolve(controller);
@@ -803,7 +761,7 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
             updateSubclassesStrategy();
         }
 
-        private void rootsChanged( boolean reinitResourceListener ) {
+        private void rootsChanged(boolean reinitResourceListener) {
             initializeClassIndex(reinitResourceListener);
             if (reinitResourceListener) {
                 setTypesCount();
@@ -831,8 +789,6 @@ public class VaadinSupportImpl extends ProjectOpenedHook implements
     private final ConcurrentHashMap<Action, Set<ExecutorTask>> myActions;
 
     private final PropertyChangeListener myDownloadListener;
-
-    private final boolean isWeb;
 
     private final ClassIndexListenerImpl myIndexListener;
 

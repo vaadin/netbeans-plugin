@@ -33,6 +33,7 @@ import org.netbeans.api.project.Project;
 import org.netbeans.modules.j2ee.dd.api.common.InitParam;
 import org.netbeans.modules.j2ee.dd.api.web.Servlet;
 import org.netbeans.modules.j2ee.dd.api.web.WebApp;
+import org.netbeans.modules.maven.api.NbMavenProject;
 import org.netbeans.modules.xml.retriever.catalog.Utilities;
 import org.netbeans.modules.xml.xam.ModelSource;
 import org.netbeans.modules.xml.xam.locator.CatalogModelException;
@@ -53,18 +54,17 @@ class VaadinModelImpl implements VaadinModel {
 
     private static final String CLIENT = "client"; // NOI18N
 
-    private static final Logger LOG = Logger.getLogger(VaadinModelImpl.class
-            .getName());
+    private static final Logger LOG = Logger
+            .getLogger(VaadinModelImpl.class.getName());
 
-    VaadinModelImpl( Project project, boolean web ) {
+    VaadinModelImpl(Project project) {
         myConfigs = new HashMap<>();
         myProject = project;
-        isWeb = web;
     }
 
     @Override
     public Collection<ServletConfiguration> getServletConfigurations() {
-        if (!isWeb) {
+        if (!isWeb()) {
             return Collections.emptyList();
         }
         Collection<ServletConfiguration> configs = myConfigs.values();
@@ -85,8 +85,7 @@ class VaadinModelImpl implements VaadinModel {
     public List<String> getSourcePaths() {
         if (myGwtModel == null) {
             return null;
-        }
-        else {
+        } else {
             Module module = myGwtModel.getModule();
             if (module == null) {
                 return Collections.singletonList(CLIENT);
@@ -94,8 +93,7 @@ class VaadinModelImpl implements VaadinModel {
             List<Source> sources = module.getChildren(Source.class);
             if (sources.isEmpty()) {
                 return Collections.singletonList(CLIENT);
-            }
-            else {
+            } else {
                 List<String> paths = new ArrayList<>();
                 for (Source source : sources) {
                     paths.add(source.getPath());
@@ -115,27 +113,29 @@ class VaadinModelImpl implements VaadinModel {
         return getGwtXml(true);
     }
 
+    private boolean isWeb() {
+        NbMavenProject mvnProject = myProject.getLookup()
+                .lookup(NbMavenProject.class);
+        return NbMavenProject.TYPE_WAR.equals(mvnProject.getPackagingType());
+    }
+
     void initGwtXml() {
         FileObject gwtXml = findGwtXml();
         if (gwtXml == null) {
             myGwtModel = null;
-        }
-        else if (!gwtXml.equals(myGwtXml)) {
-            myGwtModel =
-                    GwtModelFactory.getInstance().getModel(
-                            getModelSource(gwtXml));
+        } else if (!gwtXml.equals(myGwtXml)) {
+            myGwtModel = GwtModelFactory.getInstance()
+                    .getModel(getModelSource(gwtXml));
             try {
                 myGwtModel.sync();
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 LOG.log(Level.INFO, null, e);
             }
         }
         myGwtXml = gwtXml;
     }
 
-    void add( ElementHandle<TypeElement> handle, ServletConfigurationImpl impl )
-    {
+    void add(ElementHandle<TypeElement> handle, ServletConfigurationImpl impl) {
         if (myConfigs.get(handle) != null) {
             return;
         }
@@ -143,78 +143,72 @@ class VaadinModelImpl implements VaadinModel {
         initGwtXml();
     }
 
-    void cleanup( boolean reinit ) {
+    void cleanup(boolean reinit) {
         myConfigs.clear();
         if (reinit) {
             initGwtXml();
-        }
-        else {
+        } else {
             myGwtXml = null;
             myGwtModel = null;
         }
     }
 
-    void remove( ElementHandle<TypeElement> handle ) {
+    void remove(ElementHandle<TypeElement> handle) {
         myConfigs.remove(handle);
         initGwtXml();
     }
 
     FileObject findGwtXml() {
         try {
-            if (isWeb) {
+            if (isWeb()) {
                 Set<FileObject> webWidgetsetFiles = getWebWidgetsetFiles();
                 if (webWidgetsetFiles.isEmpty()) {
                     LOG.log(Level.INFO,
                             "WEB configuration is not available for the project {0}, "
                                     + "proceed with recursive GWT Modules search",
-                            myProject.getProjectDirectory());//NOI18N
-                }
-                else {
+                            myProject.getProjectDirectory());// NOI18N
+                } else {
                     return webWidgetsetFiles.iterator().next();
                 }
-            }
-            else {
-                Set<FileObject> widgetsets =
-                        JavaUtils.getWidgetsetFiles(VaadinSupportImpl
-                                .getPomWidgetsets(VaadinSupportImpl
-                                        .getPom(myProject)), myProject);
+            } else {
+                Set<FileObject> widgetsets = JavaUtils.getWidgetsetFiles(
+                        VaadinSupportImpl.getPomWidgetsets(
+                                VaadinSupportImpl.getPom(myProject)),
+                        myProject);
                 if (widgetsets.isEmpty()) {
                     LOG.log(Level.INFO,
                             "No widgetsets configured via POM are found in the project {0}, "
                                     + "proceed with recursive GWT Modules search",
-                            myProject.getProjectDirectory());//NOI18N
-                }
-                else {
+                            myProject.getProjectDirectory());// NOI18N
+                } else {
                     return widgetsets.iterator().next();
                 }
             }
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             LOG.log(Level.INFO,
                     "Unable to find widgetsets via WEB configuration, "
-                            + "proceed with recursive GWT Modules ", e);//NOI18N
+                            + "proceed with recursive GWT Modules ",
+                    e);// NOI18N
         }
         FileObject fileObject = XmlUtils.findGwtXml(myProject);
         if (fileObject != null && fileObject.isValid()) {
             return fileObject;
-        }
-        else {
+        } else {
             return null;
         }
     }
 
-    public FileObject getGwtXml( boolean init ) {
+    public FileObject getGwtXml(boolean init) {
         if (init && myGwtXml == null) {
             return XmlUtils.findGwtXml(myProject);
         }
         return myGwtXml;
     }
 
-    private ModelSource getModelSource( FileObject fileObject ) {
+    private ModelSource getModelSource(FileObject fileObject) {
         try {
             return Utilities.createModelSource(fileObject, true);
-        }
-        catch (CatalogModelException ex) {
+        } catch (CatalogModelException ex) {
             LOG.log(Level.SEVERE, ex.getMessage(), ex);
         }
         return null;
@@ -224,8 +218,7 @@ class VaadinModelImpl implements VaadinModel {
         WebApp webApp = null;
         try {
             webApp = XmlUtils.getWebApp(myProject);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             LOG.log(Level.INFO, null, e);
         }
         if (webApp == null) {
@@ -237,10 +230,8 @@ class VaadinModelImpl implements VaadinModel {
             InitParam[] initParams = servlet.getInitParam();
             for (InitParam initParam : initParams) {
                 if (JavaUtils.WIDGETSET.equals(initParam.getParamName())
-                        && initParam.getParamValue() != null)
-                {
-                    ServletConfigurationImpl impl =
-                            new ServletConfigurationImpl();
+                        && initParam.getParamValue() != null) {
+                    ServletConfigurationImpl impl = new ServletConfigurationImpl();
                     impl.setWidgetset(initParam.getParamValue());
                     result.add(impl);
                 }
@@ -267,8 +258,6 @@ class VaadinModelImpl implements VaadinModel {
     private FileObject myGwtXml;
 
     private final Project myProject;
-
-    private final boolean isWeb;
 
     private GwtModel myGwtModel;
 

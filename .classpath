@@ -54,8 +54,22 @@
 	<classpathentry kind="lib" path="build/public-package-jars/org-openide-util-lookup.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-uihandler.jar"/>
 	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-lib-uihandler.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jre7"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="lib" path="build/public-package-jars/nb-javac-impl.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="build/public-package-jars/org-apache-tools-ant-module.jar"/>
+	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-api-progress-compat8.jar"/>
+	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-api-progress-nb.jar"/>
+	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-api-templates.jar"/>
+	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-editor-document.jar"/>
+	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-java-project-ui.jar"/>
+	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-java-source-base.jar"/>
+	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-java-source-compat8.jar"/>
+	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-parsing-indexing.jar"/>
+	<classpathentry kind="lib" path="build/public-package-jars/org-netbeans-modules-projectuiapi-base.jar"/>
+	<classpathentry kind="lib" path="build/public-package-jars/org-openide-execution-compat8.jar"/>
+	<classpathentry kind="lib" path="build/public-package-jars/org-openide-filesystems-compat8.jar"/>
+	<classpathentry kind="lib" path="build/public-package-jars/org-openide-filesystems-nb.jar"/>
+	<classpathentry kind="lib" path="build/public-package-jars/org-openide-util-ui.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
