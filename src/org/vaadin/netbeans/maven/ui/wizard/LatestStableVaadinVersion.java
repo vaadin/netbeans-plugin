@@ -39,7 +39,7 @@ public final class LatestStableVaadinVersion extends AbstractVaadinVersions {
     private static final LatestStableVaadinVersion INSTANCE =
             new LatestStableVaadinVersion();
 
-    static final String VERSION_URL = "http://vaadin.com/download/LATEST7"; // NOI18N
+    static final String VERSION_URL = "http://vaadin.com/download/LATEST8"; // NOI18N
 
     private LatestStableVaadinVersion() {
         myVersion = new AtomicReference<>();
