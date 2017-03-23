@@ -44,7 +44,7 @@ public final class VaadinVersions extends AbstractVaadinVersions {
 
     private static final VaadinVersions INSTANCE = new VaadinVersions();
 
-    static final String VERSIONS_URL = "http://vaadin.com/download/VERSIONS_7"; // NOI18N
+    static final String VERSIONS_URL = "http://vaadin.com/download/VERSIONS_8"; // NOI18N
 
     private VaadinVersions() {
         myVersions = new AtomicReference<>();
