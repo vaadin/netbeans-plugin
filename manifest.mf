@@ -2,4 +2,4 @@ Manifest-Version: 1.0
 OpenIDE-Module: org.vaadin.netbeans.maven
 OpenIDE-Module-Layer: org/vaadin/netbeans/maven/resources/layer.xml
 OpenIDE-Module-Localizing-Bundle: org/vaadin/netbeans/maven/Bundle.properties
-OpenIDE-Module-Specification-Version: 1.2.1
+OpenIDE-Module-Specification-Version: 1.2.2
